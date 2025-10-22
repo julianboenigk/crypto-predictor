@@ -5,31 +5,54 @@ import config
 from fetcher import get_markets, load_all_ohlc
 from analyzer import scan_all
 from notifier import send_telegram, fmt_signal
+from db_logger import init_db, insert_signal
 
 def ensure_dirs():
     Path(config.DATA_DIR).mkdir(parents=True, exist_ok=True)
-    Path(os.path.dirname(config.LOG_FILE)).mkdir(parents=True, exist_ok=True)
+    log_dir = os.path.dirname(config.LOG_FILE) or "."
+    Path(log_dir).mkdir(parents=True, exist_ok=True)
     if not os.path.exists(config.LOG_FILE):
         with open(config.LOG_FILE, "w", newline="") as f:
             w = csv.writer(f)
-            w.writerow(["ts","coin_id","signal","price","stop","target","rr","expected_return_pct","ema200","rsi14","atr14"])
+            w.writerow([
+                "ts","coin_id","signal","price","stop","target","rr",
+                "expected_return_pct","ema200","rsi14","atr14"
+            ])
 
-def log_signal(s: dict):
+def log_signal_csv(s: dict):
     with open(config.LOG_FILE, "a", newline="") as f:
         w = csv.writer(f)
         w.writerow([
             s["timestamp"], s["coin_id"], s["signal"], s["price"], s["stop"],
-            s["target"], s["rr"], s["expected_return_pct"], s["ema200"], s["rsi14"], s["atr14"]
+            s["target"], s["rr"], s["expected_return_pct"],
+            s["ema200"], s["rsi14"], s["atr14"]
         ])
 
 def dedupe_signals(signals):
-    if not os.path.exists(config.LOG_FILE): return signals
-    df = pd.read_csv(config.LOG_FILE)
+    if not os.path.exists(config.LOG_FILE):
+        return signals
+    try:
+        df = pd.read_csv(config.LOG_FILE)
+    except Exception:
+        return signals
     out = []
     for s in signals:
-        recent = df[(df.coin_id==s["coin_id"]) & (df.signal==s["signal"])].tail(1)
-        out.append(s) if recent.empty else out.append(s)
+        recent = df[(df.coin_id == s["coin_id"]) & (df.signal == s["signal"])].tail(1)
+        out.append(s) if recent.empty else out.append(s)  # keep simple for now
     return out
 
 def run_once():
-    ensure_dirs_
+    init_db()
+    ensure_dirs()
+    ohlc_map = load_all_ohlc(config.COIN_IDS)
+    signals = scan_all(ohlc_map)
+    signals = dedupe_signals(signals)
+    for s in signals:
+        log_signal_csv(s)
+        insert_signal(s)
+        send_telegram(fmt_signal(s))
+    # optional console heartbeat
+    print(f"logged {len(signals)} signals")
+
+if __name__ == "__main__":
+    run_once()

@@ -1,60 +1,31 @@
-import os, time, math
+import time
 from typing import Dict, List
 import requests
 import pandas as pd
-from dateutil import tz
-from datetime import datetime
 import config
 
-BASE = "https://api.coingecko.com/api/v3"
+BINANCE = "https://api.binance.com"
 
-def _headers():
-    h = {"accept": "application/json"}
-    if config.COINGECKO_API_KEY:
-        h["x-cg-pro-api-key"] = config.COINGECKO_API_KEY
-    return h
-
-def now_ms() -> int:
-    return int(time.time() * 1000)
-
-def get_markets(ids: List[str]) -> pd.DataFrame:
-    out = []
-    for i in range(0, len(ids), 200):
-        batch = ids[i:i+200]
-        r = requests.get(
-            f"{BASE}/coins/markets",
-            params={
-                "vs_currency": config.VS_CURRENCY,
-                "ids": ",".join(batch),
-                "order": "market_cap_desc",
-                "per_page": len(batch),
-                "page": 1,
-                "sparkline": "false",
-                "price_change_percentage": "1h,24h"
-            },
-            headers=_headers(), timeout=30
-        )
-        r.raise_for_status()
-        out += r.json()
-    return pd.DataFrame(out)
-
-def get_ohlc(coin_id: str, days: int = 1) -> pd.DataFrame:
-    r = requests.get(
-        f"{BASE}/coins/{coin_id}/ohlc",
-        params={"vs_currency": config.VS_CURRENCY, "days": days},
-        headers=_headers(), timeout=30
-    )
+def _get(path: str, params: dict) -> requests.Response:
+    r = requests.get(f"{BINANCE}{path}", params=params, timeout=30)
     r.raise_for_status()
-    data = r.json()
-    if not data:
-        return pd.DataFrame(columns=["t","o","h","l","c"])
-    df = pd.DataFrame(data, columns=["t","o","h","l","c"])
+    return r
+
+def _eurusdt() -> float:
+    # how many USDT per 1 EUR
+    r = _get("/api/v3/ticker/price", {"symbol": "EURUSDT"})
+    return float(r.json()["price"])
+
+def _klines(symbol: str, interval: str, limit: int) -> pd.DataFrame:
+    r = _get("/api/v3/klines", {"symbol": symbol, "interval": interval, "limit": limit})
+    cols = ["t","o","h","l","c","v","ct","qv","n","tb","tqv","ig"]
+    df = pd.DataFrame(r.json(), columns=cols)
+    df = df[["t","o","h","l","c"]].astype({"o":"float64","h":"float64","l":"float64","c":"float64"})
     df["t"] = pd.to_datetime(df["t"], unit="ms", utc=True).dt.tz_convert("Europe/Berlin")
     return df
 
 def last_candle_fresh(df: pd.DataFrame) -> bool:
-    if df.empty:
-        return False
+    if df.empty: return False
     if len(df) >= 2:
         period = (df["t"].iloc[-1] - df["t"].iloc[-2]).total_seconds()
     else:
@@ -63,13 +34,34 @@ def last_candle_fresh(df: pd.DataFrame) -> bool:
     ts = int(df.iloc[-1]["t"].tz_convert("UTC").timestamp())
     return (time.time() - ts) <= allowed
 
+def get_markets(ids: List[str]) -> pd.DataFrame:
+    eurusdt = _eurusdt()
+    rows = []
+    for cid in ids:
+        sym = config.SYMBOL_MAP.get(cid)
+        if not sym: continue
+        try:
+            r = _get("/api/v3/ticker/price", {"symbol": sym})
+            usdt = float(r.json()["price"])
+            eur = usdt / eurusdt if eurusdt > 0 else None
+            rows.append({"id": cid, "symbol": sym, "current_price_eur": eur})
+        except Exception:
+            continue
+    return pd.DataFrame(rows)
+
+def get_ohlc(coin_id: str) -> pd.DataFrame:
+    sym = config.SYMBOL_MAP.get(coin_id)
+    if not sym:
+        return pd.DataFrame(columns=["t","o","h","l","c"])
+    return _klines(sym, config.BINANCE_INTERVAL, config.BINANCE_LIMIT)
+
 def load_all_ohlc(ids: List[str]) -> Dict[str, pd.DataFrame]:
-    out = {}
+    out: Dict[str, pd.DataFrame] = {}
     for cid in ids:
         try:
-            o = get_ohlc(cid, days=1)
-            if last_candle_fresh(o):
-                out[cid] = o
+            df = get_ohlc(cid)
+            if not df.empty and len(df) >= config.EMA_LEN and last_candle_fresh(df):
+                out[cid] = df
         except Exception:
             continue
     return out
