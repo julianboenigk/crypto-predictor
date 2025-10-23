@@ -39,26 +39,43 @@ def dedupe_signals(signals):
         out.append(s) if recent.empty else out.append(s)
     return out
 
+def _bar_minutes() -> int:
+    m = {"1m":1,"3m":3,"5m":5,"15m":15,"30m":30,"1h":60,"2h":120,"4h":240,"1d":1440}
+    return m.get(config.BINANCE_INTERVAL, 60)
+
 def run_once():
     init_db()
     ensure_dirs()
 
-    # universe
     try:
         keys = get_top_symbols(config.DYNAMIC_TOP_N) if config.USE_DYNAMIC_SYMBOLS else config.COIN_IDS
     except Exception:
         keys = config.COIN_IDS
 
-    # data + analysis
     ohlc_map = load_all_ohlc(keys)
     signals = dedupe_signals(scan_all(ohlc_map))
 
-    # sentiment context
+    bar_min = _bar_minutes()
     fng = fetch_fng()
-    ctx = {"fng": fng}
 
-    # outputs
     for s in signals:
+        ts = pd.to_datetime(s["timestamp"])
+        entry_until = ts + pd.Timedelta(minutes=bar_min * config.ENTRY_VALID_BARS)
+        dist = abs(float(s["target"]) - float(s["price"]))
+        atr = max(float(s["atr14"]), 1e-9)
+        est_bars = max(1, int(round(dist / atr)))
+        est_exit = ts + pd.Timedelta(minutes=bar_min * est_bars)
+        force_exit = ts + pd.Timedelta(minutes=bar_min * config.MAX_HOLD_BARS)
+
+        ctx = {
+            "fng": fng,
+            "timing": {
+                "entry_until": entry_until.strftime("%Y-%m-%d %H:%M:%S%z"),
+                "est_exit":    est_exit.strftime("%Y-%m-%d %H:%M:%S%z"),
+                "force_exit":  force_exit.strftime("%Y-%m-%d %H:%M:%S%z"),
+            },
+        }
+
         log_signal_csv(s)
         insert_signal(s)
         send_telegram(fmt_signal(s, ctx))

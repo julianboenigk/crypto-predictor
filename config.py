@@ -16,16 +16,20 @@ SYMBOL_MAP = {
     "solana":"SOLUSDT","cardano":"ADAUSDT","dogecoin":"DOGEUSDT","tron":"TRXUSDT",
     "chainlink":"LINKUSDT","litecoin":"LTCUSDT",
 }
-USE_DYNAMIC_SYMBOLS = True    # turn on dynamic top list
-DYNAMIC_TOP_N = 20            # top 20 by 24h quote volume
+USE_DYNAMIC_SYMBOLS = True    # pull top-volume pairs automatically
+DYNAMIC_TOP_N = 30            # analyze top 30 USDT pairs
 
 # === Strategy ===
-MIN_EXPECTED_RETURN_PCT = 5.0   # realistic on 1h
+MIN_EXPECTED_RETURN_PCT = 7.0   # realistic on 1h
 MIN_RR = 1.5
 DATA_FRESHNESS_SEC = 1800
 EMA_LEN = 200
 RSI_LEN = 14
 ATR_LEN = 14
+
+# Timing guidance (adds “enter before / expected exit / max hold until”)
+ENTRY_VALID_BARS = 2             # signal fresh for next N bars
+MAX_HOLD_BARS   = 48             # force exit after M bars
 
 # === Telegram ===
 TELEGRAM_BOT_TOKEN = "8218118041:AAFkzrSAEySMA0ByJRdLFz9sVI6GNQYB_l4"
