@@ -4,3 +4,9 @@ data/
 logs/
 config.py
 .env
+config.py
+.env
+.venv/
+data/
+logs/
+
