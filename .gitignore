@@ -10,3 +10,8 @@ config.py
 data/
 logs/
 
+config.py
+.env
+.venv/
+data/
+logs/
