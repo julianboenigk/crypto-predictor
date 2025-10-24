@@ -16,3 +16,13 @@ config.py
 data/
 logs/
 .env
+
+# secrets & local
+.env
+.venv/
+logs/
+__pycache__/
+*.pyc
+data/signals.db
+data/signals.backup*
+data/signals.csv

@@ -164,3 +164,143 @@ Traceback (most recent call last):
     from pandas._config import config
 ImportError: cannot import name 'config' from partially initialized module 'pandas._config' (most likely due to a circular import) (/home/crypto/crypto-predictor/.venv/lib/python3.12/site-packages/pandas/_config/__init__.py)
 universe=30 data=29 signals=3 FNG=27
+universe=30 data=29 signals=2 FNG=27
+universe=30 data=29 signals=2 FNG=27
+universe=30 data=29 signals=2 FNG=27
+universe=30 data=29 signals=2 FNG=27
+universe=30 data=29 signals=2 FNG=27
+universe=30 data=29 signals=0 FNG=27
+universe=30 data=29 signals=2 FNG=27
+universe=30 data=29 signals=3 FNG=27
+universe=30 data=29 signals=3 FNG=27
+universe=30 data=29 signals=3 FNG=27
+universe=30 data=29 signals=1 FNG=27
+universe=30 data=29 signals=1 FNG=27
+universe=30 data=29 signals=1 FNG=27
+universe=30 data=29 signals=2 FNG=27
+universe=30 data=29 signals=2 FNG=27
+universe=30 data=29 signals=2 FNG=27
+universe=30 data=29 signals=2 FNG=27
+universe=30 data=29 signals=1 FNG=27
+universe=30 data=29 signals=0 FNG=30
+universe=30 data=29 signals=1 FNG=30
+universe=30 data=29 signals=2 FNG=30
+universe=30 data=29 signals=1 FNG=30
+universe=30 data=29 signals=2 FNG=30
+universe=30 data=29 signals=2 FNG=30
+universe=30 data=29 signals=2 FNG=30
+universe=30 data=29 signals=2 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=1 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=0 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=1 FNG=30
+universe=30 data=29 signals=2 FNG=30
+universe=30 data=29 signals=1 FNG=30
+universe=30 data=29 signals=1 FNG=30
+universe=30 data=29 signals=2 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=1 FNG=30
+universe=30 data=29 signals=2 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=2 FNG=30
+universe=30 data=29 signals=2 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=4 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=2 FNG=30
+universe=30 data=29 signals=2 FNG=30
+universe=30 data=29 signals=1 FNG=30
+universe=30 data=29 signals=2 FNG=30
+universe=30 data=29 signals=2 FNG=30
+universe=30 data=29 signals=1 FNG=30
+universe=30 data=29 signals=1 FNG=30
+universe=30 data=29 signals=2 FNG=30
+universe=30 data=29 signals=2 FNG=30
+universe=30 data=29 signals=2 FNG=30
+universe=30 data=29 signals=1 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=1 FNG=30
+universe=30 data=29 signals=2 FNG=30
+universe=30 data=29 signals=1 FNG=30
+universe=30 data=29 signals=2 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=1 FNG=30
+universe=30 data=29 signals=1 FNG=30
+universe=30 data=29 signals=0 FNG=30
+universe=30 data=29 signals=1 FNG=30
+universe=30 data=29 signals=1 FNG=30
+universe=30 data=29 signals=1 FNG=30
+universe=30 data=29 signals=2 FNG=30
+universe=30 data=29 signals=2 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=2 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=2 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=2 FNG=30
+universe=30 data=29 signals=2 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=4 FNG=30
+universe=30 data=29 signals=4 FNG=30
+universe=30 data=29 signals=1 FNG=30
+universe=30 data=29 signals=2 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=4 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=4 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=2 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=2 FNG=30
+universe=30 data=29 signals=2 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=4 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=4 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=2 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=2 FNG=30
+universe=30 data=29 signals=4 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=3 FNG=30
+universe=30 data=29 signals=4 FNG=30
+universe=30 data=29 raw_signals=4 sent=1 FNG=30
+universe=30 data=29 raw_signals=3 sent=2 FNG=30
+universe=30 data=29 raw_signals=2 sent=2 FNG=30
+universe=30 data=29 raw_signals=4 sent=3 FNG=30
+universe=30 data=29 raw_signals=4 sent=3 FNG=30
+Traceback (most recent call last):
+  File "/home/crypto/crypto-predictor/main.py", line 94, in <module>
+    run_once()
+  File "/home/crypto/crypto-predictor/main.py", line 87, in run_once
+    insert_signal(s)
+  File "/home/crypto/crypto-predictor/db_logger.py", line 31, in insert_signal
+    cur.execute("""
+sqlite3.OperationalError: database is locked
+universe=10 data=10 raw_signals=0 sent=0 FNG=30
+universe=10 data=10 raw_signals=0 sent=0 FNG=30

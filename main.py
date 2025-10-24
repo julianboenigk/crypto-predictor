@@ -1,12 +1,13 @@
-import os, csv
+import os, csv, math
 from pathlib import Path
 import pandas as pd
 import config
 from fetcher import get_markets, load_all_ohlc, get_top_symbols
 from analyzer import scan_all
-from notifier import send_telegram, fmt_signal
+from notifier import send_telegram, fmt_signal, score_confidence
 from db_logger import init_db, insert_signal
 from sentiment import fetch_fng
+from eta import estimate_bars
 
 def ensure_dirs():
     Path(config.DATA_DIR).mkdir(parents=True, exist_ok=True)
@@ -58,12 +59,18 @@ def run_once():
     bar_min = _bar_minutes()
     fng = fetch_fng()
 
+    sent = 0
     for s in signals:
+        # 1) alert only High confidence
+        label, score = score_confidence(s)
+        if label != "High":
+            continue
+
+        # 2) timing hints
         ts = pd.to_datetime(s["timestamp"])
         entry_until = ts + pd.Timedelta(minutes=bar_min * config.ENTRY_VALID_BARS)
-        dist = abs(float(s["target"]) - float(s["price"]))
-        atr = max(float(s["atr14"]), 1e-9)
-        est_bars = max(1, int(round(dist / atr)))
+
+        est_bars = estimate_bars(s, bar_minutes=bar_min, max_hold_bars=config.MAX_HOLD_BARS, db_path=os.path.join(config.DATA_DIR, "signals.db"))
         est_exit = ts + pd.Timedelta(minutes=bar_min * est_bars)
         force_exit = ts + pd.Timedelta(minutes=bar_min * config.MAX_HOLD_BARS)
 
@@ -78,9 +85,10 @@ def run_once():
 
         log_signal_csv(s)
         insert_signal(s)
-        send_telegram(fmt_signal(s, ctx))
+        if send_telegram(fmt_signal(s, ctx)):
+            sent += 1
 
-    print(f"universe={len(keys)} data={len(ohlc_map)} signals={len(signals)} FNG={fng.get('value')}")
+    print(f"universe={len(keys)} data={len(ohlc_map)} raw_signals={len(signals)} sent={sent} FNG={fng.get('value')}")
 
 if __name__ == "__main__":
     run_once()
