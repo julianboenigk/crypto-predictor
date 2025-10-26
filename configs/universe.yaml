@@ -1,0 +1,3 @@
+pairs: ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT", "ADAUSDT"]
+interval: "15m"
+max_input_age_sec: 120
