@@ -17,13 +17,23 @@ from src.core.store import (
 )
 from src.data.binance_client import get_ohlcv
 from src.agents.technical import TechnicalAgent
+from src.agents.sentiment import SentimentAgent
 from src.agents.base import Candle
-from src.core.consensus import decide
+from src.core.consensus import decide, Vote
 
 
 def load_cfg(path: str) -> dict[str, Any]:
     with open(path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)  # type: ignore[no-any-return]
+
+
+def load_weights(path: str = "configs/weights.yaml") -> dict[str, float]:
+    p = Path(path)
+    if not p.exists():
+        return {}
+    with open(p, "r", encoding="utf-8") as f:
+        data = yaml.safe_load(f)
+    return {str(k): float(v) for k, v in (data or {}).items()}
 
 
 def write_csv(pair: str, rows: list[list[float | int]]) -> Path:
@@ -32,7 +42,9 @@ def write_csv(pair: str, rows: list[list[float | int]]) -> Path:
     if not out.exists():
         with open(out, "w", newline="") as f:
             w = csv.writer(f)
-            w.writerow(["open_time_ms", "open", "high", "low", "close", "volume", "close_time_ms"])
+            w.writerow(
+                ["open_time_ms", "open", "high", "low", "close", "volume", "close_time_ms"]
+            )
     if rows:
         with open(out, "a", newline="") as f:
             w = csv.writer(f)
@@ -48,17 +60,18 @@ def run_once() -> int:
     max_age = int(cfg["max_input_age_sec"]) * 1000
 
     init_db()
+    weights = load_weights()
+
     ta = TechnicalAgent()
+    sa = SentimentAgent()
 
     started = datetime.now(timezone.utc).isoformat()
     run_id = start_run(started, notes=f"interval={interval}")
 
     try:
         ok_pairs = 0
-
         for p in pairs:
             rows, server_time = get_ohlcv(p, interval, limit=1000)
-
             if not rows:
                 print(f"[ERROR] {p} no rows returned")
                 continue
@@ -68,7 +81,7 @@ def run_once() -> int:
             status = "FRESH" if fresh else "STALE"
             print(f"[{status}] {p} rows_appended=100 file={out}")
 
-            # --- Technical agent ---
+            # Build last 250 candles
             last = rows[-250:]
             candles: list[Candle] = [
                 {
@@ -81,35 +94,58 @@ def run_once() -> int:
                 }
                 for r in last
             ]
-            res = ta.run(p, candles, inputs_fresh=fresh)
-            print(
-                f"[TECH] {p} score={res['score']:+.2f} "
-                f"conf={res['confidence']:.2f} :: {res['explanation']}"
-            )
 
+            # --- Technical agent ---
+            t_res = ta.run(p, candles, inputs_fresh=fresh)
+            print(
+                f"[TECH] {p} score={t_res['score']:+.2f} "
+                f"conf={t_res['confidence']:.2f} :: {t_res['explanation']}"
+            )
             save_agent_output(
                 run_id,
                 p,
                 "technical",
-                res["score"],
-                res["confidence"],
-                res["explanation"],
-                res["inputs_fresh"],
-                res["latency_ms"],
+                t_res["score"],
+                t_res["confidence"],
+                t_res["explanation"],
+                t_res["inputs_fresh"],
+                t_res["latency_ms"],
             )
 
-            # --- Consensus (currently only technical agent) ---
-            decision = decide(
-                [
-                    {
-                        "agent": "technical",
-                        "score": res["score"],
-                        "confidence": res["confidence"],
-                        "explanation": res["explanation"],
-                    }
-                ]
+            # --- Sentiment agent ---
+            s_res = sa.run(p, candles, inputs_fresh=fresh)
+            print(
+                f"[SENT] {p} score={s_res['score']:+.2f} "
+                f"conf={s_res['confidence']:.2f} :: {s_res['explanation']}"
+            )
+            save_agent_output(
+                run_id,
+                p,
+                "sentiment",
+                s_res["score"],
+                s_res["confidence"],
+                s_res["explanation"],
+                s_res["inputs_fresh"],
+                s_res["latency_ms"],
             )
 
+            # --- Consensus ---
+            votes: list[Vote] = [
+                {
+                    "agent": "technical",
+                    "score": t_res["score"],
+                    "confidence": t_res["confidence"],
+                    "explanation": t_res["explanation"],
+                },
+                {
+                    "agent": "sentiment",
+                    "score": s_res["score"],
+                    "confidence": s_res["confidence"],
+                    "explanation": s_res["explanation"],
+                },
+            ]
+
+            decision = decide(votes, weights=weights)
             save_signal(
                 run_id,
                 p,
@@ -117,7 +153,6 @@ def run_once() -> int:
                 decision["decision"],
                 decision["reason"],
             )
-
             print(
                 f"[CONSENSUS] {p} {decision['decision']} "
                 f"S={decision['consensus']:+.3f} :: {decision['reason']}"
