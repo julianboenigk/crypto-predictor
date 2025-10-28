@@ -18,6 +18,7 @@ from src.core.store import (
 from src.data.binance_client import get_ohlcv
 from src.agents.technical import TechnicalAgent
 from src.agents.sentiment import SentimentAgent
+from src.agents.news import NewsAgent
 from src.agents.base import Candle
 from src.core.consensus import decide, Vote
 
@@ -64,6 +65,7 @@ def run_once() -> int:
 
     ta = TechnicalAgent()
     sa = SentimentAgent()
+    na = NewsAgent()
 
     started = datetime.now(timezone.utc).isoformat()
     run_id = start_run(started, notes=f"interval={interval}")
@@ -129,6 +131,23 @@ def run_once() -> int:
                 s_res["latency_ms"],
             )
 
+            # --- News agent ---
+            n_res = na.run(p, candles, inputs_fresh=fresh)
+            print(
+                f"[NEWS] {p} score={n_res['score']:+.2f} "
+                f"conf={n_res['confidence']:.2f} :: {n_res['explanation']}"
+            )
+            save_agent_output(
+                run_id,
+                p,
+                "news",
+                n_res["score"],
+                n_res["confidence"],
+                n_res["explanation"],
+                n_res["inputs_fresh"],
+                n_res["latency_ms"],
+            )
+
             # --- Consensus ---
             votes: list[Vote] = [
                 {
@@ -142,6 +161,12 @@ def run_once() -> int:
                     "score": s_res["score"],
                     "confidence": s_res["confidence"],
                     "explanation": s_res["explanation"],
+                },
+                {
+                    "agent": "news",
+                    "score": n_res["score"],
+                    "confidence": n_res["confidence"],
+                    "explanation": n_res["explanation"],
                 },
             ]
 
