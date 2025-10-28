@@ -19,6 +19,7 @@ from src.data.binance_client import get_ohlcv
 from src.agents.technical import TechnicalAgent
 from src.agents.sentiment import SentimentAgent
 from src.agents.news import NewsAgent
+from src.agents.research import ResearchAgent
 from src.agents.base import Candle
 from src.core.consensus import decide, Vote
 
@@ -66,6 +67,7 @@ def run_once() -> int:
     ta = TechnicalAgent()
     sa = SentimentAgent()
     na = NewsAgent()
+    ra = ResearchAgent()
 
     started = datetime.now(timezone.utc).isoformat()
     run_id = start_run(started, notes=f"interval={interval}")
@@ -104,14 +106,9 @@ def run_once() -> int:
                 f"conf={t_res['confidence']:.2f} :: {t_res['explanation']}"
             )
             save_agent_output(
-                run_id,
-                p,
-                "technical",
-                t_res["score"],
-                t_res["confidence"],
-                t_res["explanation"],
-                t_res["inputs_fresh"],
-                t_res["latency_ms"],
+                run_id, p, "technical",
+                t_res["score"], t_res["confidence"], t_res["explanation"],
+                t_res["inputs_fresh"], t_res["latency_ms"],
             )
 
             # --- Sentiment agent ---
@@ -121,14 +118,9 @@ def run_once() -> int:
                 f"conf={s_res['confidence']:.2f} :: {s_res['explanation']}"
             )
             save_agent_output(
-                run_id,
-                p,
-                "sentiment",
-                s_res["score"],
-                s_res["confidence"],
-                s_res["explanation"],
-                s_res["inputs_fresh"],
-                s_res["latency_ms"],
+                run_id, p, "sentiment",
+                s_res["score"], s_res["confidence"], s_res["explanation"],
+                s_res["inputs_fresh"], s_res["latency_ms"],
             )
 
             # --- News agent ---
@@ -138,46 +130,33 @@ def run_once() -> int:
                 f"conf={n_res['confidence']:.2f} :: {n_res['explanation']}"
             )
             save_agent_output(
-                run_id,
-                p,
-                "news",
-                n_res["score"],
-                n_res["confidence"],
-                n_res["explanation"],
-                n_res["inputs_fresh"],
-                n_res["latency_ms"],
+                run_id, p, "news",
+                n_res["score"], n_res["confidence"], n_res["explanation"],
+                n_res["inputs_fresh"], n_res["latency_ms"],
+            )
+
+            # --- Research agent ---
+            r_res = ra.run(p, candles, inputs_fresh=fresh)
+            print(
+                f"[RSCH] {p} score={r_res['score']:+.2f} "
+                f"conf={r_res['confidence']:.2f} :: {r_res['explanation']}"
+            )
+            save_agent_output(
+                run_id, p, "research",
+                r_res["score"], r_res["confidence"], r_res["explanation"],
+                r_res["inputs_fresh"], r_res["latency_ms"],
             )
 
             # --- Consensus ---
             votes: list[Vote] = [
-                {
-                    "agent": "technical",
-                    "score": t_res["score"],
-                    "confidence": t_res["confidence"],
-                    "explanation": t_res["explanation"],
-                },
-                {
-                    "agent": "sentiment",
-                    "score": s_res["score"],
-                    "confidence": s_res["confidence"],
-                    "explanation": s_res["explanation"],
-                },
-                {
-                    "agent": "news",
-                    "score": n_res["score"],
-                    "confidence": n_res["confidence"],
-                    "explanation": n_res["explanation"],
-                },
+                {"agent": "technical", "score": t_res["score"], "confidence": t_res["confidence"], "explanation": t_res["explanation"]},
+                {"agent": "sentiment", "score": s_res["score"], "confidence": s_res["confidence"], "explanation": s_res["explanation"]},
+                {"agent": "news",      "score": n_res["score"], "confidence": n_res["confidence"], "explanation": n_res["explanation"]},
+                {"agent": "research",  "score": r_res["score"], "confidence": r_res["confidence"], "explanation": r_res["explanation"]},
             ]
 
             decision = decide(votes, weights=weights)
-            save_signal(
-                run_id,
-                p,
-                decision["consensus"],
-                decision["decision"],
-                decision["reason"],
-            )
+            save_signal(run_id, p, decision["consensus"], decision["decision"], decision["reason"])
             print(
                 f"[CONSENSUS] {p} {decision['decision']} "
                 f"S={decision['consensus']:+.3f} :: {decision['reason']}"
