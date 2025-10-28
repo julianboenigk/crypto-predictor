@@ -1,10 +1,15 @@
 from __future__ import annotations
 from typing import List, Optional, Tuple
-import time
+import time, os
 import requests
+from dotenv import load_dotenv
+
+load_dotenv()  # loads .env if present
 
 _BASE = "https://api.binance.com"
 _INTERVALS = {"1m","3m","5m","15m","30m","1h","2h","4h","6h","8h","12h","1d"}
+
+_API_KEY = os.getenv("BINANCE_API_KEY")  # optional header
 
 def get_ohlcv(
     pair: str, interval: str, limit: int = 500, end_ms: Optional[int] = None
@@ -20,7 +25,8 @@ def get_ohlcv(
     if end_ms is not None:
         params.append(("endTime", str(end_ms)))
 
-    r = requests.get(f"{_BASE}/api/v3/klines", params=params, timeout=10)
+    headers = {"X-MBX-APIKEY": _API_KEY} if _API_KEY else None
+    r = requests.get(f"{_BASE}/api/v3/klines", params=params, headers=headers, timeout=10)
     r.raise_for_status()
     data = r.json()
 
