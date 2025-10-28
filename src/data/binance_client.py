@@ -1,15 +1,17 @@
 from __future__ import annotations
 from typing import List, Optional, Tuple
-import time, os
+import time
+import os
+
 import requests
 from dotenv import load_dotenv
 
-load_dotenv()  # loads .env if present
+load_dotenv()
 
 _BASE = "https://api.binance.com"
-_INTERVALS = {"1m","3m","5m","15m","30m","1h","2h","4h","6h","8h","12h","1d"}
+_INTERVALS = {"1m", "3m", "5m", "15m", "30m", "1h", "2h", "4h", "6h", "8h", "12h", "1d"}
+_API_KEY = os.getenv("BINANCE_API_KEY")
 
-_API_KEY = os.getenv("BINANCE_API_KEY")  # optional header
 
 def get_ohlcv(
     pair: str, interval: str, limit: int = 500, end_ms: Optional[int] = None
@@ -32,6 +34,9 @@ def get_ohlcv(
 
     rows: List[List[float | int]] = []
     for k in data:
-        rows.append([int(k[0]), float(k[1]), float(k[2]), float(k[3]), float(k[4]), float(k[5]), int(k[6])])
+        rows.append(
+            [int(k[0]), float(k[1]), float(k[2]), float(k[3]), float(k[4]), float(k[5]), int(k[6])]
+        )
+
     server_time = int(time.time() * 1000)
     return rows, server_time
