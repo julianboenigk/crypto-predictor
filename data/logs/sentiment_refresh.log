@@ -1,0 +1,68 @@
+[SENT-REFRESH] BTCUSDT pol=+0.00 vz=+0.00 sig=0.50 -> data/sentiment/BTCUSDT.json
+[SENT-REFRESH] ETHUSDT pol=+0.00 vz=+0.00 sig=0.50 -> data/sentiment/ETHUSDT.json
+[SENT-REFRESH] SOLUSDT pol=+0.00 vz=+0.00 sig=0.50 -> data/sentiment/SOLUSDT.json
+[SENT-REFRESH] BNBUSDT pol=+0.00 vz=+0.00 sig=0.50 -> data/sentiment/BNBUSDT.json
+[SENT-REFRESH] XRPUSDT pol=+0.00 vz=+0.00 sig=0.50 -> data/sentiment/XRPUSDT.json
+[SENT-REFRESH] ADAUSDT pol=+0.00 vz=+0.00 sig=0.50 -> data/sentiment/ADAUSDT.json
+[SENT-REFRESH] BTCUSDT pol=+0.00 vz=+0.00 sig=0.50 -> data/sentiment/BTCUSDT.json
+[SENT-REFRESH] ETHUSDT pol=+0.00 vz=+0.00 sig=0.50 -> data/sentiment/ETHUSDT.json
+[SENT-REFRESH] SOLUSDT pol=+0.00 vz=+0.00 sig=0.50 -> data/sentiment/SOLUSDT.json
+[SENT-REFRESH] BNBUSDT pol=+0.00 vz=+0.00 sig=0.50 -> data/sentiment/BNBUSDT.json
+[SENT-REFRESH] XRPUSDT pol=+0.00 vz=+0.00 sig=0.50 -> data/sentiment/XRPUSDT.json
+[SENT-REFRESH] ADAUSDT pol=+0.00 vz=+0.00 sig=0.50 -> data/sentiment/ADAUSDT.json
+[SENT-REFRESH] BTCUSDT pol=+0.00 vz=+0.00 sig=0.50 -> data/sentiment/BTCUSDT.json
+[SENT-REFRESH] ETHUSDT pol=+0.00 vz=+0.00 sig=0.50 -> data/sentiment/ETHUSDT.json
+[SENT-REFRESH] SOLUSDT pol=+0.00 vz=+0.00 sig=0.50 -> data/sentiment/SOLUSDT.json
+[SENT-REFRESH] BNBUSDT pol=+0.00 vz=+0.00 sig=0.50 -> data/sentiment/BNBUSDT.json
+[SENT-REFRESH] XRPUSDT pol=+0.00 vz=+0.00 sig=0.50 -> data/sentiment/XRPUSDT.json
+[SENT-REFRESH] ADAUSDT pol=+0.00 vz=+0.00 sig=0.50 -> data/sentiment/ADAUSDT.json
+[SENT-REFRESH] BTCUSDT pol=+0.00 vz=+0.00 sig=0.50 -> data/sentiment/BTCUSDT.json
+[SENT-REFRESH] ETHUSDT pol=+0.00 vz=+0.00 sig=0.50 -> data/sentiment/ETHUSDT.json
+[SENT-REFRESH] SOLUSDT pol=+0.00 vz=+0.00 sig=0.50 -> data/sentiment/SOLUSDT.json
+[SENT-REFRESH] BNBUSDT pol=+0.00 vz=+0.00 sig=0.50 -> data/sentiment/BNBUSDT.json
+[SENT-REFRESH] XRPUSDT pol=+0.00 vz=+0.00 sig=0.50 -> data/sentiment/XRPUSDT.json
+[SENT-REFRESH] ADAUSDT pol=+0.00 vz=+0.00 sig=0.50 -> data/sentiment/ADAUSDT.json
+[SENT-REFRESH][ERROR] BTCUSDT: 403 Client Error: Forbidden for url: https://cryptonews-api.com/api/v1/stat?tickers=BTC&date=last1days&page=1&cache=false&token=YOUR_TOKEN_HERE
+[SENT-REFRESH][ERROR] ETHUSDT: 403 Client Error: Forbidden for url: https://cryptonews-api.com/api/v1/stat?tickers=ETH&date=last1days&page=1&cache=false&token=YOUR_TOKEN_HERE
+[SENT-REFRESH][ERROR] SOLUSDT: 403 Client Error: Forbidden for url: https://cryptonews-api.com/api/v1/stat?tickers=SOL&date=last1days&page=1&cache=false&token=YOUR_TOKEN_HERE
+[SENT-REFRESH][ERROR] BNBUSDT: 403 Client Error: Forbidden for url: https://cryptonews-api.com/api/v1/stat?tickers=BNB&date=last1days&page=1&cache=false&token=YOUR_TOKEN_HERE
+[SENT-REFRESH][ERROR] XRPUSDT: 403 Client Error: Forbidden for url: https://cryptonews-api.com/api/v1/stat?tickers=XRP&date=last1days&page=1&cache=false&token=YOUR_TOKEN_HERE
+[SENT-REFRESH][ERROR] ADAUSDT: 403 Client Error: Forbidden for url: https://cryptonews-api.com/api/v1/stat?tickers=ADA&date=last1days&page=1&cache=false&token=YOUR_TOKEN_HERE
+[SENT-REFRESH][ERROR] missing env CRYPTONEWS_API_KEY
+[SENT-REFRESH] BTCUSDT pol=+0.00 vz=+0.00 sig=0.50 -> data/sentiment/BTCUSDT.json
+[SENT-REFRESH] ETHUSDT pol=+0.00 vz=+0.00 sig=0.50 -> data/sentiment/ETHUSDT.json
+[SENT-REFRESH] SOLUSDT pol=+0.00 vz=+0.00 sig=0.50 -> data/sentiment/SOLUSDT.json
+[SENT-REFRESH] BNBUSDT pol=+0.00 vz=+0.00 sig=0.50 -> data/sentiment/BNBUSDT.json
+[SENT-REFRESH] XRPUSDT pol=+0.00 vz=+0.00 sig=0.50 -> data/sentiment/XRPUSDT.json
+[SENT-REFRESH] ADAUSDT pol=+0.00 vz=+0.00 sig=0.50 -> data/sentiment/ADAUSDT.json
+/home/crypto/crypto-predictor/.venv/bin/python: No module named src.fetchers.sentiment_refresh
+[SENT-REFRESH][ERROR] BTCUSDT: HTTPError {"message":"`REPLACE_WITH_YOUR_REAL_KEY` is not a valid API token. You need to have an API token in order to view the API response - sign up to obtain an API token."}
+[SENT-REFRESH][ERROR] ETHUSDT: HTTPError {"message":"`REPLACE_WITH_YOUR_REAL_KEY` is not a valid API token. You need to have an API token in order to view the API response - sign up to obtain an API token."}
+[SENT-REFRESH][ERROR] SOLUSDT: HTTPError {"message":"`REPLACE_WITH_YOUR_REAL_KEY` is not a valid API token. You need to have an API token in order to view the API response - sign up to obtain an API token."}
+[SENT-REFRESH][ERROR] BNBUSDT: HTTPError {"message":"`REPLACE_WITH_YOUR_REAL_KEY` is not a valid API token. You need to have an API token in order to view the API response - sign up to obtain an API token."}
+[SENT-REFRESH][ERROR] XRPUSDT: HTTPError {"message":"`REPLACE_WITH_YOUR_REAL_KEY` is not a valid API token. You need to have an API token in order to view the API response - sign up to obtain an API token."}
+[SENT-REFRESH][ERROR] ADAUSDT: HTTPError {"message":"`REPLACE_WITH_YOUR_REAL_KEY` is not a valid API token. You need to have an API token in order to view the API response - sign up to obtain an API token."}
+[SENT-REFRESH][ERROR] BTCUSDT: HTTPError {"message":"`REPLACE_WITH_YOUR_REAL_KEY` is not a valid API token. You need to have an API token in order to view the API response - sign up to obtain an API token."}
+[SENT-REFRESH][ERROR] ETHUSDT: HTTPError {"message":"`REPLACE_WITH_YOUR_REAL_KEY` is not a valid API token. You need to have an API token in order to view the API response - sign up to obtain an API token."}
+[SENT-REFRESH][ERROR] SOLUSDT: HTTPError {"message":"`REPLACE_WITH_YOUR_REAL_KEY` is not a valid API token. You need to have an API token in order to view the API response - sign up to obtain an API token."}
+[SENT-REFRESH][ERROR] BNBUSDT: HTTPError {"message":"`REPLACE_WITH_YOUR_REAL_KEY` is not a valid API token. You need to have an API token in order to view the API response - sign up to obtain an API token."}
+[SENT-REFRESH][ERROR] XRPUSDT: HTTPError {"message":"your IP has been blacklisted. For more info reach out to support@stocknewsapi.com"}
+[SENT-REFRESH][ERROR] ADAUSDT: HTTPError {"message":"your IP has been blacklisted. For more info reach out to support@stocknewsapi.com"}
+[SENT-REFRESH][ERROR] BTCUSDT: HTTPError {"message":"your IP has been blacklisted. For more info reach out to support@stocknewsapi.com"}
+[SENT-REFRESH][ERROR] ETHUSDT: HTTPError {"message":"your IP has been blacklisted. For more info reach out to support@stocknewsapi.com"}
+[SENT-REFRESH][ERROR] SOLUSDT: HTTPError {"message":"your IP has been blacklisted. For more info reach out to support@stocknewsapi.com"}
+[SENT-REFRESH][ERROR] BNBUSDT: HTTPError {"message":"your IP has been blacklisted. For more info reach out to support@stocknewsapi.com"}
+[SENT-REFRESH][ERROR] XRPUSDT: HTTPError {"message":"your IP has been blacklisted. For more info reach out to support@stocknewsapi.com"}
+[SENT-REFRESH][ERROR] ADAUSDT: HTTPError {"message":"your IP has been blacklisted. For more info reach out to support@stocknewsapi.com"}
+[SENT-REFRESH][ERROR] BTCUSDT: HTTPError {"message":"your IP has been blacklisted. For more info reach out to support@stocknewsapi.com"}
+[SENT-REFRESH][ERROR] ETHUSDT: HTTPError {"message":"your IP has been blacklisted. For more info reach out to support@stocknewsapi.com"}
+[SENT-REFRESH][ERROR] SOLUSDT: HTTPError {"message":"your IP has been blacklisted. For more info reach out to support@stocknewsapi.com"}
+[SENT-REFRESH][ERROR] BNBUSDT: HTTPError {"message":"your IP has been blacklisted. For more info reach out to support@stocknewsapi.com"}
+[SENT-REFRESH][ERROR] XRPUSDT: HTTPError {"message":"your IP has been blacklisted. For more info reach out to support@stocknewsapi.com"}
+[SENT-REFRESH][ERROR] ADAUSDT: HTTPError {"message":"your IP has been blacklisted. For more info reach out to support@stocknewsapi.com"}
+[SENT-REFRESH][ERROR] BTCUSDT: HTTPError('HTTPError 403 on /api/v1/stat with params={\'tickers\': \'BTC\', \'date\': \'last1days\', \'page\': 1, \'cache\': \'false\', \'token\': \'yv3a4jurrsxc8ixpasmp4ug6oxnpek8zasrczrzz\'} :: {"message":"your IP has been blacklisted. For more info reach out to support@stocknewsapi.com"}')
+[SENT-REFRESH][ERROR] ETHUSDT: HTTPError('HTTPError 403 on /api/v1/stat with params={\'tickers\': \'ETH\', \'date\': \'last1days\', \'page\': 1, \'cache\': \'false\', \'token\': \'yv3a4jurrsxc8ixpasmp4ug6oxnpek8zasrczrzz\'} :: {"message":"your IP has been blacklisted. For more info reach out to support@stocknewsapi.com"}')
+[SENT-REFRESH][ERROR] SOLUSDT: HTTPError('HTTPError 403 on /api/v1/stat with params={\'tickers\': \'SOL\', \'date\': \'last1days\', \'page\': 1, \'cache\': \'false\', \'token\': \'yv3a4jurrsxc8ixpasmp4ug6oxnpek8zasrczrzz\'} :: {"message":"your IP has been blacklisted. For more info reach out to support@stocknewsapi.com"}')
+[SENT-REFRESH][ERROR] BNBUSDT: HTTPError('HTTPError 403 on /api/v1/stat with params={\'tickers\': \'BNB\', \'date\': \'last1days\', \'page\': 1, \'cache\': \'false\', \'token\': \'yv3a4jurrsxc8ixpasmp4ug6oxnpek8zasrczrzz\'} :: {"message":"your IP has been blacklisted. For more info reach out to support@stocknewsapi.com"}')
+[SENT-REFRESH][ERROR] XRPUSDT: HTTPError('HTTPError 403 on /api/v1/stat with params={\'tickers\': \'XRP\', \'date\': \'last1days\', \'page\': 1, \'cache\': \'false\', \'token\': \'yv3a4jurrsxc8ixpasmp4ug6oxnpek8zasrczrzz\'} :: {"message":"your IP has been blacklisted. For more info reach out to support@stocknewsapi.com"}')
+[SENT-REFRESH][ERROR] ADAUSDT: HTTPError('HTTPError 403 on /api/v1/stat with params={\'tickers\': \'ADA\', \'date\': \'last1days\', \'page\': 1, \'cache\': \'false\', \'token\': \'yv3a4jurrsxc8ixpasmp4ug6oxnpek8zasrczrzz\'} :: {"message":"your IP has been blacklisted. For more info reach out to support@stocknewsapi.com"}')

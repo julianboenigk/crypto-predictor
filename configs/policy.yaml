@@ -1,0 +1,6 @@
+# Global decision policy (M4)
+min_score_threshold: 0.4     # LONG/SHORT only if |S| >= this
+max_atr_pct: 2.0             # skip entries when ATR% exceeds this
+rr_min: 1.5                  # min reward:risk at entry
+sl_atr_mult: 1.0             # stop=1*ATR
+tp_atr_mult: 1.5             # takeProfit=1.5*ATR

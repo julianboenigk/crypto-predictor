@@ -1,60 +1,107 @@
 from __future__ import annotations
+
 import json
 import time
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Sequence
-from src.agents.base import Agent, Candle, AgentResult
-
-_MAX_AGE_MS = 120_000  # ≤2 min
+from typing import Any, Dict
 
 
-def _clamp(x: float, lo: float, hi: float) -> float:
-    return max(lo, min(hi, x))
+@dataclass
+class NewsResult:
+    score: float
+    confidence: float
+    info: Dict[str, Any]
+    inputs_fresh: bool
 
 
-def _fresh(ts_ms: int, now_ms: int) -> bool:
-    return (now_ms - ts_ms) <= _MAX_AGE_MS
-
-
-class NewsAgent(Agent):
+class NewsAgent:
     """
-    Reads cached news sentiment from data/news/{pair}.json
-    JSON: {"timestamp_ms": int, "bias": float[-1,1], "novelty": float[0,1]}
-    Score = bias * (0.5 + 0.5*novelty). Confidence from recency and novelty.
+    File-based news signal reader.
+
+    Looks for: data/news/{PAIR}.json
+    Expected shape written by our news_refresh fetcher:
+      {
+        "ts": 1730220000000,        # unix ms (news_refresh writes ms; we also accept sec)
+        "bias": -0.25,              # -1..+1 sentiment polarity aggregate
+        "novelty": 0.10,            # 0..1 novelty ratio
+        "amp": 0.50                 # 0..1 amplification/proxy for reach
+      }
+
+    If missing/stale → neutral score with low confidence.
     """
-    def run(self, pair: str, candles: Sequence[Candle], inputs_fresh: bool) -> AgentResult:
-        t0 = time.time()
-        now_ms = int(t0 * 1000)
-        path = Path("data") / "news" / f"{pair}.json"
+
+    def __init__(self, data_dir: str = "data", freshness_sec: int = 90 * 60):
+        self.name = "news"
+        self.data_dir = data_dir
+        self.freshness_sec = freshness_sec
+
+    # ---------- helpers ----------
+
+    def _now(self) -> int:
+        return int(time.time())
+
+    def _load_json(self, path: Path) -> Dict[str, Any] | None:
         if not path.exists():
-            return self._result(pair, 0.0, 0.2, "no news file", False, t0)
-
+            return None
         try:
-            data = json.loads(path.read_text(encoding="utf-8"))
-            ts = int(data.get("timestamp_ms", 0))
-            bias = float(data.get("bias", 0.0))
-            novelty = float(data.get("novelty", 0.0))  # 0..1
-        except Exception as e:
-            return self._result(pair, 0.0, 0.2, f"bad news json: {e}", False, t0)
+            return json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            return None
 
-        fresh = _fresh(ts, now_ms)
-        nov = max(0.0, min(1.0, novelty))
-        amp = 0.5 + 0.5 * nov
-        score = _clamp(bias * amp, -1.0, 1.0)
+    def _fresh(self, ts_value: int) -> bool:
+        # accept seconds or milliseconds
+        if ts_value > 10_000_000_000:  # looks like ms
+            ts_value = ts_value // 1000
+        age = self._now() - int(ts_value)
+        return age <= self.freshness_sec
 
-        conf = 0.5 + 0.3 * amp
-        if not fresh:
-            conf = max(0.05, conf - 0.3)
+    # ---------- public API ----------
 
-        expl = f"bias={bias:+.2f}, novelty={nov:.2f}, amp={amp:.2f}, ts_fresh={fresh}"
-        return self._result(pair, float(score), float(conf), expl, fresh, t0)
+    def evaluate(self, pair: str) -> NewsResult:
+        f = Path(self.data_dir) / "news" / f"{pair}.json"
+        rec = self._load_json(f)
 
-    def _result(self, pair: str, score: float, conf: float, expl: str, fresh: bool, t0: float) -> AgentResult:
-        return {
-            "pair": pair,
-            "score": float(score),
-            "confidence": float(conf),
-            "explanation": expl,
-            "inputs_fresh": bool(fresh),
-            "latency_ms": int((time.time() - t0) * 1000),
+        if not rec:
+            return NewsResult(
+                score=0.0,
+                confidence=0.35,
+                info={"bias": 0.0, "novelty": 0.0, "amp": 0.50},
+                inputs_fresh=False,
+            )
+
+        bias = float(rec.get("bias", 0.0))
+        novelty = float(rec.get("novelty", 0.0))
+        amp = float(rec.get("amp", 0.5))
+        ts_val = int(rec.get("ts", 0))
+
+        is_fresh = self._fresh(ts_val)
+
+        # Scoring:
+        #  - bias directly drives sign (already clipped -1..+1 upstream)
+        #  - novelty lightly boosts magnitude (new info matters more)
+        score = max(-1.0, min(1.0, bias)) * (1.0 + min(0.25, novelty * 0.5))
+        score = max(-1.0, min(1.0, score))
+
+        # Confidence:
+        #  - base 0.35
+        #  - + novelty up to +0.25
+        #  - + amp up to +0.25
+        #  - if stale, reduce to min(0.35, conf)
+        conf = 0.35 + min(0.25, novelty * 0.5) + min(0.25, amp * 0.5)
+        conf = max(0.0, min(1.0, conf))
+        if not is_fresh:
+            conf = min(0.35, conf)
+
+        info = {
+            "bias": round(bias, 2),
+            "novelty": round(novelty, 2),
+            "amp": round(amp, 2),
         }
+
+        return NewsResult(
+            score=score,
+            confidence=conf,
+            info=info,
+            inputs_fresh=is_fresh,
+        )

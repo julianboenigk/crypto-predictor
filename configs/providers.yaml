@@ -1,0 +1,4 @@
+news:
+  provider: cryptonews
+  max_age_sec: 120
+  window: ${CRYPTONEWS_WINDOW}

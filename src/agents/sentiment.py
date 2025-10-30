@@ -1,63 +1,95 @@
 from __future__ import annotations
+
 import json
 import time
-import math
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Sequence
-from src.agents.base import Agent, Candle, AgentResult
-
-_MAX_AGE_MS = 120_000  # align with universe.yaml
+from typing import Any, Dict, Sequence
 
 
-def _clamp(x: float, lo: float, hi: float) -> float:
-    return max(lo, min(hi, x))
+@dataclass
+class SentimentResult:
+    score: float
+    confidence: float
+    info: Dict[str, Any]
+    inputs_fresh: bool
 
 
-def _fresh(ts_ms: int, now_ms: int) -> bool:
-    return (now_ms - ts_ms) <= _MAX_AGE_MS
-
-
-class SentimentAgent(Agent):
+class SentimentAgent:
     """
-    Reads cached sentiment for a pair from data/sentiment/{pair}.json
-    JSON schema: {"timestamp_ms": int, "polarity": float[-1,1], "volume_z": float}
-    Score = polarity * sigmoid(volume_z); Confidence from recency and |volume_z|.
-    Deterministic. No network calls.
+    File-based sentiment reader.
+    Looks for data/sentiment/{PAIR}.json with shape:
+      {
+        "ts": 1730220000,           # unix seconds or ms (auto-detected)
+        "polarity": 0.12,           # -1..+1
+        "volume_z": 0.80,           # -inf..+inf (z-score-ish)
+        "signal": 0.69              # 0..1 confidence-ish
+      }
+
+    If missing/stale → neutral score with low confidence.
     """
 
-    def run(self, pair: str, candles: Sequence[Candle], inputs_fresh: bool) -> AgentResult:
-        t0 = time.time()
-        now_ms = int(t0 * 1000)
-        path = Path("data") / "sentiment" / f"{pair}.json"
+    def __init__(self, data_dir: str = "data", freshness_sec: int = 90 * 60):
+        self.name = "sentiment"
+        self.data_dir = data_dir
+        self.freshness_sec = freshness_sec
+
+    # ---------- helpers ----------
+
+    def _now(self) -> int:
+        return int(time.time())
+
+    def _load_json(self, path: Path) -> Dict[str, Any] | None:
         if not path.exists():
-            return self._result(pair, 0.0, 0.2, "no sentiment file", False, t0)
-
+            return None
         try:
-            data = json.loads(path.read_text(encoding="utf-8"))
-            ts = int(data.get("timestamp_ms", 0))
-            pol = float(data.get("polarity", 0.0))
-            vz = float(data.get("volume_z", 0.0))
-        except Exception as e:
-            return self._result(pair, 0.0, 0.2, f"bad sentiment json: {e}", False, t0)
+            return json.loads(path.read_text(encoding="utf-8"))
+        except Exception:
+            return None
 
-        is_fresh = _fresh(ts, now_ms)
-        sig = 1.0 / (1.0 + math.exp(-vz))
-        raw = pol * sig
-        score = _clamp(raw, -1.0, 1.0)
+    def _fresh(self, ts_value: int) -> bool:
+        # accept seconds or milliseconds
+        if ts_value > 10_000_000_000:  # ms
+            ts_value = ts_value // 1000
+        age = self._now() - int(ts_value)
+        return age <= self.freshness_sec
 
-        conf = 0.5 + min(0.4, abs(vz) * 0.2)
-        if not is_fresh:
-            conf = max(0.05, conf - 0.3)
+    # ---------- public API ----------
 
-        expl = f"pol={pol:+.2f}, vz={vz:.2f}, sig={sig:.2f}, ts_fresh={is_fresh}"
-        return self._result(pair, float(score), float(conf), expl, is_fresh, t0)
+    def evaluate(self, pair: str) -> SentimentResult:
+        f = Path(self.data_dir) / "sentiment" / f"{pair}.json"
+        rec = self._load_json(f)
 
-    def _result(self, pair: str, score: float, conf: float, expl: str, fresh: bool, t0: float) -> AgentResult:
-        return {
-            "pair": pair,
-            "score": float(score),
-            "confidence": float(conf),
-            "explanation": expl,
-            "inputs_fresh": bool(fresh),
-            "latency_ms": int((time.time() - t0) * 1000),
+        if not rec:
+            # No file → neutral with low confidence
+            return SentimentResult(
+                score=0.0,
+                confidence=0.20,
+                info={"reason": "no sentiment file"},
+                inputs_fresh=False,
+            )
+
+        pol = float(rec.get("polarity", 0.0))
+        vz = float(rec.get("volume_z", 0.0))
+        sig = float(rec.get("signal", 0.5))
+        ts_val = int(rec.get("ts", 0))
+
+        is_fresh = self._fresh(ts_val)
+
+        # Simple mapping: polarity drives sign; volume_z/signal modulate confidence
+        score = max(-1.0, min(1.0, pol))
+        base_conf = 0.20 if not is_fresh else 0.30 + min(0.50, abs(vz) * 0.10) + min(0.20, sig * 0.20)
+        confidence = max(0.0, min(1.0, base_conf))
+
+        info = {
+            "pol": round(pol, 2),
+            "vz": round(vz, 2),
+            "sig": round(sig, 2),
         }
+
+        return SentimentResult(
+            score=score,
+            confidence=confidence,
+            info=info,
+            inputs_fresh=is_fresh,
+        )

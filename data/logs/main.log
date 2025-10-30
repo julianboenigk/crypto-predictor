@@ -1,0 +1,468 @@
+[FRESH] BTCUSDT rows_appended=0 file=data/BTCUSDT_15m.csv
+[TECH] BTCUSDT score=-0.30 conf=0.69 :: price=107392.76, ema200=110871.61, rsi14=38.7, atr%=0.3, trend=down, rsi_sig=0.0
+[SENT] BTCUSDT score=+0.15 conf=0.20 :: pol=0.15, vz=0.8, sig=0.5, ts_fresh=False
+[NEWS] BTCUSDT score=+0.00 conf=0.35 :: bias=+0.00, novelty=0.04, amp=0.50, ts_fresh=False
+[RSCH] BTCUSDT score=-0.06 conf=0.60 :: ema200_slope%=-0.284, dd%=7.04, trend_bias=-0.004, dd_penalty=0.056
+[CONSENSUS] BTCUSDT HOLD S=-0.114 :: S=-0.114 from technical=-0.14×w0.45, sentiment=+0.03×w0.20, news=+0.00×w0.20, research=-0.01×w0.15
+[FRESH] ETHUSDT rows_appended=0 file=data/ETHUSDT_15m.csv
+[TECH] ETHUSDT score=-0.30 conf=0.69 :: price=3750.33, ema200=3928.26, rsi14=38.4, atr%=0.52, trend=down, rsi_sig=0.0
+[SENT] ETHUSDT score=+0.00 conf=0.20 :: pol=None, vz=None, sig=None, ts_fresh=False
+[NEWS] ETHUSDT score=+0.00 conf=0.35 :: bias=+0.00, novelty=0.00, amp=0.50, ts_fresh=False
+[RSCH] ETHUSDT score=-0.08 conf=0.59 :: ema200_slope%=-0.4, dd%=9.56, trend_bias=-0.006, dd_penalty=0.076
+[CONSENSUS] ETHUSDT HOLD S=-0.147 :: S=-0.147 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=+0.00×w0.20, research=-0.01×w0.15
+[FRESH] SOLUSDT rows_appended=0 file=data/SOLUSDT_15m.csv
+[TECH] SOLUSDT score=+0.20 conf=0.69 :: price=182.68, ema200=193.33, rsi14=28.2, atr%=0.62, trend=down, rsi_sig=0.5
+[SENT] SOLUSDT score=+0.00 conf=0.20 :: pol=None, vz=None, sig=None, ts_fresh=False
+[NEWS] SOLUSDT score=+0.50 conf=0.35 :: bias=+0.50, novelty=0.01, amp=0.50, ts_fresh=False
+[RSCH] SOLUSDT score=-0.08 conf=0.59 :: ema200_slope%=-0.468, dd%=9.21, trend_bias=-0.007, dd_penalty=0.074
+[CONSENSUS] SOLUSDT HOLD S=+0.178 :: S=+0.178 from technical=+0.09×w0.45, sentiment=+0.00×w0.20, news=+0.10×w0.20, research=-0.01×w0.15
+[FRESH] BNBUSDT rows_appended=0 file=data/BNBUSDT_15m.csv
+[TECH] BNBUSDT score=-0.30 conf=0.69 :: price=1069.74, ema200=1108.16, rsi14=31.7, atr%=0.5, trend=down, rsi_sig=0.0
+[SENT] BNBUSDT score=+0.00 conf=0.20 :: pol=None, vz=None, sig=None, ts_fresh=False
+[NEWS] BNBUSDT score=+0.00 conf=0.35 :: bias=+0.00, novelty=0.50, amp=0.50, ts_fresh=False
+[RSCH] BNBUSDT score=-0.06 conf=0.59 :: ema200_slope%=-0.297, dd%=6.87, trend_bias=-0.004, dd_penalty=0.055
+[CONSENSUS] BNBUSDT HOLD S=-0.144 :: S=-0.144 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=+0.00×w0.20, research=-0.01×w0.15
+[FRESH] XRPUSDT rows_appended=0 file=data/XRPUSDT_15m.csv
+[TECH] XRPUSDT score=-0.30 conf=0.69 :: price=2.44, ema200=2.57, rsi14=33.9, atr%=0.52, trend=down, rsi_sig=0.0
+[SENT] XRPUSDT score=+0.00 conf=0.20 :: pol=None, vz=None, sig=None, ts_fresh=False
+[NEWS] XRPUSDT score=+1.00 conf=0.35 :: bias=+1.00, novelty=0.30, amp=0.50, ts_fresh=False
+[RSCH] XRPUSDT score=-0.08 conf=0.59 :: ema200_slope%=-0.444, dd%=8.81, trend_bias=-0.006, dd_penalty=0.07
+[CONSENSUS] XRPUSDT HOLD S=+0.053 :: S=+0.053 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=+0.20×w0.20, research=-0.01×w0.15
+[FRESH] ADAUSDT rows_appended=0 file=data/ADAUSDT_15m.csv
+[TECH] ADAUSDT score=-0.30 conf=0.69 :: price=0.6, ema200=0.64, rsi14=35.7, atr%=0.62, trend=down, rsi_sig=0.0
+[SENT] ADAUSDT score=+0.00 conf=0.20 :: pol=None, vz=None, sig=None, ts_fresh=False
+[NEWS] ADAUSDT score=+0.00 conf=0.35 :: bias=+0.00, novelty=0.03, amp=0.50, ts_fresh=False
+[RSCH] ADAUSDT score=-0.09 conf=0.59 :: ema200_slope%=-0.538, dd%=10.65, trend_bias=-0.008, dd_penalty=0.085
+[CONSENSUS] ADAUSDT HOLD S=-0.149 :: S=-0.149 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=+0.00×w0.20, research=-0.01×w0.15
+[FRESH] BTCUSDT rows_appended=0 file=data/BTCUSDT_15m.csv
+[TECH] BTCUSDT score=-0.30 conf=0.69 :: price=107392.76, ema200=110871.61, rsi14=38.7, atr%=0.3, trend=down, rsi_sig=0.0
+[SENT] BTCUSDT score=+0.15 conf=0.20 :: pol=0.15, vz=0.8, sig=0.5, ts_fresh=False
+[NEWS] BTCUSDT score=+0.00 conf=0.35 :: bias=+0.00, novelty=0.04, amp=0.50, ts_fresh=False
+[RSCH] BTCUSDT score=-0.06 conf=0.60 :: ema200_slope%=-0.284, dd%=7.04, trend_bias=-0.004, dd_penalty=0.056
+[CONSENSUS] BTCUSDT HOLD S=-0.114 :: S=-0.114 from technical=-0.14×w0.45, sentiment=+0.03×w0.20, news=+0.00×w0.20, research=-0.01×w0.15
+[FRESH] ETHUSDT rows_appended=0 file=data/ETHUSDT_15m.csv
+[TECH] ETHUSDT score=-0.30 conf=0.69 :: price=3750.33, ema200=3928.26, rsi14=38.4, atr%=0.52, trend=down, rsi_sig=0.0
+[SENT] ETHUSDT score=+0.00 conf=0.20 :: pol=None, vz=None, sig=None, ts_fresh=False
+[NEWS] ETHUSDT score=+0.00 conf=0.35 :: bias=+0.00, novelty=0.00, amp=0.50, ts_fresh=False
+[RSCH] ETHUSDT score=-0.08 conf=0.59 :: ema200_slope%=-0.4, dd%=9.56, trend_bias=-0.006, dd_penalty=0.076
+[CONSENSUS] ETHUSDT HOLD S=-0.147 :: S=-0.147 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=+0.00×w0.20, research=-0.01×w0.15
+[FRESH] SOLUSDT rows_appended=0 file=data/SOLUSDT_15m.csv
+[TECH] SOLUSDT score=+0.20 conf=0.69 :: price=182.68, ema200=193.33, rsi14=28.2, atr%=0.62, trend=down, rsi_sig=0.5
+[SENT] SOLUSDT score=+0.00 conf=0.20 :: pol=None, vz=None, sig=None, ts_fresh=False
+[NEWS] SOLUSDT score=+0.50 conf=0.35 :: bias=+0.50, novelty=0.01, amp=0.50, ts_fresh=False
+[RSCH] SOLUSDT score=-0.08 conf=0.59 :: ema200_slope%=-0.468, dd%=9.21, trend_bias=-0.007, dd_penalty=0.074
+[CONSENSUS] SOLUSDT HOLD S=+0.178 :: S=+0.178 from technical=+0.09×w0.45, sentiment=+0.00×w0.20, news=+0.10×w0.20, research=-0.01×w0.15
+[FRESH] BNBUSDT rows_appended=0 file=data/BNBUSDT_15m.csv
+[TECH] BNBUSDT score=-0.30 conf=0.69 :: price=1069.74, ema200=1108.16, rsi14=31.7, atr%=0.5, trend=down, rsi_sig=0.0
+[SENT] BNBUSDT score=+0.00 conf=0.20 :: pol=None, vz=None, sig=None, ts_fresh=False
+[NEWS] BNBUSDT score=+0.00 conf=0.35 :: bias=+0.00, novelty=0.50, amp=0.50, ts_fresh=False
+[RSCH] BNBUSDT score=-0.06 conf=0.59 :: ema200_slope%=-0.297, dd%=6.87, trend_bias=-0.004, dd_penalty=0.055
+[CONSENSUS] BNBUSDT HOLD S=-0.144 :: S=-0.144 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=+0.00×w0.20, research=-0.01×w0.15
+[FRESH] XRPUSDT rows_appended=0 file=data/XRPUSDT_15m.csv
+[TECH] XRPUSDT score=-0.30 conf=0.69 :: price=2.44, ema200=2.57, rsi14=33.9, atr%=0.52, trend=down, rsi_sig=0.0
+[SENT] XRPUSDT score=+0.00 conf=0.20 :: pol=None, vz=None, sig=None, ts_fresh=False
+[NEWS] XRPUSDT score=+1.00 conf=0.35 :: bias=+1.00, novelty=0.30, amp=0.50, ts_fresh=False
+[RSCH] XRPUSDT score=-0.08 conf=0.59 :: ema200_slope%=-0.444, dd%=8.81, trend_bias=-0.006, dd_penalty=0.07
+[CONSENSUS] XRPUSDT HOLD S=+0.053 :: S=+0.053 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=+0.20×w0.20, research=-0.01×w0.15
+[FRESH] ADAUSDT rows_appended=0 file=data/ADAUSDT_15m.csv
+[TECH] ADAUSDT score=-0.30 conf=0.69 :: price=0.6, ema200=0.64, rsi14=35.7, atr%=0.62, trend=down, rsi_sig=0.0
+[SENT] ADAUSDT score=+0.00 conf=0.20 :: pol=None, vz=None, sig=None, ts_fresh=False
+[NEWS] ADAUSDT score=+0.00 conf=0.35 :: bias=+0.00, novelty=0.03, amp=0.50, ts_fresh=False
+[RSCH] ADAUSDT score=-0.09 conf=0.59 :: ema200_slope%=-0.538, dd%=10.65, trend_bias=-0.008, dd_penalty=0.085
+[CONSENSUS] ADAUSDT HOLD S=-0.149 :: S=-0.149 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=+0.00×w0.20, research=-0.01×w0.15
+[FRESH] BTCUSDT rows_appended=1 file=data/BTCUSDT_15m.csv
+[TECH] BTCUSDT score=-0.30 conf=0.69 :: price=107029.33, ema200=110833.38, rsi14=35.3, atr%=0.31, trend=down, rsi_sig=0.0
+[SENT] BTCUSDT score=+0.15 conf=0.20 :: pol=0.15, vz=0.8, sig=0.5, ts_fresh=False
+[NEWS] BTCUSDT score=+0.00 conf=0.35 :: bias=+0.00, novelty=0.04, amp=0.50, ts_fresh=False
+[RSCH] BTCUSDT score=-0.06 conf=0.60 :: ema200_slope%=-0.29, dd%=7.35, trend_bias=-0.004, dd_penalty=0.059
+[CONSENSUS] BTCUSDT HOLD S=-0.114 :: S=-0.114 from technical=-0.14×w0.45, sentiment=+0.03×w0.20, news=+0.00×w0.20, research=-0.01×w0.15
+[FRESH] ETHUSDT rows_appended=1 file=data/ETHUSDT_15m.csv
+[TECH] ETHUSDT score=-0.30 conf=0.69 :: price=3726.89, ema200=3926.25, rsi14=34.6, atr%=0.54, trend=down, rsi_sig=0.0
+[SENT] ETHUSDT score=+0.00 conf=0.20 :: pol=None, vz=None, sig=None, ts_fresh=False
+[NEWS] ETHUSDT score=+0.00 conf=0.35 :: bias=+0.00, novelty=0.00, amp=0.50, ts_fresh=False
+[RSCH] ETHUSDT score=-0.09 conf=0.59 :: ema200_slope%=-0.414, dd%=10.12, trend_bias=-0.006, dd_penalty=0.081
+[CONSENSUS] ETHUSDT HOLD S=-0.148 :: S=-0.148 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=+0.00×w0.20, research=-0.01×w0.15
+[FRESH] SOLUSDT rows_appended=1 file=data/SOLUSDT_15m.csv
+[TECH] SOLUSDT score=+0.20 conf=0.69 :: price=181.54, ema200=193.21, rsi14=26.9, atr%=0.63, trend=down, rsi_sig=0.5
+[SENT] SOLUSDT score=+0.00 conf=0.20 :: pol=None, vz=None, sig=None, ts_fresh=False
+[NEWS] SOLUSDT score=+0.50 conf=0.35 :: bias=+0.50, novelty=0.01, amp=0.50, ts_fresh=False
+[RSCH] SOLUSDT score=-0.09 conf=0.59 :: ema200_slope%=-0.487, dd%=9.78, trend_bias=-0.007, dd_penalty=0.078
+[CONSENSUS] SOLUSDT HOLD S=+0.178 :: S=+0.178 from technical=+0.09×w0.45, sentiment=+0.00×w0.20, news=+0.10×w0.20, research=-0.01×w0.15
+[FRESH] BNBUSDT rows_appended=1 file=data/BNBUSDT_15m.csv
+[TECH] BNBUSDT score=+0.20 conf=0.69 :: price=1064.99, ema200=1107.73, rsi14=28.3, atr%=0.5, trend=down, rsi_sig=0.5
+[SENT] BNBUSDT score=+0.00 conf=0.20 :: pol=None, vz=None, sig=None, ts_fresh=False
+[NEWS] BNBUSDT score=+0.00 conf=0.35 :: bias=+0.00, novelty=0.50, amp=0.50, ts_fresh=False
+[RSCH] BNBUSDT score=-0.06 conf=0.59 :: ema200_slope%=-0.31, dd%=7.29, trend_bias=-0.004, dd_penalty=0.058
+[CONSENSUS] BNBUSDT HOLD S=+0.081 :: S=+0.081 from technical=+0.09×w0.45, sentiment=+0.00×w0.20, news=+0.00×w0.20, research=-0.01×w0.15
+[FRESH] XRPUSDT rows_appended=1 file=data/XRPUSDT_15m.csv
+[TECH] XRPUSDT score=+0.20 conf=0.69 :: price=2.42, ema200=2.57, rsi14=28.6, atr%=0.55, trend=down, rsi_sig=0.5
+[SENT] XRPUSDT score=+0.00 conf=0.20 :: pol=None, vz=None, sig=None, ts_fresh=False
+[NEWS] XRPUSDT score=+1.00 conf=0.35 :: bias=+1.00, novelty=0.30, amp=0.50, ts_fresh=False
+[RSCH] XRPUSDT score=-0.08 conf=0.59 :: ema200_slope%=-0.455, dd%=9.54, trend_bias=-0.007, dd_penalty=0.076
+[CONSENSUS] XRPUSDT HOLD S=+0.278 :: S=+0.278 from technical=+0.09×w0.45, sentiment=+0.00×w0.20, news=+0.20×w0.20, research=-0.01×w0.15
+[FRESH] ADAUSDT rows_appended=1 file=data/ADAUSDT_15m.csv
+[TECH] ADAUSDT score=-0.30 conf=0.69 :: price=0.59, ema200=0.64, rsi14=33.7, atr%=0.62, trend=down, rsi_sig=0.0
+[SENT] ADAUSDT score=+0.00 conf=0.20 :: pol=None, vz=None, sig=None, ts_fresh=False
+[NEWS] ADAUSDT score=+0.00 conf=0.35 :: bias=+0.00, novelty=0.03, amp=0.50, ts_fresh=False
+[RSCH] ADAUSDT score=-0.10 conf=0.59 :: ema200_slope%=-0.548, dd%=11.32, trend_bias=-0.008, dd_penalty=0.091
+[CONSENSUS] ADAUSDT HOLD S=-0.150 :: S=-0.150 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=+0.00×w0.20, research=-0.01×w0.15
+[FRESH] BTCUSDT rows_appended=0 file=data/BTCUSDT_15m.csv
+[TECH] BTCUSDT score=-0.30 conf=0.69 :: price=107029.33, ema200=110833.38, rsi14=35.3, atr%=0.31, trend=down, rsi_sig=0.0
+[SENT] BTCUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] BTCUSDT score=+0.18 conf=0.35 :: bias=+0.17, novelty=0.14, amp=0.50, ts_fresh=False
+[RSCH] BTCUSDT score=-0.06 conf=0.60 :: ema200_slope%=-0.29, dd%=7.35, trend_bias=-0.004, dd_penalty=0.059
+[CONSENSUS] BTCUSDT HOLD S=-0.109 :: S=-0.109 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=+0.04×w0.20, research=-0.01×w0.15
+[FRESH] ETHUSDT rows_appended=0 file=data/ETHUSDT_15m.csv
+[TECH] ETHUSDT score=-0.30 conf=0.69 :: price=3726.89, ema200=3926.25, rsi14=34.6, atr%=0.54, trend=down, rsi_sig=0.0
+[SENT] ETHUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] ETHUSDT score=+1.00 conf=0.35 :: bias=+1.00, novelty=0.46, amp=0.50, ts_fresh=False
+[RSCH] ETHUSDT score=-0.09 conf=0.59 :: ema200_slope%=-0.414, dd%=10.12, trend_bias=-0.006, dd_penalty=0.081
+[CONSENSUS] ETHUSDT HOLD S=+0.052 :: S=+0.052 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=+0.20×w0.20, research=-0.01×w0.15
+[FRESH] SOLUSDT rows_appended=0 file=data/SOLUSDT_15m.csv
+[TECH] SOLUSDT score=+0.20 conf=0.69 :: price=181.54, ema200=193.21, rsi14=26.9, atr%=0.63, trend=down, rsi_sig=0.5
+[SENT] SOLUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] SOLUSDT score=+1.00 conf=0.35 :: bias=+1.00, novelty=0.29, amp=0.50, ts_fresh=False
+[RSCH] SOLUSDT score=-0.09 conf=0.59 :: ema200_slope%=-0.487, dd%=9.78, trend_bias=-0.007, dd_penalty=0.078
+[CONSENSUS] SOLUSDT HOLD S=+0.277 :: S=+0.277 from technical=+0.09×w0.45, sentiment=+0.00×w0.20, news=+0.20×w0.20, research=-0.01×w0.15
+[FRESH] BNBUSDT rows_appended=0 file=data/BNBUSDT_15m.csv
+[TECH] BNBUSDT score=+0.20 conf=0.69 :: price=1064.99, ema200=1107.73, rsi14=28.3, atr%=0.5, trend=down, rsi_sig=0.5
+[SENT] BNBUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] BNBUSDT score=+0.00 conf=0.35 :: bias=+0.00, novelty=0.50, amp=0.50, ts_fresh=False
+[RSCH] BNBUSDT score=-0.06 conf=0.59 :: ema200_slope%=-0.31, dd%=7.29, trend_bias=-0.004, dd_penalty=0.058
+[CONSENSUS] BNBUSDT HOLD S=+0.081 :: S=+0.081 from technical=+0.09×w0.45, sentiment=+0.00×w0.20, news=+0.00×w0.20, research=-0.01×w0.15
+[FRESH] XRPUSDT rows_appended=0 file=data/XRPUSDT_15m.csv
+[TECH] XRPUSDT score=+0.20 conf=0.69 :: price=2.42, ema200=2.57, rsi14=28.6, atr%=0.55, trend=down, rsi_sig=0.5
+[SENT] XRPUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] XRPUSDT score=+0.43 conf=0.35 :: bias=+0.43, novelty=0.02, amp=0.50, ts_fresh=False
+[RSCH] XRPUSDT score=-0.08 conf=0.59 :: ema200_slope%=-0.455, dd%=9.54, trend_bias=-0.007, dd_penalty=0.076
+[CONSENSUS] XRPUSDT HOLD S=+0.164 :: S=+0.164 from technical=+0.09×w0.45, sentiment=+0.00×w0.20, news=+0.09×w0.20, research=-0.01×w0.15
+[FRESH] ADAUSDT rows_appended=0 file=data/ADAUSDT_15m.csv
+[TECH] ADAUSDT score=-0.30 conf=0.69 :: price=0.59, ema200=0.64, rsi14=33.7, atr%=0.62, trend=down, rsi_sig=0.0
+[SENT] ADAUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] ADAUSDT score=+1.00 conf=0.35 :: bias=+1.00, novelty=0.35, amp=0.50, ts_fresh=False
+[RSCH] ADAUSDT score=-0.10 conf=0.59 :: ema200_slope%=-0.548, dd%=11.32, trend_bias=-0.008, dd_penalty=0.091
+[CONSENSUS] ADAUSDT HOLD S=+0.050 :: S=+0.050 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=+0.20×w0.20, research=-0.01×w0.15
+[FRESH] BTCUSDT rows_appended=1 file=data/BTCUSDT_15m.csv
+[TECH] BTCUSDT score=-0.30 conf=0.69 :: price=106820.0, ema200=110793.44, rsi14=35.0, atr%=0.3, trend=down, rsi_sig=0.0
+[SENT] BTCUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] BTCUSDT score=+0.18 conf=0.35 :: bias=+0.17, novelty=0.14, amp=0.50, ts_fresh=False
+[RSCH] BTCUSDT score=-0.06 conf=0.60 :: ema200_slope%=-0.299, dd%=7.53, trend_bias=-0.004, dd_penalty=0.06
+[CONSENSUS] BTCUSDT HOLD S=-0.109 :: S=-0.109 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=+0.04×w0.20, research=-0.01×w0.15
+[FRESH] ETHUSDT rows_appended=1 file=data/ETHUSDT_15m.csv
+[TECH] ETHUSDT score=-0.30 conf=0.69 :: price=3720.17, ema200=3924.2, rsi14=35.8, atr%=0.51, trend=down, rsi_sig=0.0
+[SENT] ETHUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] ETHUSDT score=+1.00 conf=0.35 :: bias=+1.00, novelty=0.46, amp=0.50, ts_fresh=False
+[RSCH] ETHUSDT score=-0.09 conf=0.59 :: ema200_slope%=-0.425, dd%=10.28, trend_bias=-0.006, dd_penalty=0.082
+[CONSENSUS] ETHUSDT HOLD S=+0.052 :: S=+0.052 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=+0.20×w0.20, research=-0.01×w0.15
+[FRESH] SOLUSDT rows_appended=1 file=data/SOLUSDT_15m.csv
+[TECH] SOLUSDT score=+0.20 conf=0.69 :: price=181.02, ema200=193.09, rsi14=26.6, atr%=0.61, trend=down, rsi_sig=0.5
+[SENT] SOLUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] SOLUSDT score=+1.00 conf=0.35 :: bias=+1.00, novelty=0.29, amp=0.50, ts_fresh=False
+[RSCH] SOLUSDT score=-0.09 conf=0.59 :: ema200_slope%=-0.504, dd%=10.03, trend_bias=-0.007, dd_penalty=0.08
+[CONSENSUS] SOLUSDT HOLD S=+0.277 :: S=+0.277 from technical=+0.09×w0.45, sentiment=+0.00×w0.20, news=+0.20×w0.20, research=-0.01×w0.15
+[FRESH] BNBUSDT rows_appended=1 file=data/BNBUSDT_15m.csv
+[TECH] BNBUSDT score=-0.30 conf=0.69 :: price=1064.59, ema200=1107.3, rsi14=30.5, atr%=0.47, trend=down, rsi_sig=0.0
+[SENT] BNBUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] BNBUSDT score=+0.00 conf=0.35 :: bias=+0.00, novelty=0.50, amp=0.50, ts_fresh=False
+[RSCH] BNBUSDT score=-0.06 conf=0.59 :: ema200_slope%=-0.322, dd%=7.32, trend_bias=-0.005, dd_penalty=0.059
+[CONSENSUS] BNBUSDT HOLD S=-0.144 :: S=-0.144 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=+0.00×w0.20, research=-0.01×w0.15
+[FRESH] XRPUSDT rows_appended=1 file=data/XRPUSDT_15m.csv
+[TECH] XRPUSDT score=-0.30 conf=0.69 :: price=2.42, ema200=2.57, rsi14=33.2, atr%=0.51, trend=down, rsi_sig=0.0
+[SENT] XRPUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] XRPUSDT score=+0.43 conf=0.35 :: bias=+0.43, novelty=0.02, amp=0.50, ts_fresh=False
+[RSCH] XRPUSDT score=-0.08 conf=0.59 :: ema200_slope%=-0.468, dd%=9.49, trend_bias=-0.007, dd_penalty=0.076
+[CONSENSUS] XRPUSDT HOLD S=-0.061 :: S=-0.061 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=+0.09×w0.20, research=-0.01×w0.15
+[FRESH] ADAUSDT rows_appended=1 file=data/ADAUSDT_15m.csv
+[TECH] ADAUSDT score=-0.30 conf=0.69 :: price=0.59, ema200=0.64, rsi14=34.6, atr%=0.59, trend=down, rsi_sig=0.0
+[SENT] ADAUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] ADAUSDT score=+1.00 conf=0.35 :: bias=+1.00, novelty=0.35, amp=0.50, ts_fresh=False
+[RSCH] ADAUSDT score=-0.10 conf=0.59 :: ema200_slope%=-0.564, dd%=11.51, trend_bias=-0.008, dd_penalty=0.092
+[CONSENSUS] ADAUSDT HOLD S=+0.050 :: S=+0.050 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=+0.20×w0.20, research=-0.02×w0.15
+[FRESH] BTCUSDT rows_appended=1 file=data/BTCUSDT_15m.csv
+[TECH] BTCUSDT score=-0.30 conf=0.69 :: price=106951.68, ema200=110755.22, rsi14=37.1, atr%=0.28, trend=down, rsi_sig=0.0
+[SENT] BTCUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] BTCUSDT score=+0.00 conf=0.35 :: bias=+0.00, novelty=0.04, amp=0.50, ts_fresh=False
+[RSCH] BTCUSDT score=-0.06 conf=0.60 :: ema200_slope%=-0.301, dd%=7.42, trend_bias=-0.004, dd_penalty=0.059
+[CONSENSUS] BTCUSDT HOLD S=-0.145 :: S=-0.145 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=+0.00×w0.20, research=-0.01×w0.15
+[FRESH] ETHUSDT rows_appended=1 file=data/ETHUSDT_15m.csv
+[TECH] ETHUSDT score=-0.30 conf=0.69 :: price=3731.04, ema200=3922.28, rsi14=38.7, atr%=0.49, trend=down, rsi_sig=0.0
+[SENT] ETHUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] ETHUSDT score=+1.00 conf=0.35 :: bias=+1.00, novelty=0.45, amp=0.50, ts_fresh=False
+[RSCH] ETHUSDT score=-0.09 conf=0.59 :: ema200_slope%=-0.433, dd%=10.02, trend_bias=-0.006, dd_penalty=0.08
+[CONSENSUS] ETHUSDT HOLD S=+0.052 :: S=+0.052 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=+0.20×w0.20, research=-0.01×w0.15
+[FRESH] SOLUSDT rows_appended=1 file=data/SOLUSDT_15m.csv
+[TECH] SOLUSDT score=+0.20 conf=0.69 :: price=181.27, ema200=192.98, rsi14=29.9, atr%=0.59, trend=down, rsi_sig=0.5
+[SENT] SOLUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] SOLUSDT score=+1.00 conf=0.35 :: bias=+1.00, novelty=0.28, amp=0.50, ts_fresh=False
+[RSCH] SOLUSDT score=-0.09 conf=0.59 :: ema200_slope%=-0.52, dd%=9.91, trend_bias=-0.007, dd_penalty=0.079
+[CONSENSUS] SOLUSDT HOLD S=+0.277 :: S=+0.277 from technical=+0.09×w0.45, sentiment=+0.00×w0.20, news=+0.20×w0.20, research=-0.01×w0.15
+[FRESH] BNBUSDT rows_appended=1 file=data/BNBUSDT_15m.csv
+[TECH] BNBUSDT score=-0.30 conf=0.69 :: price=1065.95, ema200=1106.89, rsi14=35.2, atr%=0.45, trend=down, rsi_sig=0.0
+[SENT] BNBUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] BNBUSDT score=+0.00 conf=0.35 :: bias=+0.00, novelty=0.50, amp=0.50, ts_fresh=False
+[RSCH] BNBUSDT score=-0.06 conf=0.59 :: ema200_slope%=-0.333, dd%=7.2, trend_bias=-0.005, dd_penalty=0.058
+[CONSENSUS] BNBUSDT HOLD S=-0.144 :: S=-0.144 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=+0.00×w0.20, research=-0.01×w0.15
+[FRESH] XRPUSDT rows_appended=1 file=data/XRPUSDT_15m.csv
+[TECH] XRPUSDT score=-0.30 conf=0.69 :: price=2.42, ema200=2.56, rsi14=32.8, atr%=0.48, trend=down, rsi_sig=0.0
+[SENT] XRPUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] XRPUSDT score=+0.51 conf=0.35 :: bias=+0.50, novelty=0.05, amp=0.50, ts_fresh=False
+[RSCH] XRPUSDT score=-0.08 conf=0.59 :: ema200_slope%=-0.48, dd%=9.54, trend_bias=-0.007, dd_penalty=0.076
+[CONSENSUS] XRPUSDT HOLD S=-0.045 :: S=-0.045 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=+0.10×w0.20, research=-0.01×w0.15
+[FRESH] ADAUSDT rows_appended=1 file=data/ADAUSDT_15m.csv
+[TECH] ADAUSDT score=-0.30 conf=0.69 :: price=0.6, ema200=0.64, rsi14=39.3, atr%=0.58, trend=down, rsi_sig=0.0
+[SENT] ADAUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] ADAUSDT score=-0.36 conf=0.35 :: bias=-0.33, novelty=0.16, amp=0.50, ts_fresh=False
+[RSCH] ADAUSDT score=-0.10 conf=0.59 :: ema200_slope%=-0.575, dd%=11.18, trend_bias=-0.008, dd_penalty=0.089
+[CONSENSUS] ADAUSDT HOLD S=-0.222 :: S=-0.222 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=-0.07×w0.20, research=-0.01×w0.15
+[FRESH] BTCUSDT rows_appended=1 file=data/BTCUSDT_15m.csv
+[TECH] BTCUSDT score=-0.30 conf=0.70 :: price=107110.17, ema200=110718.95, rsi14=32.4, atr%=0.25, trend=down, rsi_sig=0.0
+[SENT] BTCUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] BTCUSDT score=-0.11 conf=0.35 :: bias=-0.11, novelty=0.03, amp=0.50, ts_fresh=False
+[RSCH] BTCUSDT score=-0.06 conf=0.60 :: ema200_slope%=-0.302, dd%=7.12, trend_bias=-0.004, dd_penalty=0.057
+[CONSENSUS] BTCUSDT HOLD S=-0.167 :: S=-0.167 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=-0.02×w0.20, research=-0.01×w0.15
+[FRESH] ETHUSDT rows_appended=1 file=data/ETHUSDT_15m.csv
+[TECH] ETHUSDT score=-0.30 conf=0.69 :: price=3731.89, ema200=3920.39, rsi14=33.1, atr%=0.45, trend=down, rsi_sig=0.0
+[SENT] ETHUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] ETHUSDT score=+1.00 conf=0.35 :: bias=+1.00, novelty=0.45, amp=0.50, ts_fresh=False
+[RSCH] ETHUSDT score=-0.09 conf=0.59 :: ema200_slope%=-0.432, dd%=10.0, trend_bias=-0.006, dd_penalty=0.08
+[CONSENSUS] ETHUSDT HOLD S=+0.052 :: S=+0.052 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=+0.20×w0.20, research=-0.01×w0.15
+[FRESH] SOLUSDT rows_appended=1 file=data/SOLUSDT_15m.csv
+[TECH] SOLUSDT score=+0.20 conf=0.69 :: price=181.09, ema200=192.86, rsi14=23.1, atr%=0.53, trend=down, rsi_sig=0.5
+[SENT] SOLUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] SOLUSDT score=+1.00 conf=0.35 :: bias=+1.00, novelty=0.28, amp=0.50, ts_fresh=False
+[RSCH] SOLUSDT score=-0.09 conf=0.59 :: ema200_slope%=-0.525, dd%=10.0, trend_bias=-0.007, dd_penalty=0.08
+[CONSENSUS] SOLUSDT HOLD S=+0.277 :: S=+0.277 from technical=+0.09×w0.45, sentiment=+0.00×w0.20, news=+0.20×w0.20, research=-0.01×w0.15
+[FRESH] BNBUSDT rows_appended=1 file=data/BNBUSDT_15m.csv
+[TECH] BNBUSDT score=-0.30 conf=0.69 :: price=1067.05, ema200=1106.49, rsi14=30.3, atr%=0.39, trend=down, rsi_sig=0.0
+[SENT] BNBUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] BNBUSDT score=+0.00 conf=0.35 :: bias=+0.00, novelty=0.50, amp=0.50, ts_fresh=False
+[RSCH] BNBUSDT score=-0.06 conf=0.59 :: ema200_slope%=-0.33, dd%=7.0, trend_bias=-0.005, dd_penalty=0.056
+[CONSENSUS] BNBUSDT HOLD S=-0.144 :: S=-0.144 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=+0.00×w0.20, research=-0.01×w0.15
+[FRESH] XRPUSDT rows_appended=1 file=data/XRPUSDT_15m.csv
+[TECH] XRPUSDT score=+0.20 conf=0.69 :: price=2.42, ema200=2.56, rsi14=24.3, atr%=0.43, trend=down, rsi_sig=0.5
+[SENT] XRPUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] XRPUSDT score=+0.34 conf=0.35 :: bias=+0.33, novelty=0.03, amp=0.50, ts_fresh=False
+[RSCH] XRPUSDT score=-0.08 conf=0.59 :: ema200_slope%=-0.483, dd%=9.56, trend_bias=-0.007, dd_penalty=0.076
+[CONSENSUS] XRPUSDT HOLD S=+0.145 :: S=+0.145 from technical=+0.09×w0.45, sentiment=+0.00×w0.20, news=+0.07×w0.20, research=-0.01×w0.15
+[FRESH] ADAUSDT rows_appended=1 file=data/ADAUSDT_15m.csv
+[TECH] ADAUSDT score=-0.30 conf=0.69 :: price=0.6, ema200=0.64, rsi14=40.1, atr%=0.59, trend=down, rsi_sig=0.0
+[SENT] ADAUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] ADAUSDT score=-1.00 conf=0.35 :: bias=-1.00, novelty=0.41, amp=0.50, ts_fresh=False
+[RSCH] ADAUSDT score=-0.10 conf=0.59 :: ema200_slope%=-0.573, dd%=11.13, trend_bias=-0.008, dd_penalty=0.089
+[CONSENSUS] ADAUSDT HOLD S=-0.350 :: S=-0.350 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=-0.20×w0.20, research=-0.01×w0.15
+[FRESH] BTCUSDT rows_appended=0 file=data/BTCUSDT_15m.csv
+[TECH] BTCUSDT score=-0.30 conf=0.70 :: price=107110.17, ema200=110718.95, rsi14=32.4, atr%=0.25, trend=down, rsi_sig=0.0
+[SENT] BTCUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] BTCUSDT score=-0.11 conf=0.35 :: bias=-0.11, novelty=0.03, amp=0.50, ts_fresh=False
+[RSCH] BTCUSDT score=-0.06 conf=0.60 :: ema200_slope%=-0.302, dd%=7.12, trend_bias=-0.004, dd_penalty=0.057
+[CONSENSUS] BTCUSDT HOLD S=-0.167 :: S=-0.167 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=-0.02×w0.20, research=-0.01×w0.15
+[FRESH] ETHUSDT rows_appended=0 file=data/ETHUSDT_15m.csv
+[TECH] ETHUSDT score=-0.30 conf=0.69 :: price=3731.89, ema200=3920.39, rsi14=33.1, atr%=0.45, trend=down, rsi_sig=0.0
+[SENT] ETHUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] ETHUSDT score=+1.00 conf=0.35 :: bias=+1.00, novelty=0.45, amp=0.50, ts_fresh=False
+[RSCH] ETHUSDT score=-0.09 conf=0.59 :: ema200_slope%=-0.432, dd%=10.0, trend_bias=-0.006, dd_penalty=0.08
+[CONSENSUS] ETHUSDT HOLD S=+0.052 :: S=+0.052 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=+0.20×w0.20, research=-0.01×w0.15
+[FRESH] SOLUSDT rows_appended=0 file=data/SOLUSDT_15m.csv
+[TECH] SOLUSDT score=+0.20 conf=0.69 :: price=181.09, ema200=192.86, rsi14=23.1, atr%=0.53, trend=down, rsi_sig=0.5
+[SENT] SOLUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] SOLUSDT score=+1.00 conf=0.35 :: bias=+1.00, novelty=0.28, amp=0.50, ts_fresh=False
+[RSCH] SOLUSDT score=-0.09 conf=0.59 :: ema200_slope%=-0.525, dd%=10.0, trend_bias=-0.007, dd_penalty=0.08
+[CONSENSUS] SOLUSDT HOLD S=+0.277 :: S=+0.277 from technical=+0.09×w0.45, sentiment=+0.00×w0.20, news=+0.20×w0.20, research=-0.01×w0.15
+[FRESH] BNBUSDT rows_appended=0 file=data/BNBUSDT_15m.csv
+[TECH] BNBUSDT score=-0.30 conf=0.69 :: price=1067.05, ema200=1106.49, rsi14=30.3, atr%=0.39, trend=down, rsi_sig=0.0
+[SENT] BNBUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] BNBUSDT score=+0.00 conf=0.35 :: bias=+0.00, novelty=0.50, amp=0.50, ts_fresh=False
+[RSCH] BNBUSDT score=-0.06 conf=0.59 :: ema200_slope%=-0.33, dd%=7.0, trend_bias=-0.005, dd_penalty=0.056
+[CONSENSUS] BNBUSDT HOLD S=-0.144 :: S=-0.144 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=+0.00×w0.20, research=-0.01×w0.15
+[FRESH] XRPUSDT rows_appended=0 file=data/XRPUSDT_15m.csv
+[TECH] XRPUSDT score=+0.20 conf=0.69 :: price=2.42, ema200=2.56, rsi14=24.3, atr%=0.43, trend=down, rsi_sig=0.5
+[SENT] XRPUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] XRPUSDT score=+0.34 conf=0.35 :: bias=+0.33, novelty=0.03, amp=0.50, ts_fresh=False
+[RSCH] XRPUSDT score=-0.08 conf=0.59 :: ema200_slope%=-0.483, dd%=9.56, trend_bias=-0.007, dd_penalty=0.076
+[CONSENSUS] XRPUSDT HOLD S=+0.145 :: S=+0.145 from technical=+0.09×w0.45, sentiment=+0.00×w0.20, news=+0.07×w0.20, research=-0.01×w0.15
+[FRESH] ADAUSDT rows_appended=0 file=data/ADAUSDT_15m.csv
+[TECH] ADAUSDT score=-0.30 conf=0.69 :: price=0.6, ema200=0.64, rsi14=40.1, atr%=0.59, trend=down, rsi_sig=0.0
+[SENT] ADAUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] ADAUSDT score=-1.00 conf=0.35 :: bias=-1.00, novelty=0.41, amp=0.50, ts_fresh=False
+[RSCH] ADAUSDT score=-0.10 conf=0.59 :: ema200_slope%=-0.573, dd%=11.13, trend_bias=-0.008, dd_penalty=0.089
+[CONSENSUS] ADAUSDT HOLD S=-0.350 :: S=-0.350 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=-0.20×w0.20, research=-0.01×w0.15
+[FRESH] BTCUSDT rows_appended=1 file=data/BTCUSDT_15m.csv
+[TECH] BTCUSDT score=+0.20 conf=0.69 :: price=106669.95, ema200=110678.66, rsi14=26.2, atr%=0.26, trend=down, rsi_sig=0.5
+[SENT] BTCUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] BTCUSDT score=+0.00 conf=0.35 :: bias=+0.00, novelty=0.04, amp=0.50, ts_fresh=False
+[RSCH] BTCUSDT score=-0.06 conf=0.60 :: ema200_slope%=-0.303, dd%=7.5, trend_bias=-0.004, dd_penalty=0.06
+[CONSENSUS] BTCUSDT HOLD S=+0.080 :: S=+0.080 from technical=+0.09×w0.45, sentiment=+0.00×w0.20, news=+0.00×w0.20, research=-0.01×w0.15
+[FRESH] ETHUSDT rows_appended=1 file=data/ETHUSDT_15m.csv
+[TECH] ETHUSDT score=+0.20 conf=0.69 :: price=3697.99, ema200=3918.17, rsi14=24.5, atr%=0.47, trend=down, rsi_sig=0.5
+[SENT] ETHUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] ETHUSDT score=+1.00 conf=0.35 :: bias=+1.00, novelty=0.44, amp=0.50, ts_fresh=False
+[RSCH] ETHUSDT score=-0.09 conf=0.59 :: ema200_slope%=-0.439, dd%=10.82, trend_bias=-0.006, dd_penalty=0.087
+[CONSENSUS] ETHUSDT HOLD S=+0.276 :: S=+0.276 from technical=+0.09×w0.45, sentiment=+0.00×w0.20, news=+0.20×w0.20, research=-0.01×w0.15
+[FRESH] SOLUSDT rows_appended=1 file=data/SOLUSDT_15m.csv
+[TECH] SOLUSDT score=+0.20 conf=0.69 :: price=179.74, ema200=192.73, rsi14=17.3, atr%=0.54, trend=down, rsi_sig=0.5
+[SENT] SOLUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] SOLUSDT score=+1.00 conf=0.35 :: bias=+1.00, novelty=0.28, amp=0.50, ts_fresh=False
+[RSCH] SOLUSDT score=-0.09 conf=0.59 :: ema200_slope%=-0.534, dd%=10.67, trend_bias=-0.008, dd_penalty=0.085
+[CONSENSUS] SOLUSDT HOLD S=+0.276 :: S=+0.276 from technical=+0.09×w0.45, sentiment=+0.00×w0.20, news=+0.20×w0.20, research=-0.01×w0.15
+[FRESH] BNBUSDT rows_appended=1 file=data/BNBUSDT_15m.csv
+[TECH] BNBUSDT score=+0.20 conf=0.69 :: price=1061.22, ema200=1106.04, rsi14=21.4, atr%=0.39, trend=down, rsi_sig=0.5
+[SENT] BNBUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] BNBUSDT score=+0.00 conf=0.35 :: bias=+0.00, novelty=0.50, amp=0.50, ts_fresh=False
+[RSCH] BNBUSDT score=-0.06 conf=0.59 :: ema200_slope%=-0.333, dd%=7.34, trend_bias=-0.005, dd_penalty=0.059
+[CONSENSUS] BNBUSDT HOLD S=+0.080 :: S=+0.080 from technical=+0.09×w0.45, sentiment=+0.00×w0.20, news=+0.00×w0.20, research=-0.01×w0.15
+[FRESH] XRPUSDT rows_appended=1 file=data/XRPUSDT_15m.csv
+[TECH] XRPUSDT score=+0.20 conf=0.69 :: price=2.4, ema200=2.56, rsi14=20.8, atr%=0.45, trend=down, rsi_sig=0.5
+[SENT] XRPUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] XRPUSDT score=+0.34 conf=0.35 :: bias=+0.33, novelty=0.03, amp=0.50, ts_fresh=False
+[RSCH] XRPUSDT score=-0.09 conf=0.59 :: ema200_slope%=-0.495, dd%=10.29, trend_bias=-0.007, dd_penalty=0.082
+[CONSENSUS] XRPUSDT HOLD S=+0.144 :: S=+0.144 from technical=+0.09×w0.45, sentiment=+0.00×w0.20, news=+0.07×w0.20, research=-0.01×w0.15
+[FRESH] ADAUSDT rows_appended=1 file=data/ADAUSDT_15m.csv
+[TECH] ADAUSDT score=+0.20 conf=0.69 :: price=0.59, ema200=0.64, rsi14=27.5, atr%=0.62, trend=down, rsi_sig=0.5
+[SENT] ADAUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] ADAUSDT score=-1.00 conf=0.35 :: bias=-1.00, novelty=0.40, amp=0.50, ts_fresh=False
+[RSCH] ADAUSDT score=-0.11 conf=0.59 :: ema200_slope%=-0.583, dd%=12.09, trend_bias=-0.008, dd_penalty=0.097
+[CONSENSUS] ADAUSDT HOLD S=-0.126 :: S=-0.126 from technical=+0.09×w0.45, sentiment=+0.00×w0.20, news=-0.20×w0.20, research=-0.02×w0.15
+[FRESH] BTCUSDT rows_appended=1 file=data/BTCUSDT_15m.csv
+[TECH] BTCUSDT score=+0.20 conf=0.69 :: price=106596.55, ema200=110638.04, rsi14=26.7, atr%=0.25, trend=down, rsi_sig=0.5
+[SENT] BTCUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] BTCUSDT score=+0.00 conf=0.35 :: bias=+0.00, novelty=0.04, amp=0.50, ts_fresh=False
+[RSCH] BTCUSDT score=-0.06 conf=0.60 :: ema200_slope%=-0.306, dd%=7.33, trend_bias=-0.004, dd_penalty=0.059
+[CONSENSUS] BTCUSDT HOLD S=+0.081 :: S=+0.081 from technical=+0.09×w0.45, sentiment=+0.00×w0.20, news=+0.00×w0.20, research=-0.01×w0.15
+[FRESH] ETHUSDT rows_appended=1 file=data/ETHUSDT_15m.csv
+[TECH] ETHUSDT score=+0.20 conf=0.69 :: price=3691.93, ema200=3915.92, rsi14=24.0, atr%=0.49, trend=down, rsi_sig=0.5
+[SENT] ETHUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] ETHUSDT score=+1.00 conf=0.35 :: bias=+1.00, novelty=0.44, amp=0.50, ts_fresh=False
+[RSCH] ETHUSDT score=-0.09 conf=0.59 :: ema200_slope%=-0.449, dd%=10.55, trend_bias=-0.006, dd_penalty=0.084
+[CONSENSUS] ETHUSDT HOLD S=+0.276 :: S=+0.276 from technical=+0.09×w0.45, sentiment=+0.00×w0.20, news=+0.20×w0.20, research=-0.01×w0.15
+[FRESH] SOLUSDT rows_appended=1 file=data/SOLUSDT_15m.csv
+[TECH] SOLUSDT score=+0.20 conf=0.69 :: price=179.23, ema200=192.59, rsi14=16.7, atr%=0.56, trend=down, rsi_sig=0.5
+[SENT] SOLUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] SOLUSDT score=+1.00 conf=0.35 :: bias=+1.00, novelty=0.28, amp=0.50, ts_fresh=False
+[RSCH] SOLUSDT score=-0.10 conf=0.59 :: ema200_slope%=-0.547, dd%=10.92, trend_bias=-0.008, dd_penalty=0.087
+[CONSENSUS] SOLUSDT HOLD S=+0.276 :: S=+0.276 from technical=+0.09×w0.45, sentiment=+0.00×w0.20, news=+0.20×w0.20, research=-0.01×w0.15
+[FRESH] BNBUSDT rows_appended=1 file=data/BNBUSDT_15m.csv
+[TECH] BNBUSDT score=+0.20 conf=0.69 :: price=1062.04, ema200=1105.6, rsi14=23.3, atr%=0.39, trend=down, rsi_sig=0.5
+[SENT] BNBUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] BNBUSDT score=+0.00 conf=0.35 :: bias=+0.00, novelty=0.50, amp=0.50, ts_fresh=False
+[RSCH] BNBUSDT score=-0.06 conf=0.59 :: ema200_slope%=-0.336, dd%=7.19, trend_bias=-0.005, dd_penalty=0.058
+[CONSENSUS] BNBUSDT HOLD S=+0.081 :: S=+0.081 from technical=+0.09×w0.45, sentiment=+0.00×w0.20, news=+0.00×w0.20, research=-0.01×w0.15
+[FRESH] XRPUSDT rows_appended=1 file=data/XRPUSDT_15m.csv
+[TECH] XRPUSDT score=+0.20 conf=0.69 :: price=2.39, ema200=2.56, rsi14=18.8, atr%=0.49, trend=down, rsi_sig=0.5
+[SENT] XRPUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] XRPUSDT score=+0.34 conf=0.35 :: bias=+0.33, novelty=0.03, amp=0.50, ts_fresh=False
+[RSCH] XRPUSDT score=-0.09 conf=0.59 :: ema200_slope%=-0.512, dd%=10.71, trend_bias=-0.007, dd_penalty=0.086
+[CONSENSUS] XRPUSDT HOLD S=+0.144 :: S=+0.144 from technical=+0.09×w0.45, sentiment=+0.00×w0.20, news=+0.07×w0.20, research=-0.01×w0.15
+[FRESH] ADAUSDT rows_appended=1 file=data/ADAUSDT_15m.csv
+[TECH] ADAUSDT score=+0.20 conf=0.69 :: price=0.59, ema200=0.64, rsi14=28.7, atr%=0.59, trend=down, rsi_sig=0.5
+[SENT] ADAUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] ADAUSDT score=-1.00 conf=0.35 :: bias=-1.00, novelty=0.40, amp=0.50, ts_fresh=False
+[RSCH] ADAUSDT score=-0.10 conf=0.59 :: ema200_slope%=-0.598, dd%=11.71, trend_bias=-0.009, dd_penalty=0.094
+[CONSENSUS] ADAUSDT HOLD S=-0.125 :: S=-0.125 from technical=+0.09×w0.45, sentiment=+0.00×w0.20, news=-0.20×w0.20, research=-0.02×w0.15
+[FRESH] BTCUSDT rows_appended=1 file=data/BTCUSDT_15m.csv
+[TECH] BTCUSDT score=+0.20 conf=0.69 :: price=106852.25, ema200=110600.37, rsi14=29.6, atr%=0.26, trend=down, rsi_sig=0.5
+[SENT] BTCUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] BTCUSDT score=+0.00 conf=0.35 :: bias=+0.00, novelty=0.04, amp=0.50, ts_fresh=False
+[RSCH] BTCUSDT score=-0.06 conf=0.60 :: ema200_slope%=-0.309, dd%=7.1, trend_bias=-0.004, dd_penalty=0.057
+[CONSENSUS] BTCUSDT HOLD S=+0.081 :: S=+0.081 from technical=+0.09×w0.45, sentiment=+0.00×w0.20, news=+0.00×w0.20, research=-0.01×w0.15
+[FRESH] ETHUSDT rows_appended=1 file=data/ETHUSDT_15m.csv
+[TECH] ETHUSDT score=-0.30 conf=0.69 :: price=3707.71, ema200=3913.85, rsi14=31.9, atr%=0.48, trend=down, rsi_sig=0.0
+[SENT] ETHUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] ETHUSDT score=+1.00 conf=0.35 :: bias=+1.00, novelty=0.44, amp=0.50, ts_fresh=False
+[RSCH] ETHUSDT score=-0.09 conf=0.59 :: ema200_slope%=-0.46, dd%=9.91, trend_bias=-0.007, dd_penalty=0.079
+[CONSENSUS] ETHUSDT HOLD S=+0.052 :: S=+0.052 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=+0.20×w0.20, research=-0.01×w0.15
+[FRESH] SOLUSDT rows_appended=1 file=data/SOLUSDT_15m.csv
+[TECH] SOLUSDT score=+0.20 conf=0.69 :: price=180.03, ema200=192.47, rsi14=24.3, atr%=0.54, trend=down, rsi_sig=0.5
+[SENT] SOLUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] SOLUSDT score=+1.00 conf=0.35 :: bias=+1.00, novelty=0.28, amp=0.50, ts_fresh=False
+[RSCH] SOLUSDT score=-0.09 conf=0.59 :: ema200_slope%=-0.56, dd%=10.53, trend_bias=-0.008, dd_penalty=0.084
+[CONSENSUS] SOLUSDT HOLD S=+0.276 :: S=+0.276 from technical=+0.09×w0.45, sentiment=+0.00×w0.20, news=+0.20×w0.20, research=-0.01×w0.15
+[FRESH] BNBUSDT rows_appended=1 file=data/BNBUSDT_15m.csv
+[TECH] BNBUSDT score=+0.20 conf=0.69 :: price=1054.02, ema200=1105.09, rsi14=19.7, atr%=0.4, trend=down, rsi_sig=0.5
+[SENT] BNBUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] BNBUSDT score=+0.00 conf=0.35 :: bias=+0.00, novelty=0.50, amp=0.50, ts_fresh=False
+[RSCH] BNBUSDT score=-0.07 conf=0.59 :: ema200_slope%=-0.348, dd%=7.9, trend_bias=-0.005, dd_penalty=0.063
+[CONSENSUS] BNBUSDT HOLD S=+0.080 :: S=+0.080 from technical=+0.09×w0.45, sentiment=+0.00×w0.20, news=+0.00×w0.20, research=-0.01×w0.15
+[FRESH] XRPUSDT rows_appended=1 file=data/XRPUSDT_15m.csv
+[TECH] XRPUSDT score=+0.20 conf=0.69 :: price=2.41, ema200=2.56, rsi14=30.0, atr%=0.52, trend=down, rsi_sig=0.5
+[SENT] XRPUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] XRPUSDT score=+0.34 conf=0.35 :: bias=+0.33, novelty=0.03, amp=0.50, ts_fresh=False
+[RSCH] XRPUSDT score=-0.09 conf=0.59 :: ema200_slope%=-0.524, dd%=9.89, trend_bias=-0.007, dd_penalty=0.079
+[CONSENSUS] XRPUSDT HOLD S=+0.145 :: S=+0.145 from technical=+0.09×w0.45, sentiment=+0.00×w0.20, news=+0.07×w0.20, research=-0.01×w0.15
+[FRESH] ADAUSDT rows_appended=1 file=data/ADAUSDT_15m.csv
+[TECH] ADAUSDT score=-0.30 conf=0.69 :: price=0.59, ema200=0.63, rsi14=32.2, atr%=0.62, trend=down, rsi_sig=0.0
+[SENT] ADAUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] ADAUSDT score=-1.00 conf=0.35 :: bias=-1.00, novelty=0.40, amp=0.50, ts_fresh=False
+[RSCH] ADAUSDT score=-0.10 conf=0.59 :: ema200_slope%=-0.607, dd%=11.03, trend_bias=-0.009, dd_penalty=0.088
+[CONSENSUS] ADAUSDT HOLD S=-0.350 :: S=-0.350 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=-0.20×w0.20, research=-0.01×w0.15
+[FRESH] BTCUSDT rows_appended=1 file=data/BTCUSDT_15m.csv
+[TECH] BTCUSDT score=-0.30 conf=0.70 :: price=107153.66, ema200=110566.08, rsi14=43.8, atr%=0.23, trend=down, rsi_sig=0.0
+[SENT] BTCUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] BTCUSDT score=+0.00 conf=0.35 :: bias=+0.00, novelty=0.04, amp=0.50, ts_fresh=False
+[RSCH] BTCUSDT score=-0.06 conf=0.60 :: ema200_slope%=-0.307, dd%=6.84, trend_bias=-0.004, dd_penalty=0.055
+[CONSENSUS] BTCUSDT HOLD S=-0.144 :: S=-0.144 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=+0.00×w0.20, research=-0.01×w0.15
+[FRESH] ETHUSDT rows_appended=1 file=data/ETHUSDT_15m.csv
+[TECH] ETHUSDT score=-0.30 conf=0.69 :: price=3713.76, ema200=3911.86, rsi14=34.2, atr%=0.49, trend=down, rsi_sig=0.0
+[SENT] ETHUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] ETHUSDT score=+1.00 conf=0.35 :: bias=+1.00, novelty=0.44, amp=0.50, ts_fresh=False
+[RSCH] ETHUSDT score=-0.08 conf=0.59 :: ema200_slope%=-0.463, dd%=9.76, trend_bias=-0.007, dd_penalty=0.078
+[CONSENSUS] ETHUSDT HOLD S=+0.052 :: S=+0.052 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=+0.20×w0.20, research=-0.01×w0.15
+[FRESH] SOLUSDT rows_appended=1 file=data/SOLUSDT_15m.csv
+[TECH] SOLUSDT score=+0.20 conf=0.69 :: price=180.11, ema200=192.34, rsi14=25.0, atr%=0.55, trend=down, rsi_sig=0.5
+[SENT] SOLUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] SOLUSDT score=+1.00 conf=0.35 :: bias=+1.00, novelty=0.28, amp=0.50, ts_fresh=False
+[RSCH] SOLUSDT score=-0.09 conf=0.59 :: ema200_slope%=-0.566, dd%=10.49, trend_bias=-0.008, dd_penalty=0.084
+[CONSENSUS] SOLUSDT HOLD S=+0.276 :: S=+0.276 from technical=+0.09×w0.45, sentiment=+0.00×w0.20, news=+0.20×w0.20, research=-0.01×w0.15
+[FRESH] BNBUSDT rows_appended=1 file=data/BNBUSDT_15m.csv
+[TECH] BNBUSDT score=+0.20 conf=0.69 :: price=1057.97, ema200=1104.62, rsi14=26.2, atr%=0.43, trend=down, rsi_sig=0.5
+[SENT] BNBUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] BNBUSDT score=+0.00 conf=0.35 :: bias=+0.00, novelty=0.50, amp=0.50, ts_fresh=False
+[RSCH] BNBUSDT score=-0.07 conf=0.59 :: ema200_slope%=-0.354, dd%=7.55, trend_bias=-0.005, dd_penalty=0.06
+[CONSENSUS] BNBUSDT HOLD S=+0.080 :: S=+0.080 from technical=+0.09×w0.45, sentiment=+0.00×w0.20, news=+0.00×w0.20, research=-0.01×w0.15
+[FRESH] XRPUSDT rows_appended=1 file=data/XRPUSDT_15m.csv
+[TECH] XRPUSDT score=+0.20 conf=0.69 :: price=2.41, ema200=2.56, rsi14=29.6, atr%=0.52, trend=down, rsi_sig=0.5
+[SENT] XRPUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] XRPUSDT score=+0.34 conf=0.35 :: bias=+0.33, novelty=0.03, amp=0.50, ts_fresh=False
+[RSCH] XRPUSDT score=-0.09 conf=0.59 :: ema200_slope%=-0.53, dd%=9.99, trend_bias=-0.008, dd_penalty=0.08
+[CONSENSUS] XRPUSDT HOLD S=+0.145 :: S=+0.145 from technical=+0.09×w0.45, sentiment=+0.00×w0.20, news=+0.07×w0.20, research=-0.01×w0.15
+[FRESH] ADAUSDT rows_appended=1 file=data/ADAUSDT_15m.csv
+[TECH] ADAUSDT score=-0.30 conf=0.69 :: price=0.59, ema200=0.63, rsi14=31.8, atr%=0.62, trend=down, rsi_sig=0.0
+[SENT] ADAUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] ADAUSDT score=-1.00 conf=0.35 :: bias=-1.00, novelty=0.40, amp=0.50, ts_fresh=False
+[RSCH] ADAUSDT score=-0.10 conf=0.59 :: ema200_slope%=-0.61, dd%=11.12, trend_bias=-0.009, dd_penalty=0.089
+[CONSENSUS] ADAUSDT HOLD S=-0.350 :: S=-0.350 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=-0.20×w0.20, research=-0.01×w0.15
+[FRESH] BTCUSDT rows_appended=1 file=data/BTCUSDT_15m.csv
+[TECH] BTCUSDT score=-0.30 conf=0.70 :: price=107283.35, ema200=110533.41, rsi14=46.7, atr%=0.24, trend=down, rsi_sig=0.0
+[SENT] BTCUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] BTCUSDT score=+0.00 conf=0.35 :: bias=+0.00, novelty=0.04, amp=0.50, ts_fresh=False
+[RSCH] BTCUSDT score=-0.06 conf=0.60 :: ema200_slope%=-0.305, dd%=6.57, trend_bias=-0.004, dd_penalty=0.053
+[CONSENSUS] BTCUSDT HOLD S=-0.144 :: S=-0.144 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=+0.00×w0.20, research=-0.01×w0.15
+[FRESH] ETHUSDT rows_appended=1 file=data/ETHUSDT_15m.csv
+[TECH] ETHUSDT score=-0.30 conf=0.69 :: price=3735.4, ema200=3910.1, rsi14=48.3, atr%=0.44, trend=down, rsi_sig=0.0
+[SENT] ETHUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] ETHUSDT score=+1.00 conf=0.35 :: bias=+1.00, novelty=0.44, amp=0.50, ts_fresh=False
+[RSCH] ETHUSDT score=-0.08 conf=0.59 :: ema200_slope%=-0.462, dd%=8.98, trend_bias=-0.007, dd_penalty=0.072
+[CONSENSUS] ETHUSDT HOLD S=+0.053 :: S=+0.053 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=+0.20×w0.20, research=-0.01×w0.15
+[FRESH] SOLUSDT rows_appended=1 file=data/SOLUSDT_15m.csv
+[TECH] SOLUSDT score=-0.30 conf=0.69 :: price=180.61, ema200=192.23, rsi14=36.0, atr%=0.47, trend=down, rsi_sig=0.0
+[SENT] SOLUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] SOLUSDT score=+1.00 conf=0.35 :: bias=+1.00, novelty=0.28, amp=0.50, ts_fresh=False
+[RSCH] SOLUSDT score=-0.09 conf=0.59 :: ema200_slope%=-0.571, dd%=10.24, trend_bias=-0.008, dd_penalty=0.082
+[CONSENSUS] SOLUSDT HOLD S=+0.051 :: S=+0.051 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=+0.20×w0.20, research=-0.01×w0.15
+[FRESH] BNBUSDT rows_appended=1 file=data/BNBUSDT_15m.csv
+[TECH] BNBUSDT score=-0.30 conf=0.69 :: price=1058.71, ema200=1104.17, rsi14=38.2, atr%=0.32, trend=down, rsi_sig=0.0
+[SENT] BNBUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] BNBUSDT score=+0.00 conf=0.35 :: bias=+0.00, novelty=0.50, amp=0.50, ts_fresh=False
+[RSCH] BNBUSDT score=-0.06 conf=0.59 :: ema200_slope%=-0.36, dd%=7.41, trend_bias=-0.005, dd_penalty=0.059
+[CONSENSUS] BNBUSDT HOLD S=-0.145 :: S=-0.145 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=+0.00×w0.20, research=-0.01×w0.15
+[FRESH] XRPUSDT rows_appended=1 file=data/XRPUSDT_15m.csv
+[TECH] XRPUSDT score=-0.30 conf=0.69 :: price=2.42, ema200=2.56, rsi14=42.1, atr%=0.48, trend=down, rsi_sig=0.0
+[SENT] XRPUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] XRPUSDT score=+0.34 conf=0.35 :: bias=+0.33, novelty=0.03, amp=0.50, ts_fresh=False
+[RSCH] XRPUSDT score=-0.08 conf=0.59 :: ema200_slope%=-0.533, dd%=9.42, trend_bias=-0.008, dd_penalty=0.075
+[CONSENSUS] XRPUSDT HOLD S=-0.080 :: S=-0.080 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=+0.07×w0.20, research=-0.01×w0.15
+[FRESH] ADAUSDT rows_appended=1 file=data/ADAUSDT_15m.csv
+[TECH] ADAUSDT score=-0.30 conf=0.69 :: price=0.59, ema200=0.63, rsi14=43.3, atr%=0.53, trend=down, rsi_sig=0.0
+[SENT] ADAUSDT score=+0.00 conf=0.40 :: pol=0.0, vz=0.0, sig=0.5, ts_fresh=True
+[NEWS] ADAUSDT score=-1.00 conf=0.35 :: bias=-1.00, novelty=0.40, amp=0.50, ts_fresh=False
+[RSCH] ADAUSDT score=-0.09 conf=0.59 :: ema200_slope%=-0.614, dd%=10.74, trend_bias=-0.009, dd_penalty=0.086
+[CONSENSUS] ADAUSDT HOLD S=-0.349 :: S=-0.349 from technical=-0.14×w0.45, sentiment=+0.00×w0.20, news=-0.20×w0.20, research=-0.01×w0.15
