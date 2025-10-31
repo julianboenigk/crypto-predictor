@@ -1,1 +1,15 @@
-{"ts": 1761852992619, "polarity": 0.0, "volume_z": 0.0, "signal": 0.5}
+{
+  "counts": {
+    "negative": 112,
+    "neutral": 8,
+    "positive": 93
+  },
+  "date_window": "yesterday",
+  "pol": -0.134,
+  "sig": 0.43,
+  "source": "cryptonews/stat",
+  "symbol": "BTCUSDT",
+  "ticker": "BTC",
+  "ts": 1761947266,
+  "vz": 0.0
+}

@@ -1,1 +1,24 @@
-{"timestamp_ms": 1761853025221, "bias": -1.0, "novelty": 0.3968267901360764, "source": "cryptonews", "meta": {"ticker": "ADA", "window": "last60min"}}
+{
+  "pair": "ADAUSDT",
+  "ticker": "ADA",
+  "date_window": "last60min",
+  "items": 2,
+  "bias": 0.67,
+  "novelty": 0.5,
+  "articles": [
+    {
+      "title": "Charles Hoskinson: “In Many Ways Cardano is a Spiritual Successor to Bitcoin”",
+      "source": "Zycrypto",
+      "published_at": "Fri, 31 Oct 2025 17:10:14 -0400",
+      "url": "https://zycrypto.com/charles-hoskinson-in-many-ways-cardano-is-a-spiritual-successor-to-bitcoin/",
+      "sent": 1.0
+    },
+    {
+      "title": "Cardano Network Sees Explosive Growth in Adjusted On-Chain Volume During Market Whipsaw",
+      "source": "Bitcoinist",
+      "published_at": "Fri, 31 Oct 2025 17:00:01 -0400",
+      "url": "https://bitcoinist.com/cardano-on-chain-volume-surges/",
+      "sent": 1.0
+    }
+  ]
+}

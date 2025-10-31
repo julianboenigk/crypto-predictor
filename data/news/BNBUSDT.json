@@ -1,1 +1,17 @@
-{"timestamp_ms": 1761853024086, "bias": 0.0, "novelty": 0.5, "source": "cryptonews", "meta": {"ticker": "BNB", "window": "last60min"}}
+{
+  "pair": "BNBUSDT",
+  "ticker": "BNB",
+  "date_window": "last60min",
+  "items": 1,
+  "bias": -0.67,
+  "novelty": 0.5,
+  "articles": [
+    {
+      "title": "BNB Coin Price Prediction: As Market Sentiment Turns Grim, Can BNB Shift And Reach a New ATH in November?",
+      "source": "Cryptonews",
+      "published_at": "Fri, 31 Oct 2025 17:10:20 -0400",
+      "url": "https://cryptonews.com/news/bnb-coin-price-prediction-as-market-sentiment-turns-grim-can-bnb-shift-and-reach-a-new-ath-in-november/",
+      "sent": -1.0
+    }
+  ]
+}

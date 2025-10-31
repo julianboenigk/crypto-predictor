@@ -21,8 +21,7 @@ from typing import Dict, List, Any
 from dotenv import load_dotenv
 
 # Local provider client
-from src.providers.cryptonews import fetch_news_ticker
-
+from src.providers.cryptonews import fetch_news_list as fetch_news_ticker
 
 # -------------------------- helpers ------------------------------------------
 

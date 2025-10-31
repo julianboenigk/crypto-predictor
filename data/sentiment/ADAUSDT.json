@@ -1,1 +1,15 @@
-{"ts": 1761852992621, "polarity": 0.0, "volume_z": 0.0, "signal": 0.5}
+{
+  "counts": {
+    "negative": 13,
+    "neutral": 0,
+    "positive": 7
+  },
+  "date_window": "yesterday",
+  "pol": -0.45,
+  "sig": 0.28,
+  "source": "cryptonews/stat",
+  "symbol": "ADAUSDT",
+  "ticker": "ADA",
+  "ts": 1761947286,
+  "vz": 0.0
+}

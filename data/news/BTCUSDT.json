@@ -1,1 +1,66 @@
-{"timestamp_ms": 1761853022248, "bias": 0.0, "novelty": 0.040155162747191296, "source": "cryptonews", "meta": {"ticker": "BTC", "window": "last60min"}}
+{
+  "pair": "BTCUSDT",
+  "ticker": "BTC",
+  "date_window": "last60min",
+  "items": 8,
+  "bias": -0.17,
+  "novelty": 0.5,
+  "articles": [
+    {
+      "title": "Binance Bitcoin Orders Hit $1.96M as Whales Step Back In",
+      "source": "Blockonomi",
+      "published_at": "Fri, 31 Oct 2025 17:31:29 -0400",
+      "url": "https://blockonomi.com/binance-bitcoin-orders-hit-1-96m-as-whales-step-back-in/",
+      "sent": 1.0
+    },
+    {
+      "title": "Here's What Happened The Last Time The Bitcoin Price Closed October In The Red",
+      "source": "NewsBTC",
+      "published_at": "Fri, 31 Oct 2025 17:30:19 -0400",
+      "url": "https://www.newsbtc.com/news/bitcoin/bitcoin-closed-october-in-red/",
+      "sent": -1.0
+    },
+    {
+      "title": "Bitcoin's 4-year cycle isn't dead, expect a 70% drop next downturn: VC",
+      "source": "Cointelegraph",
+      "published_at": "Fri, 31 Oct 2025 17:21:38 -0400",
+      "url": "https://cointelegraph.com/news/bitcoin-4-year-cycle-not-dead-70-drawdown?utm_source=rss_feed&utm_medium=rss&utm_campaign=rss_partner_inbound",
+      "sent": -1.0
+    },
+    {
+      "title": "Charles Hoskinson: “In Many Ways Cardano is a Spiritual Successor to Bitcoin”",
+      "source": "Zycrypto",
+      "published_at": "Fri, 31 Oct 2025 17:10:14 -0400",
+      "url": "https://zycrypto.com/charles-hoskinson-in-many-ways-cardano-is-a-spiritual-successor-to-bitcoin/",
+      "sent": 1.0
+    },
+    {
+      "title": "Market Analysis Highlights Ethereum Struggles Against Bitcoin's Renewed Momentum",
+      "source": "Crypto Economy",
+      "published_at": "Fri, 31 Oct 2025 17:08:48 -0400",
+      "url": "https://crypto-economy.com/market-analysis-highlights-ethereum-struggles-against-bitcoins-renewed-momentum/",
+      "sent": -1.0
+    },
+    {
+      "title": "HRF Warns Quantum Computers Could Break Bitcoin Encryption Within 5 Years",
+      "source": "Coinspeaker",
+      "published_at": "Fri, 31 Oct 2025 17:03:24 -0400",
+      "url": "https://www.coinspeaker.com/hrf-warns-quantum-computers-could-break-bitcoin-encryption/",
+      "sent": -1.0
+    },
+    {
+      "title": "Invisible Lightning: Why exchange channels break a favorite Bitcoin metric",
+      "source": "CryptoSlate",
+      "published_at": "Fri, 31 Oct 2025 17:01:20 -0400",
+      "url": "https://cryptoslate.com/invisible-lightning-why-exchange-channels-break-a-favorite-bitcoin-metric/",
+      "sent": -1.0
+    },
+    {
+      "title": "Nordea Expands Customer Access to Cryptocurrency with New Bitcoin Investment Option",
+      "source": "The Currency Analytics",
+      "published_at": "Fri, 31 Oct 2025 17:00:42 -0400",
+      "url": "https://thecurrencyanalytics.com/bitcoin/nordea-expands-customer-access-to-cryptocurrency-with-new-bitcoin-investment-option-208910",
+      "sent": 1.0
+    }
+  ]
+}

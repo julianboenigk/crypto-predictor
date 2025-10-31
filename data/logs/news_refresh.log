@@ -623,3 +623,153 @@
 [NEWS-REFRESH][ERROR] BNBUSDT: HTTPError('HTTPError 403 on /api/v1 with params={\'tickers\': \'BNB\', \'items\': 50, \'date\': \'last60min\', \'page\': 1, \'cache\': \'false\', \'token\': \'yv3a4jurrsxc8ixpasmp4ug6oxnpek8zasrczrzz\'} :: {"message":"your IP has been blacklisted. For more info reach out to support@stocknewsapi.com"}')
 [NEWS-REFRESH][ERROR] XRPUSDT: HTTPError('HTTPError 403 on /api/v1 with params={\'tickers\': \'XRP\', \'items\': 50, \'date\': \'last60min\', \'page\': 1, \'cache\': \'false\', \'token\': \'yv3a4jurrsxc8ixpasmp4ug6oxnpek8zasrczrzz\'} :: {"message":"your IP has been blacklisted. For more info reach out to support@stocknewsapi.com"}')
 [NEWS-REFRESH][ERROR] ADAUSDT: HTTPError('HTTPError 403 on /api/v1 with params={\'tickers\': \'ADA\', \'items\': 50, \'date\': \'last60min\', \'page\': 1, \'cache\': \'false\', \'token\': \'yv3a4jurrsxc8ixpasmp4ug6oxnpek8zasrczrzz\'} :: {"message":"your IP has been blacklisted. For more info reach out to support@stocknewsapi.com"}')
+[NEWS-REFRESH][ERROR] BTCUSDT: HTTPError('HTTPError 403 on /api/v1 with params={\'tickers\': \'BTC\', \'items\': 50, \'date\': \'last60min\', \'page\': 1, \'cache\': \'false\', \'token\': \'yv3a4jurrsxc8ixpasmp4ug6oxnpek8zasrczrzz\'} :: {"message":"your IP has been blacklisted. For more info reach out to support@stocknewsapi.com"}')
+[NEWS-REFRESH][ERROR] ETHUSDT: HTTPError('HTTPError 403 on /api/v1 with params={\'tickers\': \'ETH\', \'items\': 50, \'date\': \'last60min\', \'page\': 1, \'cache\': \'false\', \'token\': \'yv3a4jurrsxc8ixpasmp4ug6oxnpek8zasrczrzz\'} :: {"message":"your IP has been blacklisted. For more info reach out to support@stocknewsapi.com"}')
+[NEWS-REFRESH][ERROR] SOLUSDT: HTTPError('HTTPError 403 on /api/v1 with params={\'tickers\': \'SOL\', \'items\': 50, \'date\': \'last60min\', \'page\': 1, \'cache\': \'false\', \'token\': \'yv3a4jurrsxc8ixpasmp4ug6oxnpek8zasrczrzz\'} :: {"message":"your IP has been blacklisted. For more info reach out to support@stocknewsapi.com"}')
+[NEWS-REFRESH][ERROR] BNBUSDT: HTTPError('HTTPError 403 on /api/v1 with params={\'tickers\': \'BNB\', \'items\': 50, \'date\': \'last60min\', \'page\': 1, \'cache\': \'false\', \'token\': \'yv3a4jurrsxc8ixpasmp4ug6oxnpek8zasrczrzz\'} :: {"message":"your IP has been blacklisted. For more info reach out to support@stocknewsapi.com"}')
+[NEWS-REFRESH][ERROR] XRPUSDT: HTTPError('HTTPError 403 on /api/v1 with params={\'tickers\': \'XRP\', \'items\': 50, \'date\': \'last60min\', \'page\': 1, \'cache\': \'false\', \'token\': \'yv3a4jurrsxc8ixpasmp4ug6oxnpek8zasrczrzz\'} :: {"message":"your IP has been blacklisted. For more info reach out to support@stocknewsapi.com"}')
+[NEWS-REFRESH][ERROR] ADAUSDT: HTTPError('HTTPError 403 on /api/v1 with params={\'tickers\': \'ADA\', \'items\': 50, \'date\': \'last60min\', \'page\': 1, \'cache\': \'false\', \'token\': \'yv3a4jurrsxc8ixpasmp4ug6oxnpek8zasrczrzz\'} :: {"message":"your IP has been blacklisted. For more info reach out to support@stocknewsapi.com"}')
+[NEWS-REFRESH][ERROR] BTCUSDT: HTTPError('HTTPError 403 on /api/v1 with params={\'tickers\': \'BTC\', \'items\': 50, \'date\': \'last60min\', \'page\': 1, \'cache\': \'false\', \'token\': \'yv3a4jurrsxc8ixpasmp4ug6oxnpek8zasrczrzz\'} :: {"message":"your IP has been blacklisted. For more info reach out to support@stocknewsapi.com"}')
+[NEWS-REFRESH][ERROR] ETHUSDT: HTTPError('HTTPError 403 on /api/v1 with params={\'tickers\': \'ETH\', \'items\': 50, \'date\': \'last60min\', \'page\': 1, \'cache\': \'false\', \'token\': \'yv3a4jurrsxc8ixpasmp4ug6oxnpek8zasrczrzz\'} :: {"message":"your IP has been blacklisted. For more info reach out to support@stocknewsapi.com"}')
+[NEWS-REFRESH][ERROR] SOLUSDT: HTTPError('HTTPError 403 on /api/v1 with params={\'tickers\': \'SOL\', \'items\': 50, \'date\': \'last60min\', \'page\': 1, \'cache\': \'false\', \'token\': \'yv3a4jurrsxc8ixpasmp4ug6oxnpek8zasrczrzz\'} :: {"message":"your IP has been blacklisted. For more info reach out to support@stocknewsapi.com"}')
+[NEWS-REFRESH][ERROR] BNBUSDT: HTTPError('HTTPError 403 on /api/v1 with params={\'tickers\': \'BNB\', \'items\': 50, \'date\': \'last60min\', \'page\': 1, \'cache\': \'false\', \'token\': \'yv3a4jurrsxc8ixpasmp4ug6oxnpek8zasrczrzz\'} :: {"message":"your IP has been blacklisted. For more info reach out to support@stocknewsapi.com"}')
+[NEWS-REFRESH][ERROR] XRPUSDT: HTTPError('HTTPError 403 on /api/v1 with params={\'tickers\': \'XRP\', \'items\': 50, \'date\': \'last60min\', \'page\': 1, \'cache\': \'false\', \'token\': \'yv3a4jurrsxc8ixpasmp4ug6oxnpek8zasrczrzz\'} :: {"message":"your IP has been blacklisted. For more info reach out to support@stocknewsapi.com"}')
+[NEWS-REFRESH][ERROR] ADAUSDT: HTTPError('HTTPError 403 on /api/v1 with params={\'tickers\': \'ADA\', \'items\': 50, \'date\': \'last60min\', \'page\': 1, \'cache\': \'false\', \'token\': \'yv3a4jurrsxc8ixpasmp4ug6oxnpek8zasrczrzz\'} :: {"message":"your IP has been blacklisted. For more info reach out to support@stocknewsapi.com"}')
+[NEWS-REFRESH][ERROR] BTCUSDT: HTTPError('HTTPError 403 on /api/v1 with params={\'tickers\': \'BTC\', \'items\': 50, \'date\': \'last60min\', \'page\': 1, \'cache\': \'false\', \'token\': \'yv3a4jurrsxc8ixpasmp4ug6oxnpek8zasrczrzz\'} :: {"message":"your IP has been blacklisted. For more info reach out to support@stocknewsapi.com"}')
+[NEWS-REFRESH][ERROR] ETHUSDT: HTTPError('HTTPError 403 on /api/v1 with params={\'tickers\': \'ETH\', \'items\': 50, \'date\': \'last60min\', \'page\': 1, \'cache\': \'false\', \'token\': \'yv3a4jurrsxc8ixpasmp4ug6oxnpek8zasrczrzz\'} :: {"message":"your IP has been blacklisted. For more info reach out to support@stocknewsapi.com"}')
+[NEWS-REFRESH][ERROR] SOLUSDT: HTTPError('HTTPError 403 on /api/v1 with params={\'tickers\': \'SOL\', \'items\': 50, \'date\': \'last60min\', \'page\': 1, \'cache\': \'false\', \'token\': \'yv3a4jurrsxc8ixpasmp4ug6oxnpek8zasrczrzz\'} :: {"message":"your IP has been blacklisted. For more info reach out to support@stocknewsapi.com"}')
+[NEWS-REFRESH][ERROR] BNBUSDT: HTTPError('HTTPError 403 on /api/v1 with params={\'tickers\': \'BNB\', \'items\': 50, \'date\': \'last60min\', \'page\': 1, \'cache\': \'false\', \'token\': \'yv3a4jurrsxc8ixpasmp4ug6oxnpek8zasrczrzz\'} :: {"message":"your IP has been blacklisted. For more info reach out to support@stocknewsapi.com"}')
+[NEWS-REFRESH][ERROR] XRPUSDT: HTTPError('HTTPError 403 on /api/v1 with params={\'tickers\': \'XRP\', \'items\': 50, \'date\': \'last60min\', \'page\': 1, \'cache\': \'false\', \'token\': \'yv3a4jurrsxc8ixpasmp4ug6oxnpek8zasrczrzz\'} :: {"message":"your IP has been blacklisted. For more info reach out to support@stocknewsapi.com"}')
+[NEWS-REFRESH][ERROR] ADAUSDT: HTTPError('HTTPError 403 on /api/v1 with params={\'tickers\': \'ADA\', \'items\': 50, \'date\': \'last60min\', \'page\': 1, \'cache\': \'false\', \'token\': \'yv3a4jurrsxc8ixpasmp4ug6oxnpek8zasrczrzz\'} :: {"message":"your IP has been blacklisted. For more info reach out to support@stocknewsapi.com"}')
+[NEWS-REFRESH] BTCUSDT bias=+0.13 novelty=0.30 -> data/news/BTCUSDT.json
+[NEWS-REFRESH] ETHUSDT bias=+0.67 novelty=0.50 -> data/news/ETHUSDT.json
+[NEWS-REFRESH] SOLUSDT bias=+0.00 novelty=0.00 -> data/news/SOLUSDT.json
+[NEWS-REFRESH] BNBUSDT bias=+0.00 novelty=0.00 -> data/news/BNBUSDT.json
+[NEWS-REFRESH] XRPUSDT bias=+0.33 novelty=0.50 -> data/news/XRPUSDT.json
+[NEWS-REFRESH] ADAUSDT bias=+0.00 novelty=0.00 -> data/news/ADAUSDT.json
+[NEWS-REFRESH] BTCUSDT bias=-0.67 novelty=0.50 -> data/news/BTCUSDT.json
+[NEWS-REFRESH] ETHUSDT bias=+0.67 novelty=0.50 -> data/news/ETHUSDT.json
+[NEWS-REFRESH] SOLUSDT bias=-0.67 novelty=0.50 -> data/news/SOLUSDT.json
+[NEWS-REFRESH] BNBUSDT bias=+0.00 novelty=0.00 -> data/news/BNBUSDT.json
+[NEWS-REFRESH] XRPUSDT bias=+0.67 novelty=0.38 -> data/news/XRPUSDT.json
+[NEWS-REFRESH] ADAUSDT bias=+0.00 novelty=0.00 -> data/news/ADAUSDT.json
+[NEWS-REFRESH] BTCUSDT bias=+0.00 novelty=0.50 -> data/news/BTCUSDT.json
+[NEWS-REFRESH] ETHUSDT bias=+0.00 novelty=0.00 -> data/news/ETHUSDT.json
+[NEWS-REFRESH] SOLUSDT bias=+0.00 novelty=0.00 -> data/news/SOLUSDT.json
+[NEWS-REFRESH] BNBUSDT bias=+0.00 novelty=0.00 -> data/news/BNBUSDT.json
+[NEWS-REFRESH] XRPUSDT bias=+0.67 novelty=0.50 -> data/news/XRPUSDT.json
+[NEWS-REFRESH] ADAUSDT bias=+0.00 novelty=0.00 -> data/news/ADAUSDT.json
+[NEWS-REFRESH] BTCUSDT bias=-0.33 novelty=0.50 -> data/news/BTCUSDT.json
+[NEWS-REFRESH] ETHUSDT bias=+0.00 novelty=0.50 -> data/news/ETHUSDT.json
+[NEWS-REFRESH] SOLUSDT bias=+0.00 novelty=0.00 -> data/news/SOLUSDT.json
+[NEWS-REFRESH] BNBUSDT bias=+0.00 novelty=0.00 -> data/news/BNBUSDT.json
+[NEWS-REFRESH] XRPUSDT bias=+0.33 novelty=0.50 -> data/news/XRPUSDT.json
+[NEWS-REFRESH] ADAUSDT bias=+0.00 novelty=0.00 -> data/news/ADAUSDT.json
+[NEWS-REFRESH] BTCUSDT bias=+0.13 novelty=0.30 -> data/news/BTCUSDT.json
+[NEWS-REFRESH] ETHUSDT bias=-0.67 novelty=0.50 -> data/news/ETHUSDT.json
+[NEWS-REFRESH] SOLUSDT bias=+0.22 novelty=0.50 -> data/news/SOLUSDT.json
+[NEWS-REFRESH] BNBUSDT bias=+0.67 novelty=0.50 -> data/news/BNBUSDT.json
+[NEWS-REFRESH] XRPUSDT bias=+0.00 novelty=0.00 -> data/news/XRPUSDT.json
+[NEWS-REFRESH] ADAUSDT bias=+0.67 novelty=0.50 -> data/news/ADAUSDT.json
+[NEWS-REFRESH] BTCUSDT bias=+0.22 novelty=0.33 -> data/news/BTCUSDT.json
+[NEWS-REFRESH] ETHUSDT bias=-0.22 novelty=0.50 -> data/news/ETHUSDT.json
+[NEWS-REFRESH] SOLUSDT bias=+0.00 novelty=0.50 -> data/news/SOLUSDT.json
+[NEWS-REFRESH] BNBUSDT bias=+0.00 novelty=0.00 -> data/news/BNBUSDT.json
+[NEWS-REFRESH] XRPUSDT bias=+0.00 novelty=0.00 -> data/news/XRPUSDT.json
+[NEWS-REFRESH] ADAUSDT bias=+0.00 novelty=0.00 -> data/news/ADAUSDT.json
+[NEWS-REFRESH] BTCUSDT bias=+0.07 novelty=0.50 -> data/news/BTCUSDT.json
+[NEWS-REFRESH] ETHUSDT bias=-0.67 novelty=0.50 -> data/news/ETHUSDT.json
+[NEWS-REFRESH] SOLUSDT bias=+0.00 novelty=0.00 -> data/news/SOLUSDT.json
+[NEWS-REFRESH] BNBUSDT bias=+0.00 novelty=0.00 -> data/news/BNBUSDT.json
+[NEWS-REFRESH] XRPUSDT bias=+0.22 novelty=0.50 -> data/news/XRPUSDT.json
+[NEWS-REFRESH] ADAUSDT bias=+0.00 novelty=0.00 -> data/news/ADAUSDT.json
+[NEWS-REFRESH] BTCUSDT bias=-0.44 novelty=0.50 -> data/news/BTCUSDT.json
+[NEWS-REFRESH] ETHUSDT bias=-0.67 novelty=0.50 -> data/news/ETHUSDT.json
+[NEWS-REFRESH] SOLUSDT bias=+0.00 novelty=0.50 -> data/news/SOLUSDT.json
+[NEWS-REFRESH] BNBUSDT bias=+0.00 novelty=0.00 -> data/news/BNBUSDT.json
+[NEWS-REFRESH] XRPUSDT bias=-0.44 novelty=0.50 -> data/news/XRPUSDT.json
+[NEWS-REFRESH] ADAUSDT bias=+0.00 novelty=0.00 -> data/news/ADAUSDT.json
+[NEWS-REFRESH] BTCUSDT bias=+0.10 novelty=0.50 -> data/news/BTCUSDT.json
+[NEWS-REFRESH] ETHUSDT bias=+0.67 novelty=0.50 -> data/news/ETHUSDT.json
+[NEWS-REFRESH] SOLUSDT bias=+0.67 novelty=0.50 -> data/news/SOLUSDT.json
+[NEWS-REFRESH] BNBUSDT bias=+0.00 novelty=0.00 -> data/news/BNBUSDT.json
+[NEWS-REFRESH] XRPUSDT bias=+0.67 novelty=0.50 -> data/news/XRPUSDT.json
+[NEWS-REFRESH] ADAUSDT bias=+0.00 novelty=0.00 -> data/news/ADAUSDT.json
+[NEWS-REFRESH] BTCUSDT bias=+0.29 novelty=0.50 -> data/news/BTCUSDT.json
+[NEWS-REFRESH] ETHUSDT bias=-0.22 novelty=0.50 -> data/news/ETHUSDT.json
+[NEWS-REFRESH] SOLUSDT bias=+0.67 novelty=0.50 -> data/news/SOLUSDT.json
+[NEWS-REFRESH] BNBUSDT bias=-0.67 novelty=0.50 -> data/news/BNBUSDT.json
+[NEWS-REFRESH] XRPUSDT bias=+0.40 novelty=0.50 -> data/news/XRPUSDT.json
+[NEWS-REFRESH] ADAUSDT bias=-0.67 novelty=0.50 -> data/news/ADAUSDT.json
+[NEWS-REFRESH] BTCUSDT bias=-0.07 novelty=0.50 -> data/news/BTCUSDT.json
+[NEWS-REFRESH] ETHUSDT bias=-0.22 novelty=0.50 -> data/news/ETHUSDT.json
+[NEWS-REFRESH] SOLUSDT bias=+0.00 novelty=0.50 -> data/news/SOLUSDT.json
+[NEWS-REFRESH] BNBUSDT bias=+0.00 novelty=0.00 -> data/news/BNBUSDT.json
+[NEWS-REFRESH] XRPUSDT bias=+0.50 novelty=0.38 -> data/news/XRPUSDT.json
+[NEWS-REFRESH] ADAUSDT bias=-0.67 novelty=0.50 -> data/news/ADAUSDT.json
+[NEWS-REFRESH] BTCUSDT bias=-0.22 novelty=0.50 -> data/news/BTCUSDT.json
+[NEWS-REFRESH] ETHUSDT bias=-0.22 novelty=0.42 -> data/news/ETHUSDT.json
+[NEWS-REFRESH] SOLUSDT bias=+0.13 novelty=0.40 -> data/news/SOLUSDT.json
+[NEWS-REFRESH] BNBUSDT bias=+0.67 novelty=0.50 -> data/news/BNBUSDT.json
+[NEWS-REFRESH] XRPUSDT bias=+0.44 novelty=0.42 -> data/news/XRPUSDT.json
+[NEWS-REFRESH] ADAUSDT bias=+0.00 novelty=0.00 -> data/news/ADAUSDT.json
+[NEWS-REFRESH] BTCUSDT bias=+0.00 novelty=0.36 -> data/news/BTCUSDT.json
+[NEWS-REFRESH] ETHUSDT bias=-0.33 novelty=0.50 -> data/news/ETHUSDT.json
+[NEWS-REFRESH] SOLUSDT bias=+0.00 novelty=0.50 -> data/news/SOLUSDT.json
+[NEWS-REFRESH] BNBUSDT bias=+0.00 novelty=0.50 -> data/news/BNBUSDT.json
+[NEWS-REFRESH] XRPUSDT bias=-0.07 novelty=0.50 -> data/news/XRPUSDT.json
+[NEWS-REFRESH] ADAUSDT bias=-0.13 novelty=0.50 -> data/news/ADAUSDT.json
+[NEWS-REFRESH] BTCUSDT bias=-0.06 novelty=0.41 -> data/news/BTCUSDT.json
+[NEWS-REFRESH] ETHUSDT bias=-0.13 novelty=0.40 -> data/news/ETHUSDT.json
+[NEWS-REFRESH] SOLUSDT bias=+0.00 novelty=0.00 -> data/news/SOLUSDT.json
+[NEWS-REFRESH] BNBUSDT bias=+0.00 novelty=0.00 -> data/news/BNBUSDT.json
+[NEWS-REFRESH] XRPUSDT bias=+0.44 novelty=0.50 -> data/news/XRPUSDT.json
+[NEWS-REFRESH] ADAUSDT bias=+0.00 novelty=0.00 -> data/news/ADAUSDT.json
+[NEWS-REFRESH] BTCUSDT bias=+0.13 novelty=0.50 -> data/news/BTCUSDT.json
+[NEWS-REFRESH] ETHUSDT bias=+0.00 novelty=0.40 -> data/news/ETHUSDT.json
+[NEWS-REFRESH] SOLUSDT bias=+0.67 novelty=0.50 -> data/news/SOLUSDT.json
+[NEWS-REFRESH] BNBUSDT bias=+0.00 novelty=0.00 -> data/news/BNBUSDT.json
+[NEWS-REFRESH] XRPUSDT bias=-0.22 novelty=0.50 -> data/news/XRPUSDT.json
+[NEWS-REFRESH] ADAUSDT bias=+0.00 novelty=0.00 -> data/news/ADAUSDT.json
+[NEWS-REFRESH] BTCUSDT bias=+0.17 novelty=0.38 -> data/news/BTCUSDT.json
+[NEWS-REFRESH] ETHUSDT bias=+0.67 novelty=0.50 -> data/news/ETHUSDT.json
+[NEWS-REFRESH] SOLUSDT bias=+0.67 novelty=0.50 -> data/news/SOLUSDT.json
+[NEWS-REFRESH] BNBUSDT bias=-0.67 novelty=0.50 -> data/news/BNBUSDT.json
+[NEWS-REFRESH] XRPUSDT bias=-0.67 novelty=0.50 -> data/news/XRPUSDT.json
+[NEWS-REFRESH] ADAUSDT bias=+0.00 novelty=0.00 -> data/news/ADAUSDT.json
+[NEWS-REFRESH] BTCUSDT bias=+0.19 novelty=0.43 -> data/news/BTCUSDT.json
+[NEWS-REFRESH] ETHUSDT bias=+0.22 novelty=0.50 -> data/news/ETHUSDT.json
+[NEWS-REFRESH] SOLUSDT bias=+0.00 novelty=0.00 -> data/news/SOLUSDT.json
+[NEWS-REFRESH] BNBUSDT bias=+0.00 novelty=0.00 -> data/news/BNBUSDT.json
+[NEWS-REFRESH] XRPUSDT bias=+0.67 novelty=0.50 -> data/news/XRPUSDT.json
+[NEWS-REFRESH] ADAUSDT bias=+0.67 novelty=0.50 -> data/news/ADAUSDT.json
+[NEWS-REFRESH] BTCUSDT bias=+0.57 novelty=0.43 -> data/news/BTCUSDT.json
+[NEWS-REFRESH] ETHUSDT bias=+0.67 novelty=0.50 -> data/news/ETHUSDT.json
+[NEWS-REFRESH] SOLUSDT bias=+0.67 novelty=0.50 -> data/news/SOLUSDT.json
+[NEWS-REFRESH] BNBUSDT bias=+0.00 novelty=0.00 -> data/news/BNBUSDT.json
+[NEWS-REFRESH] XRPUSDT bias=+0.00 novelty=0.00 -> data/news/XRPUSDT.json
+[NEWS-REFRESH] ADAUSDT bias=+0.00 novelty=0.00 -> data/news/ADAUSDT.json
+[NEWS-REFRESH] BTCUSDT bias=+0.13 novelty=0.40 -> data/news/BTCUSDT.json
+[NEWS-REFRESH] ETHUSDT bias=+0.67 novelty=0.50 -> data/news/ETHUSDT.json
+[NEWS-REFRESH] SOLUSDT bias=+0.67 novelty=0.50 -> data/news/SOLUSDT.json
+[NEWS-REFRESH] BNBUSDT bias=+0.00 novelty=0.00 -> data/news/BNBUSDT.json
+[NEWS-REFRESH] XRPUSDT bias=+0.00 novelty=0.00 -> data/news/XRPUSDT.json
+[NEWS-REFRESH] ADAUSDT bias=+0.67 novelty=0.50 -> data/news/ADAUSDT.json
+[NEWS-REFRESH] BTCUSDT bias=+0.22 novelty=0.46 -> data/news/BTCUSDT.json
+[NEWS-REFRESH] ETHUSDT bias=+0.22 novelty=0.50 -> data/news/ETHUSDT.json
+[NEWS-REFRESH] SOLUSDT bias=+0.00 novelty=0.50 -> data/news/SOLUSDT.json
+[NEWS-REFRESH] BNBUSDT bias=+0.00 novelty=0.00 -> data/news/BNBUSDT.json
+[NEWS-REFRESH] XRPUSDT bias=+0.44 novelty=0.42 -> data/news/XRPUSDT.json
+[NEWS-REFRESH] ADAUSDT bias=+0.00 novelty=0.50 -> data/news/ADAUSDT.json
+[NEWS-REFRESH] BTCUSDT bias=+0.00 novelty=0.50 -> data/news/BTCUSDT.json
+[NEWS-REFRESH] ETHUSDT bias=+0.22 novelty=0.50 -> data/news/ETHUSDT.json
+[NEWS-REFRESH] SOLUSDT bias=+0.67 novelty=0.50 -> data/news/SOLUSDT.json
+[NEWS-REFRESH] BNBUSDT bias=+0.00 novelty=0.00 -> data/news/BNBUSDT.json
+[NEWS-REFRESH] XRPUSDT bias=+0.00 novelty=0.50 -> data/news/XRPUSDT.json
+[NEWS-REFRESH] ADAUSDT bias=+0.00 novelty=0.00 -> data/news/ADAUSDT.json
+[NEWS-REFRESH] BTCUSDT bias=+0.00 novelty=0.50 -> data/news/BTCUSDT.json
+[NEWS-REFRESH] ETHUSDT bias=+0.22 novelty=0.50 -> data/news/ETHUSDT.json
+[NEWS-REFRESH] SOLUSDT bias=+0.67 novelty=0.50 -> data/news/SOLUSDT.json
+[NEWS-REFRESH] BNBUSDT bias=+0.00 novelty=0.00 -> data/news/BNBUSDT.json
+[NEWS-REFRESH] XRPUSDT bias=+0.00 novelty=0.50 -> data/news/XRPUSDT.json
+[NEWS-REFRESH] ADAUSDT bias=+0.00 novelty=0.00 -> data/news/ADAUSDT.json

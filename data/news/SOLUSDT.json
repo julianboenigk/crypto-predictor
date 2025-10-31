@@ -1,1 +1,9 @@
-{"timestamp_ms": 1761853023452, "bias": 1.0, "novelty": 0.2764633749289448, "source": "cryptonews", "meta": {"ticker": "SOL", "window": "last60min"}}
+{
+  "pair": "SOLUSDT",
+  "ticker": "SOL",
+  "date_window": "last60min",
+  "items": 0,
+  "bias": 0.0,
+  "novelty": 0.0,
+  "articles": []
+}

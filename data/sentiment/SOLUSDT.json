@@ -1,1 +1,15 @@
-{"ts": 1761852992620, "polarity": 0.0, "volume_z": 0.0, "signal": 0.5}
+{
+  "counts": {
+    "negative": 22,
+    "neutral": 3,
+    "positive": 46
+  },
+  "date_window": "yesterday",
+  "pol": 0.507,
+  "sig": 0.75,
+  "source": "cryptonews/stat",
+  "symbol": "SOLUSDT",
+  "ticker": "SOL",
+  "ts": 1761947275,
+  "vz": 0.0
+}

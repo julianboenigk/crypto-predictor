@@ -1,209 +1,332 @@
 # src/providers/cryptonews.py
-# -----------------------------------------------------------------------------
-# Centralized CryptoNews API client.
-# - Reads API key from CRYPTONEWS_API_KEY or (fallback) CRYPTONEWS_API_KEY
-# - Exposes small helper functions used by fetchers:
-#     * fetch_news_ticker(...)      -> raw JSON from /api/v1 (articles feed)
-#     * fetch_sentiment_ticker(...) -> raw JSON from /api/v1/stat (daily sentiment)
-# - Adds consistent timeouts, error messages, and minimal retries.
-# -----------------------------------------------------------------------------
+# -*- coding: utf-8 -*-
+"""
+CryptoNews provider wrapper.
+- Reads API key from CRYPTONEWS_API_KEY or (fallback) CRYPTONEWS_TOKEN
+- Provides:
+    * fetch_news_list(...)           -> raw payload from /api/v1
+    * fetch_sentiment_stat(...)      -> raw payload from /api/v1/stat
+    * parse_sentiment_from_stat(...) -> normalized sentiment dict
+
+Notes on date windows
+---------------------
+NEWS endpoint (/api/v1): supports time windows like
+  last5min, last10min, last15min, last30min, last45min, last60min,
+  today, yesterday, last7days, last30days, last60days, last90days, yeartodate
+
+STAT endpoint (/api/v1/stat): DOES NOT accept "last1days".
+Instead, use one of:
+  today, yesterday, last7days, last30days, last60days, last90days, yeartodate
+
+We normalize a few common variants:
+  "last1days"   -> "yesterday"
+  "last24h"     -> "yesterday"
+  "last60min"   -> "today"  (for stat only; provider requires broader windows)
+"""
 
 from __future__ import annotations
 
 import os
 import time
-from typing import Any, Dict, Optional
+import json
+import pathlib
+from typing import Any, Dict, Optional, Iterable
 
 import requests
-from dotenv import load_dotenv
 
+
+# ---------- Configuration ----------
 BASE_URL = "https://cryptonews-api.com"
-_DEFAULT_TIMEOUT = 8  # seconds
-_MAX_RETRIES = 2      # small safety net for transient 5xx or timeouts
+USER_AGENT = "python-requests/2.x (crypto-predictor)"
+REQUEST_TIMEOUT_SEC = 20
+MAX_RETRIES = 4
+RETRY_BACKOFF_SEC = 1.0
+
+CACHE_DIR = pathlib.Path("data/.cache/cryptonews")
+CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 
+# ---------- Helpers ----------
 def _get_api_key() -> str:
-    """
-    Read API key from env:
-      1) CRYPTONEWS_API_KEY (preferred)
-      2) CRYPTONEWS_API_KEY   (fallback for legacy setups)
-    """
-    load_dotenv(override=False)
-
-    key = os.getenv("CRYPTONEWS_API_KEY") or os.getenv("CRYPTONEWS_API_KEY")
-    if not key:
+    key = os.getenv("CRYPTONEWS_API_KEY") or os.getenv("CRYPTONEWS_TOKEN")
+    if not key or key.strip() in {"YOUR_TOKEN_HERE", "REPLACE_WITH_YOUR_REAL_KEY"}:
         raise RuntimeError(
-            "Missing API key for CryptoNews. Set CRYPTONEWS_API_KEY in your .env "
-            "(or keep legacy CRYPTONEWS_API_KEY for backwards compatibility)."
+            "CryptoNews API key missing/placeholder. Set CRYPTONEWS_API_KEY in your .env "
+            "(or keep legacy CRYPTONEWS_TOKEN for backwards compatibility)."
         )
-    return key
+    return key.strip()
 
 
-def _request_json(
-    method: str,
-    path: str,
-    params: Optional[Dict[str, Any]] = None,
-    timeout: int = _DEFAULT_TIMEOUT,
-) -> Dict[str, Any]:
+def _cache_key(endpoint: str, params: Dict[str, Any]) -> str:
+    # Simple deterministic key
+    ordered = "|".join(f"{k}={params[k]}" for k in sorted(params))
+    return f"{endpoint}|{ordered}"
+
+
+def _cache_path(endpoint: str, params: Dict[str, Any]) -> pathlib.Path:
+    return CACHE_DIR / (str(abs(hash(_cache_key(endpoint, params)))) + ".json")
+
+
+def _maybe_load_cache(endpoint: str, params: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    p = _cache_path(endpoint, params)
+    if p.exists():
+        with p.open("r", encoding="utf-8") as f:
+            return json.load(f)
+    return None
+
+
+def _maybe_store_cache(endpoint: str, params: Dict[str, Any], payload: Dict[str, Any]) -> None:
+    p = _cache_path(endpoint, params)
+    with p.open("w", encoding="utf-8") as f:
+        json.dump(payload, f)
+
+
+def _http_get(endpoint: str, params: Dict[str, Any], *, cache: bool) -> Dict[str, Any]:
     """
-    Minimal request wrapper with tiny retry logic for robustness.
-    Raises requests.HTTPError on non-2xx responses.
+    GET with light retries + optional on-disk caching.
     """
-    key = _get_api_key()
-    url = f"{BASE_URL}{path}"
-    final_params = dict(params or {})
-    final_params["token"] = key
+    if cache:
+        cached = _maybe_load_cache(endpoint, params)
+        if cached is not None:
+            return cached
 
+    url = BASE_URL + endpoint
+    headers = {"User-Agent": USER_AGENT}
     last_err: Optional[Exception] = None
-    for attempt in range(_MAX_RETRIES + 1):
+
+    for attempt in range(1, MAX_RETRIES + 1):
         try:
-            resp = requests.request(method, url, params=final_params, timeout=timeout)
+            resp = requests.get(url, params=params, headers=headers, timeout=REQUEST_TIMEOUT_SEC)
             resp.raise_for_status()
-            return resp.json()
-        except (requests.Timeout, requests.ConnectionError) as e:
-            last_err = e
-            if attempt < _MAX_RETRIES:
-                time.sleep(0.6 * (attempt + 1))
-                continue
-            raise
-        except requests.HTTPError as e:
-            # Let 4xx/5xx bubble up, but add a clearer message
+            data = resp.json()
+            if cache:
+                _maybe_store_cache(endpoint, params, data)
+            return data
+        except requests.exceptions.HTTPError as e:
+            # Surface provider error body if present for easier debugging
             try:
-                detail = resp.text  # type: ignore[name-defined]
+                err_body = resp.text  # type: ignore[name-defined]
             except Exception:
-                detail = str(e)
-            raise requests.HTTPError(
-                f"HTTPError {getattr(e.response, 'status_code', '?')} on {path} "
-                f"with params={final_params} :: {detail}"
-            ) from e
+                err_body = str(e)
+            last_err = requests.exceptions.HTTPError(
+                f"HTTPError {getattr(resp, 'status_code', '?')} on {endpoint} "
+                f"with params={params} :: {err_body}"
+            )
+            # 4xx usually won't improve with retries unless it's a transient 429
+            if getattr(resp, "status_code", 0) in (401, 403, 404, 422):
+                break
         except Exception as e:
             last_err = e
-            break
+        time.sleep(min(RETRY_BACKOFF_SEC * attempt, 3.0))
 
+    # Exhausted retries
     if last_err:
         raise last_err
-    # Fallback (should never reach)
-    return {}
+    raise RuntimeError("Unknown error in _http_get")
 
 
-# -----------------------------------------------------------------------------
-# Public helpers used by fetchers
-# -----------------------------------------------------------------------------
+# ---------- Date-window normalization ----------
+_ALLOWED_STAT_WINDOWS: Iterable[str] = (
+    "today",
+    "yesterday",
+    "last7days",
+    "last30days",
+    "last60days",
+    "last90days",
+    "yeartodate",
+)
 
-def fetch_news_ticker(
+def _normalize_stat_window(w: str) -> str:
+    """
+    Normalize common variants into STAT-accepted values.
+    """
+    w = (w or "").strip().lower()
+
+    if w in _ALLOWED_STAT_WINDOWS:
+        return w
+
+    # common variants -> normalize
+    if w in {"last1days", "last24h", "last24hours"}:
+        return "yesterday"
+    if w in {"last60min", "last45min", "last30min", "last15min", "last10min", "last5min"}:
+        # STAT doesn't accept minute windows -> use today (closest)
+        return "today"
+
+    # default fallback
+    return "yesterday"
+
+
+# ---------- Public API: NEWS ----------
+def fetch_news_list(
     ticker: str,
     *,
-    items: int = 50,
     date_window: str = "last60min",
+    items: int = 50,
     page: int = 1,
-    cache: Optional[bool] = None,
-    timeout: int = _DEFAULT_TIMEOUT,
+    cache: bool = True,
 ) -> Dict[str, Any]:
     """
-    Raw articles feed for a single ticker.
-    Mirrors:
-      GET /api/v1?tickers=BTC&items=50&date=last60min&page=1&token=...
-
-    Args:
-        ticker: e.g. "BTC", "ETH" (NOT "BTCUSDT"; strip suffix in the caller)
-        items:  number of items per page (provider caps may apply)
-        date_window: one of provider’s accepted values
-        page:   pagination page
-        cache:  True/False to override provider caching; None leaves it unset
-        timeout: request timeout
-
-    Returns: provider JSON
+    Calls: GET /api/v1?tickers=BTC&items=50&date=last60min&page=1&cache=false&token=...
+    Returns provider payload (dict).
     """
-    params: Dict[str, Any] = {
-        "tickers": ticker,
+    token = _get_api_key()
+    params = {
+        "tickers": ticker.upper(),
         "items": int(items),
         "date": date_window,
         "page": int(page),
+        "cache": "false" if not cache else "true",
+        "token": token,
     }
-    if cache is not None:
-        # provider expects "cache=false" or "cache=true"
-        params["cache"] = "true" if cache else "false"
-
-    return _request_json("GET", "/api/v1", params=params, timeout=timeout)
+    return _http_get("/api/v1", params, cache=cache)
 
 
-def fetch_sentiment_ticker(
+# ---------- Public API: STAT (sentiment aggregates) ----------
+def fetch_sentiment_stat(
     ticker: str,
     *,
-    date_window: str = "last1days",
+    date_window: str = "yesterday",
     page: int = 1,
-    cache: Optional[bool] = None,
-    timeout: int = _DEFAULT_TIMEOUT,
+    cache: bool = True,
 ) -> Dict[str, Any]:
     """
-    Daily sentiment for a single ticker.
-    Mirrors:
-      GET /api/v1/stat?tickers=BTC&date=last1days&page=1&cache=false&token=...
-
-    Note: Sentiment score range (per docs) is [-1.5, +1.5].
-          Caller is responsible for any smoothing/transforms.
-
-    Args:
-        ticker: e.g. "BTC", "ETH"
-        date_window: accepted values per docs:
-                     today, yesterday, last7days, last30days, yeartodate, or ranges
-        page: pagination page
-        cache: True/False to override provider caching; None leaves it unset
-        timeout: request timeout
-
-    Returns: provider JSON
+    Calls: GET /api/v1/stat?tickers=BTC&date=yesterday&page=1&cache=false&token=...
+    Returns provider payload (dict).
     """
-    params: Dict[str, Any] = {
-        "tickers": ticker,
-        "date": date_window,
+    token = _get_api_key()
+    norm_date = _normalize_stat_window(date_window)
+    params = {
+        "tickers": ticker.upper(),
+        "date": norm_date,
         "page": int(page),
+        "cache": "false" if not cache else "true",
+        "token": token,
     }
-    if cache is not None:
-        params["cache"] = "true" if cache else "false"
-
-    return _request_json("GET", "/api/v1/stat", params=params, timeout=timeout)
+    return _http_get("/api/v1/stat", params, cache=cache)
 
 
-# Optional: helpers for “all tickers” and “general” sentiment, if you need them.
-def fetch_sentiment_alltickers(
-    *,
-    date_window: str = "last30days",
-    page: int = 1,
-    cache: Optional[bool] = None,
-    timeout: int = _DEFAULT_TIMEOUT,
-) -> Dict[str, Any]:
+# ---------- Parsing helpers ----------
+def _first_key(d: Dict[str, Any]) -> Optional[str]:
+    """Return the 'latest' key if sortable (e.g., a date string), otherwise an arbitrary first key."""
+    if not d:
+        return None
+    try:
+        return sorted(d.keys())[-1]
+    except Exception:
+        for k in d:
+            return k
+    return None
+
+
+def parse_sentiment_from_stat(payload: Dict[str, Any], ticker: str) -> Dict[str, Any]:
     """
-    Mirrors:
-      GET /api/v1/stat?section=alltickers&date=last30days&page=1&token=...
+    Extracts numeric sentiment score and counts from CryptoNews STAT payload.
+
+    Searches in order:
+      1) payload['total'][<TICKER>]['Sentiment Score']
+      2) payload['data'][<date>][<TICKER>]['sentiment_score']
+
+    Also tries to read positive/negative/neutral counts when present, handling key
+    naming differences across sections.
     """
-    params: Dict[str, Any] = {
-        "section": "alltickers",
-        "date": date_window,
-        "page": int(page),
+    tkr = ticker.upper()
+    score: Optional[float] = None
+    pos = neg = neu = None
+
+    # Path 1: top-level 'total'
+    total = payload.get("total", {})
+    if isinstance(total, dict) and tkr in total and isinstance(total[tkr], dict):
+        block = total[tkr]
+        if "Sentiment Score" in block:
+            try:
+                score = float(block["Sentiment Score"])
+            except Exception:
+                pass
+        pos = block.get("Total Positive", pos)
+        neg = block.get("Total Negative", neg)
+        neu = block.get("Total Neutral",  neu)
+
+    # Path 2: per-date 'data'
+    data = payload.get("data")
+    if score is None and isinstance(data, dict):
+        date_key = _first_key(data)
+        if date_key:
+            per_date = data.get(date_key, {})
+            if isinstance(per_date, dict) and tkr in per_date and isinstance(per_date[tkr], dict):
+                block = per_date[tkr]
+                if "sentiment_score" in block:
+                    try:
+                        score = float(block["sentiment_score"])
+                    except Exception:
+                        pass
+                pos = block.get("Positive", pos)
+                neg = block.get("Negative", neg)
+                neu = block.get("Neutral",  neu)
+
+    # normalize counts to int if present
+    def _to_int(x):
+        try:
+            return int(x)
+        except Exception:
+            return None
+
+    pos, neg, neu = _to_int(pos), _to_int(neg), _to_int(neu)
+
+    # final fallback for score
+    if score is None:
+        score = 0.0
+
+    # clamp score to [-1, 1]
+    score = max(-1.0, min(1.0, float(score)))
+
+    return {
+        "score": score,
+        "positive": pos,
+        "negative": neg,
+        "neutral": neu,
+        "source": "cryptonews/stat",
     }
-    if cache is not None:
-        params["cache"] = "true" if cache else "false"
-
-    return _request_json("GET", "/api/v1/stat", params=params, timeout=timeout)
 
 
-def fetch_sentiment_general(
-    *,
-    date_window: str = "last30days",
-    page: int = 1,
-    cache: Optional[bool] = None,
-    timeout: int = _DEFAULT_TIMEOUT,
-) -> Dict[str, Any]:
-    """
-    Mirrors:
-      GET /api/v1/stat?section=general&date=last30days&page=1&token=...
-    """
-    params: Dict[str, Any] = {
-        "section": "general",
-        "date": date_window,
-        "page": int(page),
-    }
-    if cache is not None:
-        params["cache"] = "true" if cache else "false"
+# ---------- CLI quick test ----------
+if __name__ == "__main__":
+    import argparse
+    ap = argparse.ArgumentParser(description="CryptoNews provider quick test")
+    ap.add_argument("--mode", choices=["news", "stat", "both"], default="stat")
+    ap.add_argument("--ticker", default="BTC")
+    ap.add_argument("--news_window", default="last60min")
+    ap.add_argument("--stat_window", default="yesterday")
+    ap.add_argument("--items", type=int, default=10)
+    ap.add_argument("--page", type=int, default=1)
+    ap.add_argument("--cache", choices=["true", "false"], default="false")
+    args = ap.parse_args()
 
-    return _request_json("GET", "/api/v1/stat", params=params, timeout=timeout)
+    use_cache = args.cache.lower() == "true"
+
+    if args.mode in ("news", "both"):
+        try:
+            news = fetch_news_list(
+                args.ticker,
+                date_window=args.news_window,
+                items=args.items,
+                page=args.page,
+                cache=use_cache,
+            )
+            print("=== NEWS payload keys ===")
+            print(list(news.keys())[:10])
+        except Exception as e:
+            print("NEWS error:", e)
+
+    if args.mode in ("stat", "both"):
+        try:
+            stat = fetch_sentiment_stat(
+                args.ticker,
+                date_window=args.stat_window,
+                page=args.page,
+                cache=use_cache,
+            )
+            parsed = parse_sentiment_from_stat(stat, args.ticker)
+            print("=== STAT parsed ===")
+            print(parsed)
+        except Exception as e:
+            print("STAT error:", e)

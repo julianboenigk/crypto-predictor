@@ -1,1 +1,15 @@
-{"ts": 1761852992620, "polarity": 0.0, "volume_z": 0.0, "signal": 0.5}
+{
+  "counts": {
+    "negative": 28,
+    "neutral": 3,
+    "positive": 72
+  },
+  "date_window": "yesterday",
+  "pol": 0.641,
+  "sig": 0.82,
+  "source": "cryptonews/stat",
+  "symbol": "XRPUSDT",
+  "ticker": "XRP",
+  "ts": 1761947282,
+  "vz": 0.0
+}

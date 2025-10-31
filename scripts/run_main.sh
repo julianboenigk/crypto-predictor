@@ -1,8 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
-cd /home/crypto/crypto-predictor
-export PYTHONPATH=/home/crypto/crypto-predictor
+
+REPO="/home/crypto/crypto-predictor"
+cd "$REPO"
+
+# Ensure imports work and env vars are exported for the shell too
+export PYTHONPATH="$REPO"
+set -a; [ -f "$REPO/.env" ] && . "$REPO/.env"; set +a
+
 source .venv/bin/activate
 exec /usr/bin/flock -n /tmp/main_run.lock \
-  /home/crypto/crypto-predictor/.venv/bin/python -m src.app.main run \
+  "$REPO/.venv/bin/python" -m src.app.main run \
   >> data/logs/main.log 2>&1

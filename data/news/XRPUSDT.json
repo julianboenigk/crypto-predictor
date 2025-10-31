@@ -1,1 +1,38 @@
-{"timestamp_ms": 1761853024648, "bias": 0.3333333333333333, "novelty": 0.03189387046453213, "source": "cryptonews", "meta": {"ticker": "XRP", "window": "last60min"}}
+{
+  "pair": "XRPUSDT",
+  "ticker": "XRP",
+  "date_window": "last60min",
+  "items": 4,
+  "bias": 0.33,
+  "novelty": 0.5,
+  "articles": [
+    {
+      "title": "Why Hidden Roads Might be Ripple's Best Acquisition So Far For Massive XRP Growth",
+      "source": "Zycrypto",
+      "published_at": "Fri, 31 Oct 2025 17:42:03 -0400",
+      "url": "https://zycrypto.com/why-hidden-roads-might-be-ripples-best-acquisition-so-far-for-massive-xrp-growth/",
+      "sent": 1.0
+    },
+    {
+      "title": "Ripple to Unlock 1 Billion XRP From Escrow on November 1",
+      "source": "BeInCrypto",
+      "published_at": "Fri, 31 Oct 2025 17:14:52 -0400",
+      "url": "https://beincrypto.com/ripple-xrp-november-escrow-unlock-analysis/",
+      "sent": -1.0
+    },
+    {
+      "title": "Ripple Powers Aid Delivery and Funding for Global Nonprofits",
+      "source": "PYMNTS",
+      "published_at": "Fri, 31 Oct 2025 17:07:13 -0400",
+      "url": "https://www.pymnts.com/cryptocurrency/2025/ripple-powers-aid-delivery-and-funding-for-global-nonprofits/?utm_source=snapi",
+      "sent": 1.0
+    },
+    {
+      "title": "XRP defends KEY support as whales buy the dip – Is $3.12 in sight?",
+      "source": "AMBCrypto",
+      "published_at": "Fri, 31 Oct 2025 17:00:07 -0400",
+      "url": "https://ambcrypto.com/xrp-defends-key-support-as-whales-buy-the-dip-is-3-12-in-sight/",
+      "sent": 1.0
+    }
+  ]
+}
