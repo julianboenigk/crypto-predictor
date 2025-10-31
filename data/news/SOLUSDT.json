@@ -2,8 +2,26 @@
   "pair": "SOLUSDT",
   "ticker": "SOL",
   "date_window": "last60min",
-  "items": 0,
+  "items": [
+    {
+      "news_url": "https://blockonomi.com/vaneck-files-first-amendment-for-jito-solana-staking-etf-with-sec/",
+      "image_url": "https://crypto.snapi.dev/images/v1/0/x/g/vaneck-letter-807759.jpg",
+      "title": "VanEck Files First Amendment for Jito Solana Staking ETF with SEC",
+      "text": "VanEck and Jito file amended S-1 for Solana ETF with staking component, moving closer to U.S. market approval.",
+      "source_name": "Blockonomi",
+      "date": "Fri, 31 Oct 2025 18:09:23 -0400",
+      "topics": [
+        "regulations"
+      ],
+      "sentiment": "Positive",
+      "type": "Article",
+      "tickers": [
+        "JTO",
+        "SOL"
+      ]
+    }
+  ],
   "bias": 0.0,
-  "novelty": 0.0,
-  "articles": []
+  "novelty": 1.0,
+  "source": "cryptonews/list"
 }

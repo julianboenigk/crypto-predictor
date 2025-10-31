@@ -2,65 +2,118 @@
   "pair": "BTCUSDT",
   "ticker": "BTC",
   "date_window": "last60min",
-  "items": 8,
-  "bias": -0.17,
-  "novelty": 0.5,
-  "articles": [
+  "items": [
     {
+      "news_url": "https://www.forbes.com/sites/digital-assets/2025/10/31/global-money-supply-is--increasing-supporting-bitcoin-price/",
+      "image_url": "https://crypto.snapi.dev/images/v1/j/7/f/global-money-supply-is-increas-807754.jpg",
+      "title": "Global Money Supply Is Increasing, Supporting Bitcoin Price",
+      "text": "The long-term trend continues to be supportive of new highs when Bitcoin is priced in money that can't seem to find its way to controlling itself.",
+      "source_name": "Forbes",
+      "date": "Fri, 31 Oct 2025 17:57:37 -0400",
+      "topics": [
+        "pricemovement"
+      ],
+      "sentiment": "Positive",
+      "type": "Article",
+      "tickers": [
+        "BTC"
+      ]
+    },
+    {
+      "news_url": "https://blockonomi.com/prenetics-adds-100-btc-whats-behind-the-11m-crypto-investment/",
+      "image_url": "https://crypto.snapi.dev/images/v1/x/i/o/bitcoin-807748.jpg",
+      "title": "Prenetics Adds 100 BTC: What's Behind the $11M Crypto Investment?",
+      "text": "Prenetics acquires 100 BTC for $11M after $44M equity raise. The health science firm now holds 378 Bitcoin worth $41M.",
+      "source_name": "Blockonomi",
+      "date": "Fri, 31 Oct 2025 17:57:15 -0400",
+      "topics": [
+        "pricemovement"
+      ],
+      "sentiment": "Positive",
+      "type": "Article",
+      "tickers": [
+        "BTC"
+      ]
+    },
+    {
+      "news_url": "https://www.cryptopolitan.com/microstrategy-premium-to-bitcoin-holdings/",
+      "image_url": "https://crypto.snapi.dev/images/v1/6/g/1/strategy-saylor-807750.webp",
+      "title": "MicroStrategy beat Q3 net income by $2.8B, but the premium over its Bitcoin holdings has fallen to 1.3×",
+      "text": "MicroStrategy's premium over its Bitcoin holdings has fallen again, even after the company reported a $2.8 billion net income beat for the third quarter, according to data from Bloomberg. The company's valuation has been heavily tied to the size and market value of its Bitcoin treasury since 2020, but it now trades at roughly 1.",
+      "source_name": "Cryptopolitan",
+      "date": "Fri, 31 Oct 2025 17:45:10 -0400",
+      "topics": [
+        "pricemovement"
+      ],
+      "sentiment": "Negative",
+      "type": "Article",
+      "tickers": [
+        "BTC"
+      ]
+    },
+    {
+      "news_url": "https://thecurrencyanalytics.com/bitcoin/bitcoin-sentiment-weakens-as-fed-rate-cut-fails-to-boost-prices-208558",
+      "image_url": "https://crypto.snapi.dev/images/v1/b/i/u/btc73-571644-807756.jpg",
+      "title": "Bitcoin Sentiment Weakens as Fed Rate Cut Fails to Boost Prices",
+      "text": "Bitcoin's price slipped below $111,000 on Wednesday after the U.S. Federal Reserve's rate decision failed to inspire market confidence. Despite a widely expected 0.25% rate cut, comments from Fed Chair Jerome Powell suggesting that further cuts were “not a foregone conclusion” triggered a quick sell-off across the crypto market.",
+      "source_name": "The Currency Analytics",
+      "date": "Fri, 31 Oct 2025 17:36:01 -0400",
+      "topics": [],
+      "sentiment": "Negative",
+      "type": "Article",
+      "tickers": [
+        "BTC"
+      ]
+    },
+    {
+      "news_url": "https://blockonomi.com/binance-bitcoin-orders-hit-1-96m-as-whales-step-back-in/",
+      "image_url": "https://crypto.snapi.dev/images/v1/j/i/h/bitcoin-gold-807738.jpg",
       "title": "Binance Bitcoin Orders Hit $1.96M as Whales Step Back In",
-      "source": "Blockonomi",
-      "published_at": "Fri, 31 Oct 2025 17:31:29 -0400",
-      "url": "https://blockonomi.com/binance-bitcoin-orders-hit-1-96m-as-whales-step-back-in/",
-      "sent": 1.0
+      "text": "Average Bitcoin spot order size on Binance hits $1.96 million as whales re-enter accumulation phase",
+      "source_name": "Blockonomi",
+      "date": "Fri, 31 Oct 2025 17:31:29 -0400",
+      "topics": [
+        "whales",
+        "pricemovement"
+      ],
+      "sentiment": "Positive",
+      "type": "Article",
+      "tickers": [
+        "BTC"
+      ]
     },
     {
+      "news_url": "https://www.newsbtc.com/news/bitcoin/bitcoin-closed-october-in-red/",
+      "image_url": "https://crypto.snapi.dev/images/v1/l/o/r/btcv23vfds-594680-807737.jpg",
       "title": "Here's What Happened The Last Time The Bitcoin Price Closed October In The Red",
-      "source": "NewsBTC",
-      "published_at": "Fri, 31 Oct 2025 17:30:19 -0400",
-      "url": "https://www.newsbtc.com/news/bitcoin/bitcoin-closed-october-in-red/",
-      "sent": -1.0
+      "text": "The crypto community has long referred to October as Uptober, a nickname earned through Bitcoin's consistent history of strong monthly performances. The trend has been so reliable that the month became synonymous with price surges.",
+      "source_name": "NewsBTC",
+      "date": "Fri, 31 Oct 2025 17:30:19 -0400",
+      "topics": [
+        "pricemovement"
+      ],
+      "sentiment": "Negative",
+      "type": "Article",
+      "tickers": [
+        "BTC"
+      ]
     },
     {
+      "news_url": "https://cointelegraph.com/news/bitcoin-4-year-cycle-not-dead-70-drawdown?utm_source=rss_feed&utm_medium=rss&utm_campaign=rss_partner_inbound",
+      "image_url": "https://crypto.snapi.dev/images/v1/h/8/x/btcv25gvgfre-594582-807734.jpg",
       "title": "Bitcoin's 4-year cycle isn't dead, expect a 70% drop next downturn: VC",
-      "source": "Cointelegraph",
-      "published_at": "Fri, 31 Oct 2025 17:21:38 -0400",
-      "url": "https://cointelegraph.com/news/bitcoin-4-year-cycle-not-dead-70-drawdown?utm_source=rss_feed&utm_medium=rss&utm_campaign=rss_partner_inbound",
-      "sent": -1.0
-    },
-    {
-      "title": "Charles Hoskinson: “In Many Ways Cardano is a Spiritual Successor to Bitcoin”",
-      "source": "Zycrypto",
-      "published_at": "Fri, 31 Oct 2025 17:10:14 -0400",
-      "url": "https://zycrypto.com/charles-hoskinson-in-many-ways-cardano-is-a-spiritual-successor-to-bitcoin/",
-      "sent": 1.0
-    },
-    {
-      "title": "Market Analysis Highlights Ethereum Struggles Against Bitcoin's Renewed Momentum",
-      "source": "Crypto Economy",
-      "published_at": "Fri, 31 Oct 2025 17:08:48 -0400",
-      "url": "https://crypto-economy.com/market-analysis-highlights-ethereum-struggles-against-bitcoins-renewed-momentum/",
-      "sent": -1.0
-    },
-    {
-      "title": "HRF Warns Quantum Computers Could Break Bitcoin Encryption Within 5 Years",
-      "source": "Coinspeaker",
-      "published_at": "Fri, 31 Oct 2025 17:03:24 -0400",
-      "url": "https://www.coinspeaker.com/hrf-warns-quantum-computers-could-break-bitcoin-encryption/",
-      "sent": -1.0
-    },
-    {
-      "title": "Invisible Lightning: Why exchange channels break a favorite Bitcoin metric",
-      "source": "CryptoSlate",
-      "published_at": "Fri, 31 Oct 2025 17:01:20 -0400",
-      "url": "https://cryptoslate.com/invisible-lightning-why-exchange-channels-break-a-favorite-bitcoin-metric/",
-      "sent": -1.0
-    },
-    {
-      "title": "Nordea Expands Customer Access to Cryptocurrency with New Bitcoin Investment Option",
-      "source": "The Currency Analytics",
-      "published_at": "Fri, 31 Oct 2025 17:00:42 -0400",
-      "url": "https://thecurrencyanalytics.com/bitcoin/nordea-expands-customer-access-to-cryptocurrency-with-new-bitcoin-investment-option-208910",
-      "sent": 1.0
+      "text": "The lack of understanding about Bitcoin's economic properties will result in a market dump at the first sign of trouble, Vineet Budki said.",
+      "source_name": "Cointelegraph",
+      "date": "Fri, 31 Oct 2025 17:21:38 -0400",
+      "topics": [],
+      "sentiment": "Negative",
+      "type": "Article",
+      "tickers": [
+        "BTC"
+      ]
     }
-  ]
+  ],
+  "bias": 0.0,
+  "novelty": 0.86,
+  "source": "cryptonews/list"
 }

@@ -2,37 +2,53 @@
   "pair": "XRPUSDT",
   "ticker": "XRP",
   "date_window": "last60min",
-  "items": 4,
-  "bias": 0.33,
-  "novelty": 0.5,
-  "articles": [
+  "items": [
     {
+      "news_url": "https://bitcoinist.com/what-to-know-about-xrp-ledger/",
+      "image_url": "https://crypto.snapi.dev/images/v1/m/u/1/xrp19-571404-807751.jpg",
+      "title": "Pundit Breaks Down The XRP Ledger: What To Know About How It Works",
+      "text": "A lively discussion about XRP's true purpose and utility erupted on X after prominent crypto analyst Scott Melker posed a sincere question to his 1 million followers: what exactly is the current pitch for XRP? The token itself, not Ripple the company.",
+      "source_name": "Bitcoinist",
+      "date": "Fri, 31 Oct 2025 18:00:13 -0400",
+      "topics": [],
+      "sentiment": "Positive",
+      "type": "Article",
+      "tickers": [
+        "XRP"
+      ]
+    },
+    {
+      "news_url": "https://coingape.com/7b-virtu-financial-holds-63m-xrp-amid-whale-sell-off/",
+      "image_url": "https://crypto.snapi.dev/images/v1/v/y/q/xrp17-571491-807753.jpg",
+      "title": "$7B Virtu Financial Holds $63M XRP as Whales Accelerate Daily Sell-Off",
+      "text": "Virtu Financial, a $7 billion Wall Street firm, has revealed $63 million in XRP holdings. In contrast, on-chain data shows that whales are offloading over $260 million worth of the token every day.",
+      "source_name": "Coingape",
+      "date": "Fri, 31 Oct 2025 17:47:29 -0400",
+      "topics": [
+        "whales"
+      ],
+      "sentiment": "Negative",
+      "type": "Article",
+      "tickers": [
+        "XRP"
+      ]
+    },
+    {
+      "news_url": "https://zycrypto.com/why-hidden-roads-might-be-ripples-best-acquisition-so-far-for-massive-xrp-growth/",
+      "image_url": "https://crypto.snapi.dev/images/v1/u/o/5/xrp20-571383-807745.jpg",
       "title": "Why Hidden Roads Might be Ripple's Best Acquisition So Far For Massive XRP Growth",
-      "source": "Zycrypto",
-      "published_at": "Fri, 31 Oct 2025 17:42:03 -0400",
-      "url": "https://zycrypto.com/why-hidden-roads-might-be-ripples-best-acquisition-so-far-for-massive-xrp-growth/",
-      "sent": 1.0
-    },
-    {
-      "title": "Ripple to Unlock 1 Billion XRP From Escrow on November 1",
-      "source": "BeInCrypto",
-      "published_at": "Fri, 31 Oct 2025 17:14:52 -0400",
-      "url": "https://beincrypto.com/ripple-xrp-november-escrow-unlock-analysis/",
-      "sent": -1.0
-    },
-    {
-      "title": "Ripple Powers Aid Delivery and Funding for Global Nonprofits",
-      "source": "PYMNTS",
-      "published_at": "Fri, 31 Oct 2025 17:07:13 -0400",
-      "url": "https://www.pymnts.com/cryptocurrency/2025/ripple-powers-aid-delivery-and-funding-for-global-nonprofits/?utm_source=snapi",
-      "sent": 1.0
-    },
-    {
-      "title": "XRP defends KEY support as whales buy the dip – Is $3.12 in sight?",
-      "source": "AMBCrypto",
-      "published_at": "Fri, 31 Oct 2025 17:00:07 -0400",
-      "url": "https://ambcrypto.com/xrp-defends-key-support-as-whales-buy-the-dip-is-3-12-in-sight/",
-      "sent": 1.0
+      "text": "Ripple has officially completed its $1.25 billion acquisition of Hidden Road, marking one of the company's most strategic milestones to date.",
+      "source_name": "Zycrypto",
+      "date": "Fri, 31 Oct 2025 17:42:03 -0400",
+      "topics": [],
+      "sentiment": "Positive",
+      "type": "Article",
+      "tickers": [
+        "XRP"
+      ]
     }
-  ]
+  ],
+  "bias": 0.0,
+  "novelty": 1.0,
+  "source": "cryptonews/list"
 }

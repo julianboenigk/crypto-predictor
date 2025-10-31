@@ -2,16 +2,8 @@
   "pair": "ETHUSDT",
   "ticker": "ETH",
   "date_window": "last60min",
-  "items": 1,
-  "bias": -0.67,
-  "novelty": 0.5,
-  "articles": [
-    {
-      "title": "Market Analysis Highlights Ethereum Struggles Against Bitcoin's Renewed Momentum",
-      "source": "Crypto Economy",
-      "published_at": "Fri, 31 Oct 2025 17:08:48 -0400",
-      "url": "https://crypto-economy.com/market-analysis-highlights-ethereum-struggles-against-bitcoins-renewed-momentum/",
-      "sent": -1.0
-    }
-  ]
+  "items": [],
+  "bias": 0.0,
+  "novelty": 0.0,
+  "source": "cryptonews/list"
 }

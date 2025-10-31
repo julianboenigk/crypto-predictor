@@ -773,3 +773,21 @@
 [NEWS-REFRESH] BNBUSDT bias=+0.00 novelty=0.00 -> data/news/BNBUSDT.json
 [NEWS-REFRESH] XRPUSDT bias=+0.00 novelty=0.50 -> data/news/XRPUSDT.json
 [NEWS-REFRESH] ADAUSDT bias=+0.00 novelty=0.00 -> data/news/ADAUSDT.json
+[NEWS-REFRESH] BTCUSDT bias=-0.13 novelty=0.45 -> data/news/BTCUSDT.json
+[NEWS-REFRESH] ETHUSDT bias=-0.67 novelty=0.50 -> data/news/ETHUSDT.json
+[NEWS-REFRESH] SOLUSDT bias=+0.00 novelty=0.00 -> data/news/SOLUSDT.json
+[NEWS-REFRESH] BNBUSDT bias=-0.67 novelty=0.50 -> data/news/BNBUSDT.json
+[NEWS-REFRESH] XRPUSDT bias=+0.22 novelty=0.50 -> data/news/XRPUSDT.json
+[NEWS-REFRESH] ADAUSDT bias=+0.67 novelty=0.50 -> data/news/ADAUSDT.json
+[NEWS-REFRESH] BTCUSDT bias=-0.07 novelty=0.44 -> data/news/BTCUSDT.json
+[NEWS-REFRESH] ETHUSDT bias=-0.67 novelty=0.50 -> data/news/ETHUSDT.json
+[NEWS-REFRESH] SOLUSDT bias=+0.00 novelty=0.00 -> data/news/SOLUSDT.json
+[NEWS-REFRESH] BNBUSDT bias=-0.67 novelty=0.50 -> data/news/BNBUSDT.json
+[NEWS-REFRESH] XRPUSDT bias=+0.13 novelty=0.50 -> data/news/XRPUSDT.json
+[NEWS-REFRESH] ADAUSDT bias=+0.67 novelty=0.50 -> data/news/ADAUSDT.json
+[NEWS-REFRESH][ERROR] BTCUSDT: AttributeError("'list' object has no attribute 'get'")
+[NEWS-REFRESH][ERROR] ETHUSDT: AttributeError("'list' object has no attribute 'get'")
+[NEWS-REFRESH][ERROR] SOLUSDT: AttributeError("'list' object has no attribute 'get'")
+[NEWS-REFRESH][ERROR] BNBUSDT: AttributeError("'list' object has no attribute 'get'")
+[NEWS-REFRESH][ERROR] XRPUSDT: AttributeError("'list' object has no attribute 'get'")
+[NEWS-REFRESH][ERROR] ADAUSDT: AttributeError("'list' object has no attribute 'get'")

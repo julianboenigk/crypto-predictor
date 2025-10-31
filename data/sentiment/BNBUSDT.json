@@ -1,15 +1,7 @@
 {
-  "counts": {
-    "negative": 4,
-    "neutral": 3,
-    "positive": 9
-  },
-  "date_window": "yesterday",
-  "pol": 0.469,
-  "sig": 0.73,
-  "source": "cryptonews/stat",
-  "symbol": "BNBUSDT",
+  "pair": "BNBUSDT",
   "ticker": "BNB",
-  "ts": 1761947276,
-  "vz": 0.0
+  "pol": 0.47,
+  "vz": 0.0,
+  "sig": 0.73
 }

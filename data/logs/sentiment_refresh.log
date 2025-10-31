@@ -4,3 +4,21 @@
 [SENT-REFRESH] BNBUSDT pol=+0.00 vz=+0.00 sig=0.50 -> data/sentiment/BNBUSDT.json
 [SENT-REFRESH] XRPUSDT pol=+0.00 vz=+0.00 sig=0.50 -> data/sentiment/XRPUSDT.json
 [SENT-REFRESH] ADAUSDT pol=+0.00 vz=+0.00 sig=0.50 -> data/sentiment/ADAUSDT.json
+[SENT-REFRESH] BTCUSDT pol=-0.13 vz=+0.00 sig=0.43 -> data/sentiment/BTCUSDT.json
+[SENT-REFRESH] ETHUSDT pol=+0.18 vz=+0.00 sig=0.59 -> data/sentiment/ETHUSDT.json
+[SENT-REFRESH] SOLUSDT pol=+0.51 vz=+0.00 sig=0.75 -> data/sentiment/SOLUSDT.json
+[SENT-REFRESH] BNBUSDT pol=+0.47 vz=+0.00 sig=0.73 -> data/sentiment/BNBUSDT.json
+[SENT-REFRESH] XRPUSDT pol=+0.64 vz=+0.00 sig=0.82 -> data/sentiment/XRPUSDT.json
+[SENT-REFRESH] ADAUSDT pol=-0.45 vz=+0.00 sig=0.28 -> data/sentiment/ADAUSDT.json
+[SENT-REFRESH] BTCUSDT pol=-0.13 vz=+0.00 sig=0.43 -> data/sentiment/BTCUSDT.json
+[SENT-REFRESH] ETHUSDT pol=+0.18 vz=+0.00 sig=0.59 -> data/sentiment/ETHUSDT.json
+[SENT-REFRESH] SOLUSDT pol=+0.51 vz=+0.00 sig=0.75 -> data/sentiment/SOLUSDT.json
+[SENT-REFRESH] BNBUSDT pol=+0.47 vz=+0.00 sig=0.73 -> data/sentiment/BNBUSDT.json
+[SENT-REFRESH] XRPUSDT pol=+0.64 vz=+0.00 sig=0.82 -> data/sentiment/XRPUSDT.json
+[SENT-REFRESH] ADAUSDT pol=-0.45 vz=+0.00 sig=0.28 -> data/sentiment/ADAUSDT.json
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/crypto/crypto-predictor/src/fetchers/sentiment_refresh.py", line 21, in <module>
+    from src.providers.cryptonews import fetch_sentiment_stat, parse_sentiment_from_stat
+ImportError: cannot import name 'parse_sentiment_from_stat' from 'src.providers.cryptonews' (/home/crypto/crypto-predictor/src/providers/cryptonews.py)

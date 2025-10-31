@@ -1,15 +1,7 @@
 {
-  "counts": {
-    "negative": 35,
-    "neutral": 4,
-    "positive": 45
-  },
-  "date_window": "yesterday",
-  "pol": 0.179,
-  "sig": 0.59,
-  "source": "cryptonews/stat",
-  "symbol": "ETHUSDT",
+  "pair": "ETHUSDT",
   "ticker": "ETH",
-  "ts": 1761947272,
-  "vz": 0.0
+  "pol": 0.18,
+  "vz": 0.0,
+  "sig": 0.59
 }

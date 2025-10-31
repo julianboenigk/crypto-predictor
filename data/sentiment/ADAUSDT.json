@@ -1,15 +1,7 @@
 {
-  "counts": {
-    "negative": 13,
-    "neutral": 0,
-    "positive": 7
-  },
-  "date_window": "yesterday",
-  "pol": -0.45,
-  "sig": 0.28,
-  "source": "cryptonews/stat",
-  "symbol": "ADAUSDT",
+  "pair": "ADAUSDT",
   "ticker": "ADA",
-  "ts": 1761947286,
-  "vz": 0.0
+  "pol": -0.45,
+  "vz": 0.0,
+  "sig": 0.28
 }
