@@ -2,18 +2,25 @@
 set -euo pipefail
 umask 002
 
+# === paths ===
 REPO="/home/crypto/crypto-predictor"
 LOGDIR="$REPO/data/logs"
+OUTDIR="$REPO/data/news"
+LOCK="/tmp/news_refresh.lock"
 
-mkdir -p "$LOGDIR" "$REPO/data/news"
-cd "$REPO"
+mkdir -p "$LOGDIR" "$OUTDIR"
 
-# Make repo importable as a package and export .env to the shell
-export PYTHONPATH="$REPO"
-set -a; [ -f "$REPO/.env" ] && . "$REPO/.env"; set +a
-
-/usr/bin/flock -n /tmp/news_refresh.lock bash -lc "
-  source '$REPO/.venv/bin/activate'
+# === run under a lock to avoid overlaps ===
+/usr/bin/flock -n "$LOCK" bash -lc "
+  set -euo pipefail
   cd '$REPO'
-  '$REPO/.venv/bin/python' -m src.fetchers.news_refresh --date last60min --items 50 --cache false
+  # venv
+  source '$REPO/.venv/bin/activate'
+  export PYTHONPATH='$REPO'
+  # run: allowed date-windows include last5min/10/15/30/45/60, today, yesterday, last7days, last30days, last60days, last90days, yeartodate
+  python -m src.fetchers.news_refresh \
+    --date-window last60min \
+    --items 50 \
+    --outdir '$OUTDIR' \
+    --cache false
 " >> "$LOGDIR/news_refresh.log" 2>&1

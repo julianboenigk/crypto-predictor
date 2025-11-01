@@ -1,7 +1,16 @@
 {
-  "pair": "ETHUSDT",
-  "ticker": "ETH",
-  "pol": 0.18,
-  "vz": 0.0,
-  "sig": 0.59
+  "symbol": "ETHUSDT",
+  "provider": "cryptonews/stat",
+  "date_window": "yesterday",
+  "polarity": -0.15,
+  "velocity": 0.0,
+  "signal": 0.425,
+  "raw": {
+    "score": -0.15,
+    "positive": 31,
+    "negative": 38,
+    "neutral": 1,
+    "source": "cryptonews/stat"
+  },
+  "ts": "2025-11-01T19:15:22.115009+00:00"
 }

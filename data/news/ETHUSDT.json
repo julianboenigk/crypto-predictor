@@ -1,9 +1,26 @@
 {
-  "pair": "ETHUSDT",
-  "ticker": "ETH",
+  "symbol": "ETHUSDT",
+  "provider": "cryptonews/news",
   "date_window": "last60min",
-  "items": [],
+  "count": 1,
   "bias": 0.0,
-  "novelty": 0.0,
-  "source": "cryptonews/list"
+  "novelty": 0.5,
+  "articles": [
+    {
+      "news_url": "https://news.bitcoin.com/public-firms-with-private-keys-the-biggest-btc-and-eth-stashes-right-now/",
+      "image_url": "https://crypto.snapi.dev/images/v1/i/m/a/be27-590188-808131.jpg",
+      "title": "Public Firms With Private Keys: The Biggest BTC and ETH Stashes Right Now",
+      "text": "Public markets now double as a scoreboard for who's stockpiling bitcoin and ethereum—and the numbers tell a lively story. From Boardrooms to the Bitcoin Blockchain Corporate coin chests start with the obvious heavyweight: Strategy (MSTR) towers over the bitcoin field with 640,808 BTC, a lead so wide it reads like a different league. Bitcointreasuries.",
+      "source_name": "Bitcoin",
+      "date": "Sat, 01 Nov 2025 15:11:33 -0400",
+      "topics": [],
+      "sentiment": "Positive",
+      "type": "Article",
+      "tickers": [
+        "BTC",
+        "ETH"
+      ]
+    }
+  ],
+  "ts": "2025-11-01T19:15:03.803396+00:00"
 }

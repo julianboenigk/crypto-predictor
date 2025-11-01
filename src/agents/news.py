@@ -1,107 +1,130 @@
+# src/agents/news.py
 from __future__ import annotations
 
 import json
+import os
 import time
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Any, Dict
+from datetime import datetime
+from typing import Any, Dict, Optional
 
+NEWS_DIR = os.path.join("data", "news")
+TTL_SEC = 90 * 60  # consider news fresh for 90 minutes
 
 @dataclass
-class NewsResult:
-    score: float
-    confidence: float
-    info: Dict[str, Any]
-    inputs_fresh: bool
+class NewsRecord:
+    bias: float = 0.0      # [-1, +1]
+    novelty: float = 0.5   # [0, 1]
+    amp: float = 0.5       # [0, 1] amplitude/weight for effect sizing
+    ts: int = 0            # unix seconds
+    raw: Dict[str, Any] = None
 
+def _parse_ts_any(ts_val: Any) -> int:
+    """
+    Accept int, float, or ISO-8601 string (e.g. '2025-11-01T14:04:09.642519+00:00').
+    Return unix seconds (int). Fallback to 0 if parsing fails.
+    """
+    if ts_val is None:
+        return 0
+    if isinstance(ts_val, int):
+        return ts_val
+    if isinstance(ts_val, float):
+        return int(ts_val)
+    if isinstance(ts_val, str):
+        s = ts_val.strip()
+        # 'Z' suffix → normalize to +00:00
+        if s.endswith("Z"):
+            s = s[:-1] + "+00:00"
+        # If it's a pure integer in a string
+        if s.isdigit():
+            try:
+                return int(s)
+            except Exception:
+                pass
+        try:
+            dt = datetime.fromisoformat(s)
+            return int(dt.timestamp())
+        except Exception:
+            return 0
+    return 0
+
+def _load_news(pair: str) -> Optional[NewsRecord]:
+    path = os.path.join(NEWS_DIR, f"{pair}.json")
+    if not os.path.exists(path):
+        return None
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except Exception:
+        return None
+
+    # Be defensive with keys
+    bias = float(data.get("bias", 0.0) or 0.0)          # [-1, 1]
+    novelty = float(data.get("novelty", 0.5) or 0.5)    # [0, 1]
+    amp = float(data.get("amp", 0.5) or 0.5)            # [0, 1]
+    ts = _parse_ts_any(data.get("ts"))
+
+    return NewsRecord(bias=bias, novelty=novelty, amp=amp, ts=ts, raw=data)
+
+def _fresh(ts: int, ttl_sec: int = TTL_SEC) -> bool:
+    if ts <= 0:
+        return False
+    return (int(time.time()) - ts) <= ttl_sec
+
+def _score_from_components(bias: float, novelty: float, amp: float) -> float:
+    """
+    Compose a single news score.
+    - bias drives direction ([-1, +1])
+    - novelty modulates intensity (0..1 → map to [-1, +1] around 0.5)
+    - amp scales overall impact (0..1)
+    """
+    nov_centered = (novelty - 0.5) * 2.0  # [-1, +1]
+    base = 0.8 * bias + 0.2 * nov_centered
+    score = base * max(0.0, min(1.0, amp))
+    # clamp to [-1, 1]
+    return max(-1.0, min(1.0, score))
 
 class NewsAgent:
     """
-    File-based news signal reader.
-
-    Looks for: data/news/{PAIR}.json
-    Expected shape written by our news_refresh fetcher:
-      {
-        "ts": 1730220000000,        # unix ms (news_refresh writes ms; we also accept sec)
-        "bias": -0.25,              # -1..+1 sentiment polarity aggregate
-        "novelty": 0.10,            # 0..1 novelty ratio
-        "amp": 0.50                 # 0..1 amplification/proxy for reach
-      }
-
-    If missing/stale → neutral score with low confidence.
+    Public interface used by src/app/main.py:
+      evaluate(pair: str) -> Dict[str, Any] with keys:
+        score, conf, bias, novelty, amp, ts_fresh, ts
     """
 
-    def __init__(self, data_dir: str = "data", freshness_sec: int = 90 * 60):
-        self.name = "news"
-        self.data_dir = data_dir
-        self.freshness_sec = freshness_sec
+    def __init__(self, ttl_sec: int = TTL_SEC) -> None:
+        self.ttl_sec = ttl_sec
 
-    # ---------- helpers ----------
+    def evaluate(self, pair: str) -> Dict[str, Any]:
+        rec = _load_news(pair)
+        if rec is None:
+            # No data = neutral, modest confidence
+            return {
+                "score": 0.0,
+                "conf": 0.35,   # matches previous prints
+                "bias": 0.0,
+                "novelty": 0.5,
+                "amp": 0.5,
+                "ts_fresh": False,
+                "ts": 0,
+            }
 
-    def _now(self) -> int:
-        return int(time.time())
+        ts_ok = _fresh(rec.ts, self.ttl_sec)
+        score = _score_from_components(rec.bias, rec.novelty, rec.amp)
 
-    def _load_json(self, path: Path) -> Dict[str, Any] | None:
-        if not path.exists():
-            return None
-        try:
-            return json.loads(path.read_text(encoding="utf-8"))
-        except Exception:
-            return None
+        # Confidence: keep baseline similar to historical logs, boost if fresh
+        conf = 0.35 + (0.10 if ts_ok else 0.0)
+        conf = float(max(0.0, min(1.0, conf)))
 
-    def _fresh(self, ts_value: int) -> bool:
-        # accept seconds or milliseconds
-        if ts_value > 10_000_000_000:  # looks like ms
-            ts_value = ts_value // 1000
-        age = self._now() - int(ts_value)
-        return age <= self.freshness_sec
-
-    # ---------- public API ----------
-
-    def evaluate(self, pair: str) -> NewsResult:
-        f = Path(self.data_dir) / "news" / f"{pair}.json"
-        rec = self._load_json(f)
-
-        if not rec:
-            return NewsResult(
-                score=0.0,
-                confidence=0.35,
-                info={"bias": 0.0, "novelty": 0.0, "amp": 0.50},
-                inputs_fresh=False,
-            )
-
-        bias = float(rec.get("bias", 0.0))
-        novelty = float(rec.get("novelty", 0.0))
-        amp = float(rec.get("amp", 0.5))
-        ts_val = int(rec.get("ts", 0))
-
-        is_fresh = self._fresh(ts_val)
-
-        # Scoring:
-        #  - bias directly drives sign (already clipped -1..+1 upstream)
-        #  - novelty lightly boosts magnitude (new info matters more)
-        score = max(-1.0, min(1.0, bias)) * (1.0 + min(0.25, novelty * 0.5))
-        score = max(-1.0, min(1.0, score))
-
-        # Confidence:
-        #  - base 0.35
-        #  - + novelty up to +0.25
-        #  - + amp up to +0.25
-        #  - if stale, reduce to min(0.35, conf)
-        conf = 0.35 + min(0.25, novelty * 0.5) + min(0.25, amp * 0.5)
-        conf = max(0.0, min(1.0, conf))
-        if not is_fresh:
-            conf = min(0.35, conf)
-
-        info = {
-            "bias": round(bias, 2),
-            "novelty": round(novelty, 2),
-            "amp": round(amp, 2),
+        return {
+            "score": float(score),
+            "conf": conf,
+            "bias": float(rec.bias),
+            "novelty": float(rec.novelty),
+            "amp": float(rec.amp),
+            "ts_fresh": bool(ts_ok),
+            "ts": int(rec.ts) if rec.ts else 0,
         }
 
-        return NewsResult(
-            score=score,
-            confidence=conf,
-            info=info,
-            inputs_fresh=is_fresh,
-        )
+# convenience factory used by main
+def make_agent(ttl_sec: int = TTL_SEC) -> NewsAgent:
+    return NewsAgent(ttl_sec=ttl_sec)

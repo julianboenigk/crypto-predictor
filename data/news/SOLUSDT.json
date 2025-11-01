@@ -1,27 +1,42 @@
 {
-  "pair": "SOLUSDT",
-  "ticker": "SOL",
+  "symbol": "SOLUSDT",
+  "provider": "cryptonews/news",
   "date_window": "last60min",
-  "items": [
+  "count": 2,
+  "bias": 0.0,
+  "novelty": 0.5,
+  "articles": [
     {
-      "news_url": "https://blockonomi.com/vaneck-files-first-amendment-for-jito-solana-staking-etf-with-sec/",
-      "image_url": "https://crypto.snapi.dev/images/v1/0/x/g/vaneck-letter-807759.jpg",
-      "title": "VanEck Files First Amendment for Jito Solana Staking ETF with SEC",
-      "text": "VanEck and Jito file amended S-1 for Solana ETF with staking component, moving closer to U.S. market approval.",
-      "source_name": "Blockonomi",
-      "date": "Fri, 31 Oct 2025 18:09:23 -0400",
-      "topics": [
-        "regulations"
-      ],
+      "news_url": "https://www.cointribune.com/en/solana-etfs-capture-nearly-200-million-in-4-days/?utm_source=snapi",
+      "image_url": "https://crypto.snapi.dev/images/v1/a/3/j/etf-solana-sol-crypto-808129.jpg",
+      "title": "Solana ETFs capture nearly $200 million in 4 days",
+      "text": "Solana ETFs have just achieved a historic feat: nearly 200 million dollars raised in only four days. Yet, the price of SOL drops by 1.5%.",
+      "source_name": "Cointribune",
+      "date": "Sat, 01 Nov 2025 15:05:00 -0400",
+      "topics": [],
       "sentiment": "Positive",
       "type": "Article",
       "tickers": [
-        "JTO",
+        "SOL"
+      ]
+    },
+    {
+      "news_url": "https://coinpaper.com/12047/solana-etf-inflows-hit-44-m-in-4-days-as-bitcoin-loses-191-m?utm_source=snapi",
+      "image_url": "https://crypto.snapi.dev/images/v1/placeholders/crypto/crypto30.jpg",
+      "title": "Solana ETF Inflows Hit $44M in 4 Days as Bitcoin Loses $191M",
+      "text": "Capital flows shift toward Solana ETFs, with $44.4M inflows in days, as Bitcoin and Ethereum funds face heavy outflows.",
+      "source_name": "Coinpaper",
+      "date": "Sat, 01 Nov 2025 14:20:30 -0400",
+      "topics": [
+        "pricemovement"
+      ],
+      "sentiment": "Negative",
+      "type": "Article",
+      "tickers": [
+        "BTC",
         "SOL"
       ]
     }
   ],
-  "bias": 0.0,
-  "novelty": 1.0,
-  "source": "cryptonews/list"
+  "ts": "2025-11-01T19:15:04.505343+00:00"
 }

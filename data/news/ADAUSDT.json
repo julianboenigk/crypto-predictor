@@ -1,9 +1,10 @@
 {
-  "pair": "ADAUSDT",
-  "ticker": "ADA",
+  "symbol": "ADAUSDT",
+  "provider": "cryptonews/news",
   "date_window": "last60min",
-  "items": [],
+  "count": 0,
   "bias": 0.0,
   "novelty": 0.0,
-  "source": "cryptonews/list"
+  "articles": [],
+  "ts": "2025-11-01T19:15:05.527239+00:00"
 }

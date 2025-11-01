@@ -1,9 +1,10 @@
 {
-  "pair": "BNBUSDT",
-  "ticker": "BNB",
+  "symbol": "BNBUSDT",
+  "provider": "cryptonews/news",
   "date_window": "last60min",
-  "items": [],
+  "count": 0,
   "bias": 0.0,
   "novelty": 0.0,
-  "source": "cryptonews/list"
+  "articles": [],
+  "ts": "2025-11-01T19:15:04.903856+00:00"
 }

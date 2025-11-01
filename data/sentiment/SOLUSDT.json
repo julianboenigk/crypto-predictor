@@ -1,7 +1,16 @@
 {
-  "pair": "SOLUSDT",
-  "ticker": "SOL",
-  "pol": 0.51,
-  "vz": 0.0,
-  "sig": 0.75
+  "symbol": "SOLUSDT",
+  "provider": "cryptonews/stat",
+  "date_window": "yesterday",
+  "polarity": 0.628,
+  "velocity": 0.0,
+  "signal": 0.814,
+  "raw": {
+    "score": 0.628,
+    "positive": 30,
+    "negative": 12,
+    "neutral": 1,
+    "source": "cryptonews/stat"
+  },
+  "ts": "2025-11-01T19:15:26.412089+00:00"
 }

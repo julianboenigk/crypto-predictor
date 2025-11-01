@@ -1,51 +1,129 @@
 # src/fetchers/sentiment_refresh.py
+# Pulls CryptoNews sentiment STATs per symbol and writes normalized JSON
+# with (polarity, velocity, signal). Uses provider retry/backoff.
+
 from __future__ import annotations
+
 import argparse
 import json
 import os
-import sys
-from pathlib import Path
-from typing import Dict
+from datetime import datetime, timezone
+from typing import List, Dict, Any
 
-from src.providers.cryptonews import fetch_sentiment_stat, parse_sentiment_from_stat
+# Best-effort .env loading (won’t crash if not present)
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except Exception:
+    pass
 
-UNIVERSE = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT", "ADAUSDT"]
+from src.providers.cryptonews import (
+    fetch_sentiment_stat,
+    parse_sentiment_from_stat,
+)
 
-def _pair_to_ticker(pair: str) -> str:
-    # Map "BTCUSDT" -> "BTC" for CryptoNews tickers
-    return pair.replace("USDT", "").upper()
+# Provider-allowed windows
+ALLOWED_WINDOWS = {
+    "last5min", "last10min", "last15min", "last30min", "last45min", "last60min",
+    "today", "yesterday", "last7days", "last30days", "last60days", "last90days",
+    "yeartodate",
+}
 
-def _to_signal(score: float) -> float:
-    # map score [-1..+1] into [0..1] with 0.5 neutral
-    return max(0.0, min(1.0, 0.5 + score * 0.5))
+DEFAULT_SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT", "ADAUSDT"]
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description="Refresh CryptoNews sentiment STAT and write per-ticker JSON.")
-    parser.add_argument("--date", default="yesterday", help="time window: today, yesterday, last7days, last30days, etc.")
-    parser.add_argument("--cache", default="false", choices=["true", "false"], help="provider cache hint")
-    parser.add_argument("--outdir", default="data/sentiment", help="output directory")
-    args = parser.parse_args()
 
-    outdir = Path(args.outdir).resolve()
-    outdir.mkdir(parents=True, exist_ok=True)
+def _ensure_dir(path: str) -> None:
+    os.makedirs(path, exist_ok=True)
 
-    for pair in UNIVERSE:
-        tkr = _pair_to_ticker(pair)
+
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _write_json(path: str, data: Dict[str, Any]) -> None:
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+
+def refresh_sentiment(
+    symbols: List[str],
+    date_window: str,
+    out_dir: str,
+    page: int = 1,
+    cache: bool = False,
+) -> None:
+    _ensure_dir(out_dir)
+
+    for sym in symbols:
         try:
-            stat = fetch_sentiment_stat(tkr, date_window=args.date, cache=(args.cache == "true"))
-            pol = float(stat.get("score", 0.0))
-            # velocity not provided by STAT; keep 0.0 for now
-            vz = 0.0
-            sig = _to_signal(pol)
-            payload = {"pair": pair, "ticker": tkr, "pol": round(pol, 2), "vz": round(vz, 2), "sig": round(sig, 2)}
-            outfile = outdir / f"{pair}.json"
-            with open(outfile, "w", encoding="utf-8") as f:
-                json.dump(payload, f, ensure_ascii=False, indent=2)
-            print(f"[SENT-REFRESH] {pair} pol={payload['pol']:+.2f} vz={payload['vz']:+.2f} sig={payload['sig']:.2f} -> {outfile}")
+            stat = fetch_sentiment_stat(sym, date_window=date_window, page=page, cache=cache)
+            pol, vz, sig = parse_sentiment_from_stat(stat)
+            payload = {
+                "symbol": sym,
+                "provider": "cryptonews/stat",
+                "date_window": date_window,
+                "polarity": round(float(pol), 4),
+                "velocity": round(float(vz), 4),
+                "signal": round(float(sig), 4),
+                "raw": stat,  # keep raw for traceability
+                "ts": _now_iso(),
+            }
+            out_path = os.path.join(out_dir, f"{sym}.json")
+            _write_json(out_path, payload)
+            print(f"[SENT-REFRESH] {sym} pol={pol:+.2f} vz={vz:+.2f} sig={sig:.2f} -> {out_path}")
         except Exception as e:
-            print(f"[SENT-REFRESH][ERROR] {pair}: {repr(e)}", file=sys.stderr)
+            print(f"[SENT-REFRESH][ERROR] {sym}: {repr(e)}")
 
-    return 0
+
+def parse_args() -> argparse.Namespace:
+    p = argparse.ArgumentParser(
+        description="Refresh CryptoNews sentiment stats and write normalized JSON."
+    )
+    p.add_argument(
+        "--symbols",
+        type=str,
+        default=",".join(DEFAULT_SYMBOLS),
+        help=f"Comma-separated symbols, default={','.join(DEFAULT_SYMBOLS)}",
+    )
+    p.add_argument(
+        "--date-window",
+        type=str,
+        default="yesterday",
+        choices=sorted(ALLOWED_WINDOWS),
+        help="Date window per provider docs (default: yesterday).",
+    )
+    p.add_argument(
+        "--page",
+        type=int,
+        default=1,
+        help="Page number for provider pagination (default: 1).",
+    )
+    p.add_argument(
+        "--cache",
+        type=lambda x: str(x).lower() in {"1", "true", "yes", "y"},
+        default=False,
+        help="Pass through provider cache=true|false (default: false).",
+    )
+    p.add_argument(
+        "--outdir",
+        type=str,
+        default="data/sentiment",
+        help="Output directory (default: data/sentiment).",
+    )
+    return p.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+    symbols = [s.strip() for s in args.symbols.split(",") if s.strip()]
+    refresh_sentiment(
+        symbols=symbols,
+        date_window=args.date_window,
+        out_dir=args.outdir,
+        page=args.page,
+        cache=args.cache,
+    )
+
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    main()

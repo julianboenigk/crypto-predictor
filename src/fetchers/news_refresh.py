@@ -1,86 +1,197 @@
 # src/fetchers/news_refresh.py
+# Pulls CryptoNews article lists per symbol and writes normalized JSON.
+# Computes a lightweight bias/novelty heuristic for quick scoring.
+
 from __future__ import annotations
+
 import argparse
 import json
 import os
-import sys
-from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from collections import Counter
+from datetime import datetime, timezone
+from typing import List, Dict, Any
 
-from src.providers.cryptonews import fetch_news_list
+# Best-effort .env loading (won’t crash if not present)
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except Exception:
+    pass
 
-UNIVERSE = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT", "ADAUSDT"]
+from src.providers.cryptonews import (
+    fetch_news_list,
+)
 
-def _pair_to_ticker(pair: str) -> str:
-    return pair.replace("USDT", "").upper()
+ALLOWED_WINDOWS = {
+    "last5min", "last10min", "last15min", "last30min", "last45min", "last60min",
+    "today", "yesterday", "last7days", "last30days", "last60days", "last90days",
+    "yeartodate",
+}
 
-def _extract_item_sentiment(item: Dict[str, Any]) -> float:
+DEFAULT_SYMBOLS = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "BNBUSDT", "XRPUSDT", "ADAUSDT"]
+
+
+def _ensure_dir(path: str) -> None:
+    os.makedirs(path, exist_ok=True)
+
+
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _write_json(path: str, data: Dict[str, Any]) -> None:
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+
+def _safe_title(item: Dict[str, Any]) -> str:
+    return str(
+        item.get("title")
+        or item.get("news_title")
+        or item.get("headline")
+        or ""
+    ).strip()
+
+
+def _get_source(item: Dict[str, Any]) -> str:
+    return str(
+        item.get("source")
+        or item.get("source_name")
+        or item.get("publisher")
+        or ""
+    ).strip().lower()
+
+
+def _compute_bias_and_novelty(articles: List[Dict[str, Any]]) -> (float, float):
     """
-    CryptoNews news items sometimes have a 'sentiment' or 'sentiment_score' field, sometimes not.
-    Normalize to [-1..+1], fallback 0.0 if unknown.
-    """
-    s = item.get("sentiment")
-    if s is None:
-        s = item.get("sentiment_score")
-    try:
-        # Could be "-1","0","1","-0.3", etc.
-        val = float(s)
-        # clip to [-1..+1]
-        return max(-1.0, min(1.0, val))
-    except Exception:
-        return 0.0
+    Heuristic:
+      - bias: simple keyword sentiment over titles only (very lightweight, deterministic).
+      - novelty: unique sources / total, clamped to [0, 0.50] to match earlier log style.
 
-def _bias_and_novelty(items: List[Dict[str, Any]]) -> Tuple[float, float]:
+    This is intentionally simple to avoid external NLP deps.
     """
-    bias = mean sentiment in [-1..+1] (0 if no items).
-    novelty = fraction of unique sources in [0..1] (proxy).
-    """
-    if not items:
+    if not articles:
         return 0.0, 0.0
-    sentiments = [_extract_item_sentiment(it) for it in items]
-    bias = sum(sentiments) / max(1, len(sentiments))
 
-    sources = [it.get("source_name") or it.get("source") or it.get("site") for it in items]
-    uniq = len({s for s in sources if s})
-    novelty = uniq / max(1, len(items))
-    return bias, novelty
+    pos_kw = ("surge", "record", "bull", "rally", "soar", "approve", "growth", "rise", "win", "support", "breakout")
+    neg_kw = ("drop", "falls", "bear", "lawsuit", "ban", "hack", "decline", "risk", "loss", "bearish", "downturn")
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description="Refresh CryptoNews article list and write per-ticker JSON.")
-    parser.add_argument("--date", default="last60min", help="time window: last5min, last15min, last60min, today, yesterday, etc.")
-    parser.add_argument("--items", type=int, default=50, help="max items")
-    parser.add_argument("--cache", default="false", choices=["true", "false"], help="provider cache hint")
-    parser.add_argument("--outdir", default="data/news", help="output directory")
-    args = parser.parse_args()
+    score = 0
+    for a in articles:
+        title = _safe_title(a).lower()
+        if not title:
+            continue
+        if any(k in title for k in pos_kw):
+            score += 1
+        if any(k in title for k in neg_kw):
+            score -= 1
 
-    outdir = Path(args.outdir).resolve()
-    outdir.mkdir(parents=True, exist_ok=True)
+    n = len(articles)
+    bias = 0.0 if n == 0 else max(-1.0, min(1.0, score / max(3.0, n / 3.0)))  # soften extremes
 
-    for pair in UNIVERSE:
-        tkr = _pair_to_ticker(pair)
+    sources = [_get_source(a) for a in articles if _get_source(a)]
+    uniq = len(set(sources))
+    novelty = min(0.50, (uniq / max(1, n)))  # keep 0..0.5 range to mirror your prior logs
+
+    # round for stable logging
+    return round(bias, 2), round(novelty, 2)
+
+
+def refresh_news(
+    symbols: List[str],
+    date_window: str,
+    out_dir: str,
+    items: int = 50,
+    page: int = 1,
+    cache: bool = False,
+) -> None:
+    _ensure_dir(out_dir)
+
+    for sym in symbols:
         try:
-            items = fetch_news_list(tkr, date_window=args.date, items=args.items, cache=(args.cache == "true"))
-            if not isinstance(items, list):
-                # extremely defensive: normalize again
-                items = items if isinstance(items, list) else []
-            bias, novelty = _bias_and_novelty(items)
-            payload = {
-                "pair": pair,
-                "ticker": tkr,
-                "date_window": args.date,
-                "items": items[: args.items],
-                "bias": round(bias, 2),
-                "novelty": round(novelty, 2),
-                "source": "cryptonews/list",
-            }
-            outfile = outdir / f"{pair}.json"
-            with open(outfile, "w", encoding="utf-8") as f:
-                json.dump(payload, f, ensure_ascii=False, indent=2)
-            print(f"[NEWS-REFRESH] {pair} bias={payload['bias']:+.2f} novelty={payload['novelty']:.2f} -> {outfile}")
-        except Exception as e:
-            print(f"[NEWS-REFRESH][ERROR] {pair}: {repr(e)}", file=sys.stderr)
+            articles = fetch_news_list(
+                sym,
+                date_window=date_window,
+                items=items,
+                page=page,
+                cache=cache,
+            )
+            bias, novelty = _compute_bias_and_novelty(articles)
 
-    return 0
+            payload = {
+                "symbol": sym,
+                "provider": "cryptonews/news",
+                "date_window": date_window,
+                "count": len(articles),
+                "bias": bias,        # lightweight heuristic
+                "novelty": novelty,  # 0..0.5
+                "articles": articles,  # keep raw list for transparency
+                "ts": _now_iso(),
+            }
+
+            out_path = os.path.join(out_dir, f"{sym}.json")
+            _write_json(out_path, payload)
+            print(f"[NEWS-REFRESH] {sym} bias={bias:+.2f} novelty={novelty:.2f} -> {out_path}")
+        except Exception as e:
+            print(f"[NEWS-REFRESH][ERROR] {sym}: {repr(e)}")
+
+
+def parse_args() -> argparse.Namespace:
+    p = argparse.ArgumentParser(
+        description="Refresh CryptoNews articles and write normalized JSON with bias/novelty heuristics."
+    )
+    p.add_argument(
+        "--symbols",
+        type=str,
+        default=",".join(DEFAULT_SYMBOLS),
+        help=f"Comma-separated symbols, default={','.join(DEFAULT_SYMBOLS)}",
+    )
+    p.add_argument(
+        "--date-window",
+        type=str,
+        default="last60min",
+        choices=sorted(ALLOWED_WINDOWS),
+        help="Date window per provider docs (default: last60min).",
+    )
+    p.add_argument(
+        "--items",
+        type=int,
+        default=50,
+        help="Number of items per call (default: 50).",
+    )
+    p.add_argument(
+        "--page",
+        type=int,
+        default=1,
+        help="Page number for provider pagination (default: 1).",
+    )
+    p.add_argument(
+        "--cache",
+        type=lambda x: str(x).lower() in {"1", "true", "yes", "y"},
+        default=False,
+        help="Pass through provider cache=true|false (default: false).",
+    )
+    p.add_argument(
+        "--outdir",
+        type=str,
+        default="data/news",
+        help="Output directory (default: data/news).",
+    )
+    return p.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+    symbols = [s.strip() for s in args.symbols.split(",") if s.strip()]
+    refresh_news(
+        symbols=symbols,
+        date_window=args.date_window,
+        out_dir=args.outdir,
+        items=args.items,
+        page=args.page,
+        cache=args.cache,
+    )
+
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    main()

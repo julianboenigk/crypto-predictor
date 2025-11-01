@@ -1,15 +1,16 @@
 {
-  "counts": {
-    "negative": 112,
-    "neutral": 8,
-    "positive": 93
-  },
-  "date_window": "yesterday",
-  "pol": -0.134,
-  "sig": 0.43,
-  "source": "cryptonews/stat",
   "symbol": "BTCUSDT",
-  "ticker": "BTC",
-  "ts": 1761948141,
-  "vz": 0.0
+  "provider": "cryptonews/stat",
+  "date_window": "yesterday",
+  "polarity": 0.229,
+  "velocity": 0.0,
+  "signal": 0.6145,
+  "raw": {
+    "score": 0.229,
+    "positive": 115,
+    "negative": 84,
+    "neutral": 4,
+    "source": "cryptonews/stat"
+  },
+  "ts": "2025-11-01T19:15:13.822898+00:00"
 }

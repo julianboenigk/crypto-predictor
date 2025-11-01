@@ -2,18 +2,24 @@
 set -euo pipefail
 umask 002
 
+# === paths ===
 REPO="/home/crypto/crypto-predictor"
 LOGDIR="$REPO/data/logs"
+OUTDIR="$REPO/data/sentiment"
+LOCK="/tmp/sentiment_refresh.lock"
 
-mkdir -p "$LOGDIR" "$REPO/data/sentiment"
-cd "$REPO"
+mkdir -p "$LOGDIR" "$OUTDIR"
 
-# Make repo importable as a package and export .env to the shell
-export PYTHONPATH="$REPO"
-set -a; [ -f "$REPO/.env" ] && . "$REPO/.env"; set +a
-
-/usr/bin/flock -n /tmp/sentiment_refresh.lock bash -lc "
-  source '$REPO/.venv/bin/activate'
+# === run under a lock to avoid overlaps ===
+/usr/bin/flock -n "$LOCK" bash -lc "
+  set -euo pipefail
   cd '$REPO'
-  '$REPO/.venv/bin/python' -m src.fetchers.sentiment_refresh --date yesterday --cache false
+  # venv
+  source '$REPO/.venv/bin/activate'
+  export PYTHONPATH='$REPO'
+  # 'yesterday' is valid for the provider's /stat endpoint
+  python -m src.fetchers.sentiment_refresh \
+    --date-window yesterday \
+    --outdir '$OUTDIR' \
+    --cache false
 " >> "$LOGDIR/sentiment_refresh.log" 2>&1

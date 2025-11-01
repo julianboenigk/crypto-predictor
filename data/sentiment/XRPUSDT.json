@@ -1,7 +1,16 @@
 {
-  "pair": "XRPUSDT",
-  "ticker": "XRP",
-  "pol": 0.64,
-  "vz": 0.0,
-  "sig": 0.82
+  "symbol": "XRPUSDT",
+  "provider": "cryptonews/stat",
+  "date_window": "yesterday",
+  "polarity": 0.518,
+  "velocity": 0.0,
+  "signal": 0.759,
+  "raw": {
+    "score": 0.518,
+    "positive": 55,
+    "negative": 26,
+    "neutral": 3,
+    "source": "cryptonews/stat"
+  },
+  "ts": "2025-11-01T19:15:33.018321+00:00"
 }

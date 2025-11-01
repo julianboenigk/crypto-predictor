@@ -1,7 +1,16 @@
 {
-  "pair": "ADAUSDT",
-  "ticker": "ADA",
-  "pol": -0.45,
-  "vz": 0.0,
-  "sig": 0.28
+  "symbol": "ADAUSDT",
+  "provider": "cryptonews/stat",
+  "date_window": "yesterday",
+  "polarity": 0.409,
+  "velocity": 0.0,
+  "signal": 0.7045,
+  "raw": {
+    "score": 0.409,
+    "positive": 14,
+    "negative": 8,
+    "neutral": 0,
+    "source": "cryptonews/stat"
+  },
+  "ts": "2025-11-01T19:15:34.779332+00:00"
 }

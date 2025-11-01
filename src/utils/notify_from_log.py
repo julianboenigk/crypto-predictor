@@ -1,55 +1,95 @@
 # src/utils/notify_from_log.py
+# -----------------------------------------------------------------------------
+# Reads all trade plans from data/plans/*.json and sends a Telegram notification
+# for those with certainty >= threshold (default 70%).
+# -----------------------------------------------------------------------------
+
 from __future__ import annotations
-import argparse
-import re
-from pathlib import Path
-from typing import List
+import os
+import json
+import glob
+from typing import Dict, Any, List
+from src.utils.notify_telegram import send_message
 
-from .notify_telegram import send_alert
 
-CONSENSUS_RE = re.compile(
-    r"^\[CONSENSUS\]\s+([A-Z]+USDT)\s+([A-Z]+)\s+S=([+-]?\d+\.\d+).*$"
-)
+# --------------------------------------------------------------------------
+# Configuration
+# --------------------------------------------------------------------------
+THRESH = float(os.getenv("CERTAINTY_NOTIFY_THRESHOLD", "70"))
 
-def parse_bullets(text: str, max_items: int = 12) -> List[str]:
-    bullets: List[str] = []
-    for line in text.splitlines():
-        m = CONSENSUS_RE.match(line.strip())
-        if not m:
+
+# --------------------------------------------------------------------------
+# Helper functions
+# --------------------------------------------------------------------------
+
+def load_plans() -> Dict[str, Any]:
+    """Load all trade plan JSON files from data/plans."""
+    plans: Dict[str, Any] = {}
+    for fp in glob.glob("data/plans/*.json"):
+        try:
+            with open(fp, "r") as f:
+                obj = json.load(f)
+                if isinstance(obj, dict) and "pair" in obj:
+                    plans[obj["pair"]] = obj
+        except Exception as e:
+            print(f"[WARN] Failed to load {fp}: {e}")
+    return plans
+
+
+def fmt_pair(p: str) -> str:
+    """Format pair name for readability (e.g. BTCUSDT → BTC)."""
+    return p.replace("USDT", "")
+
+
+def format_high_conviction(plans: Dict[str, Any]) -> str | None:
+    """Format Markdown message for all high-certainty BUY/SELL trades."""
+    lines: List[str] = []
+
+    for pair, plan in sorted(plans.items()):
+        act = plan.get("action", "HOLD")
+        cert = float(plan.get("certainty_pct", 0.0))
+        if act == "HOLD" or cert < THRESH:
             continue
-        pair, action, score = m.groups()
-        bullets.append(f"{pair}: *{action}* (S={score})")
-        if len(bullets) >= max_items:
-            break
-    return bullets
+
+        entry = plan.get("entry")
+        sl = plan.get("stop")
+        tp1 = plan.get("tp1")
+        tp2 = plan.get("tp2")
+        valid = plan.get("valid_until")
+
+        emoji = "🚀" if act == "BUY" else "🔻"
+        lines.append(
+            f"*{fmt_pair(pair)}*: {emoji} *{act}*  _Certainty {cert:.0f}%_\n"
+            f"• Entry: {entry} ({plan.get('entry_type','limit')})\n"
+            f"• Stop-Loss: {sl}\n"
+            f"• Take-Profit 1: {tp1}\n"
+            f"• Take-Profit 2: {tp2}\n"
+            f"• Valid until: {valid}"
+        )
+
+    if not lines:
+        return None
+
+    header = f"📣 *High-Conviction Trade Plans* (≥ {int(THRESH)} %)"
+    return header + "\n\n" + "\n\n".join(lines)
+
+
+# --------------------------------------------------------------------------
+# Main entry
+# --------------------------------------------------------------------------
 
 def main() -> int:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--log", default="data/logs/main.log", help="Path to main.log")
-    ap.add_argument("--dry-run", action="store_true", help="Print instead of sending")
-    args = ap.parse_args()
+    plans = load_plans()
+    text = format_high_conviction(plans)
 
-    p = Path(args.log)
-    if not p.exists():
-        print(f"Log not found: {p}")
-        return 2
-
-    text = p.read_text(errors="ignore")
-    bullets = parse_bullets(text)
-    if not bullets:
-        print("No consensus entries found to send.")
+    if not text:
+        print("[INFO] No high-conviction trades to notify.")
         return 0
 
-    title = "Crypto Predictor — Latest Consensus"
-    if args.dry_run:
-        print(title)
-        for b in bullets:
-            print(f" - {b}")
-        return 0
+    ok = send_message(text, parse_mode="Markdown")
+    print("[OK] Telegram notification sent." if ok else "[ERR] Telegram send failed.")
+    return 0 if ok else 2
 
-    ok = send_alert(title, bullets)
-    print("Sent." if ok else "Failed.")
-    return 0 if ok else 1
 
 if __name__ == "__main__":
     raise SystemExit(main())

@@ -1,7 +1,16 @@
 {
-  "pair": "BNBUSDT",
-  "ticker": "BNB",
-  "pol": 0.47,
-  "vz": 0.0,
-  "sig": 0.73
+  "symbol": "BNBUSDT",
+  "provider": "cryptonews/stat",
+  "date_window": "yesterday",
+  "polarity": 0.0,
+  "velocity": 0.0,
+  "signal": 0.5,
+  "raw": {
+    "score": 0.0,
+    "positive": 6,
+    "negative": 6,
+    "neutral": 0,
+    "source": "cryptonews/stat"
+  },
+  "ts": "2025-11-01T19:15:27.596106+00:00"
 }
