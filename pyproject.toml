@@ -6,14 +6,8 @@ build-backend = "setuptools.build_meta"
 name = "crypto-predictor"
 version = "0.1.0"
 requires-python = ">=3.12"
-dependencies = ["PyYAML>=6.0.1", "requests>=2.32"]
+dependencies = ["requests", "PyYAML", "pytest"]
 
-[tool.ruff]
-line-length = 100
-
-[tool.mypy]
-python_version = "3.12"
-strict = true
-
-[tool.pytest.ini_options]
-pythonpath = ["src"]
+[tool.setuptools.packages.find]
+where = [""]          # look in repo root
+include = ["src*"]    # package "src" and subpackages
