@@ -39,52 +39,62 @@ def format_signal_message(
     reason: str,
 ) -> str:
     """
-    Create a natural-language Telegram message for non-technical users.
+    Create a compact Telegram message for non-technical users.
+    Now supports 3 agents: technical, news, sentiment.
     """
-
     # Friendly pair + icons
     emoji_map = {"LONG": "🟢", "SHORT": "🔴", "HOLD": "⏸️"}
     action_text = {
-        "LONG": "Buy signal (bullish momentum)",
-        "SHORT": "Sell signal (bearish pressure)",
-        "HOLD": "Hold — no clear trend",
+        "LONG": "Buy signal",
+        "SHORT": "Sell signal",
+        "HOLD": "Hold / no clear edge",
     }
 
-    emoji = emoji_map.get(decision.upper(), "ℹ️")
-    action_line = action_text.get(decision.upper(), "Market update")
-
-    # Pretty pair name
     pair_pretty = pair.replace("USDT", "/USDT")
+    emoji = emoji_map.get(decision.upper(), "ℹ️")
+    action_line = action_text.get(decision.upper(), "Signal")
 
-    # Interpret breakdowns
-    tech_line = news_line = ""
+    # Agent lines
+    tech_line = ""
+    news_line = ""
+    sent_line = ""
+
     for name, s, c in breakdown:
+        name_l = name.lower()
         conf_pct = int(round(c * 100))
-        if name.lower() == "technical":
+        if name_l == "technical":
             if s > 0.3:
                 desc = "bullish setup"
             elif s < -0.3:
-                desc = "bearish tendency"
+                desc = "bearish setup"
             else:
                 desc = "neutral pattern"
-            tech_line = f"🧭 *Technicals* → {desc} ({conf_pct}% confidence)"
-        elif name.lower() == "news":
+            tech_line = f"🧭 *Technicals* → {desc} ({conf_pct}% conf.)"
+        elif name_l == "news":
             if s > 0.2:
                 desc = "positive headlines"
             elif s < -0.2:
                 desc = "negative headlines"
             else:
-                desc = "neutral news mood"
-            news_line = f"📰 *News Sentiment* → {desc} ({conf_pct}% confidence)"
+                desc = "neutral news"
+            news_line = f"📰 *News* → {desc} ({conf_pct}% conf.)"
+        elif name_l == "sentiment":
+            # this is the new agent based on CryptoNewsAPI /stat
+            if s > 0.2:
+                desc = "market upbeat"
+            elif s < -0.2:
+                desc = "market cautious"
+            else:
+                desc = "market neutral"
+            sent_line = f"📊 *Sentiment* → {desc} ({conf_pct}% conf.)"
 
-    # Friendly interpretation text
-    interpretation = ""
+    # Friendly interpretation text (shorter)
     if decision.upper() == "LONG":
-        interpretation = "Momentum and sentiment are aligned upward — a good moment to consider entering a position."
+        interpretation = "Multiple signals point up."
     elif decision.upper() == "SHORT":
-        interpretation = "Downward pressure dominates — caution, market may continue lower."
+        interpretation = "Downward pressure dominates."
     else:
-        interpretation = "Signals are mixed; staying on the sidelines may be prudent until a clearer trend forms."
+        interpretation = "Signals mixed. Waiting is reasonable."
 
     # Timestamp
     ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
@@ -96,10 +106,15 @@ def format_signal_message(
         f"Score: `{score:+.2f}` (range −1 → +1)",
         "",
     ]
-    if tech_line: lines.append(tech_line)
-    if news_line: lines.append(news_line)
+    if tech_line:
+        lines.append(tech_line)
+    if news_line:
+        lines.append(news_line)
+    if sent_line:
+        lines.append(sent_line)
+
     lines.append("")
-    lines.append(f"💡 *Interpretation:* {interpretation}")
+    lines.append(f"💡 {interpretation}")
     lines.append(f"_Reason: {reason}_")
     lines.append(f"\n_Last update: {ts}_")
 
