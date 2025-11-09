@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Dict, List, Tuple, Any, Optional
 from datetime import datetime, timezone
 
-# .env
+# .env laden
 try:
     from dotenv import load_dotenv  # type: ignore
     load_dotenv()
@@ -36,7 +36,7 @@ DEFAULT_THRESHOLDS = {
     "short": -0.4,
 }
 
-# agents
+# Agents
 try:
     from src.agents.technical import TechnicalAgent  # type: ignore
 except Exception as e:
@@ -55,14 +55,21 @@ except Exception as e:
     print(f"[WARN] import SentimentAgent failed: {e}", file=sys.stderr)
     SentimentAgent = None  # type: ignore
 
-# data fetch
+# NEU: ResearchAgent
+try:
+    from src.agents.research import ResearchAgent  # type: ignore
+except Exception as e:
+    print(f"[WARN] import ResearchAgent failed: {e}", file=sys.stderr)
+    ResearchAgent = None  # type: ignore
+
+# Daten-Fetch
 _get_ohlcv = None
 try:
     from src.data.binance_client import get_ohlcv as _get_ohlcv  # type: ignore
 except Exception as e:
     print(f"[WARN] get_ohlcv unavailable: {e}", file=sys.stderr)
 
-# notifier
+# Notifier
 try:
     from src.core.notify import format_signal_message, send_telegram  # type: ignore
 except Exception as e:
@@ -107,6 +114,22 @@ def load_thresholds() -> Dict[str, float]:
         "long": float(cons.get("long", DEFAULT_THRESHOLDS["long"])),
         "short": float(cons.get("short", DEFAULT_THRESHOLDS["short"])),
     }
+
+
+def load_telegram_score_min() -> float:
+    env_val = os.getenv("TELEGRAM_SCORE_MIN")
+    if env_val:
+        try:
+            return float(env_val)
+        except ValueError:
+            pass
+    notif_cfg = _read_yaml(CONFIG_DIR / "notifications.yaml") or {}
+    if "score_min" in notif_cfg:
+        try:
+            return float(notif_cfg["score_min"])
+        except ValueError:
+            pass
+    return 0.7
 
 
 def _fetch_rows(pair: str, interval: str, limit: int = 300) -> Any:
@@ -270,6 +293,17 @@ def collect_votes(universe: List[str], interval: str, asof: datetime, max_age_se
         except Exception as e:
             print(f"[WARN] SentimentAgent.run failed: {e}", file=sys.stderr)
 
+    # research (NEU)
+    if ResearchAgent is not None:
+        try:
+            ra = ResearchAgent()
+            out = ra.run(universe, asof)
+            for r in out:
+                r.setdefault("agent", "research")
+                votes.append(r)
+        except Exception as e:
+            print(f"[WARN] ResearchAgent.run failed: {e}", file=sys.stderr)
+
     return votes
 
 
@@ -278,6 +312,7 @@ def run_once() -> None:
     pairs, interval, max_age_sec = load_universe()
     weights = load_weights()
     thresholds = load_thresholds()
+    telegram_score_min = load_telegram_score_min()
 
     t0 = time.time()
     votes = collect_votes(pairs, interval, asof, max_age_sec)
@@ -299,7 +334,7 @@ def run_once() -> None:
             }
         )
 
-    # persist
+    # speichern
     try:
         DATA_DIR.mkdir(parents=True, exist_ok=True)
         with (DATA_DIR / "runs.log").open("a", encoding="utf-8") as f:
@@ -307,10 +342,10 @@ def run_once() -> None:
     except Exception:
         pass
 
-    # notify for actionable signals
+    # Telegram mit Score-Filter
     if format_signal_message and send_telegram:
         for res in results:
-            if res["decision"] in ("LONG", "SHORT"):
+            if res["decision"] in ("LONG", "SHORT") and abs(res["score"]) >= telegram_score_min:
                 msg = format_signal_message(
                     res["pair"],
                     res["decision"],

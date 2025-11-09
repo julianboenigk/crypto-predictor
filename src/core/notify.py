@@ -1,13 +1,12 @@
 # src/core/notify.py
 from __future__ import annotations
-import os, time, requests
+import os
+import requests
 from typing import List, Tuple, Optional
 from datetime import datetime, timezone
 
 
-# ---------- TELEGRAM SENDER ----------
 def send_telegram(message: str, parse_mode: Optional[str] = "Markdown") -> bool:
-    """Send a nicely formatted Telegram message."""
     if os.getenv("TELEGRAM_ENABLED", "false").lower() != "true":
         return False
 
@@ -30,7 +29,6 @@ def send_telegram(message: str, parse_mode: Optional[str] = "Markdown") -> bool:
         return False
 
 
-# ---------- MESSAGE FORMATTER ----------
 def format_signal_message(
     pair: str,
     decision: str,
@@ -38,11 +36,6 @@ def format_signal_message(
     breakdown: List[Tuple[str, float, float]],
     reason: str,
 ) -> str:
-    """
-    Create a compact Telegram message for non-technical users.
-    Now supports 3 agents: technical, news, sentiment.
-    """
-    # Friendly pair + icons
     emoji_map = {"LONG": "🟢", "SHORT": "🔴", "HOLD": "⏸️"}
     action_text = {
         "LONG": "Buy signal",
@@ -54,10 +47,10 @@ def format_signal_message(
     emoji = emoji_map.get(decision.upper(), "ℹ️")
     action_line = action_text.get(decision.upper(), "Signal")
 
-    # Agent lines
     tech_line = ""
     news_line = ""
     sent_line = ""
+    research_line = ""
 
     for name, s, c in breakdown:
         name_l = name.lower()
@@ -79,7 +72,6 @@ def format_signal_message(
                 desc = "neutral news"
             news_line = f"📰 *News* → {desc} ({conf_pct}% conf.)"
         elif name_l == "sentiment":
-            # this is the new agent based on CryptoNewsAPI /stat
             if s > 0.2:
                 desc = "market upbeat"
             elif s < -0.2:
@@ -87,8 +79,15 @@ def format_signal_message(
             else:
                 desc = "market neutral"
             sent_line = f"📊 *Sentiment* → {desc} ({conf_pct}% conf.)"
+        elif name_l == "research":
+            if s > 0.2:
+                desc = "research supportive"
+            elif s < -0.2:
+                desc = "research critical"
+            else:
+                desc = "research neutral"
+            research_line = f"📚 *Research* → {desc} ({conf_pct}% conf.)"
 
-    # Friendly interpretation text (shorter)
     if decision.upper() == "LONG":
         interpretation = "Multiple signals point up."
     elif decision.upper() == "SHORT":
@@ -96,10 +95,8 @@ def format_signal_message(
     else:
         interpretation = "Signals mixed. Waiting is reasonable."
 
-    # Timestamp
     ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
 
-    # Compose message
     lines = [
         f"🔹 *{pair_pretty} — Market Check*",
         f"Current Signal: {emoji} *{action_line}*",
@@ -112,6 +109,8 @@ def format_signal_message(
         lines.append(news_line)
     if sent_line:
         lines.append(sent_line)
+    if research_line:
+        lines.append(research_line)
 
     lines.append("")
     lines.append(f"💡 {interpretation}")
