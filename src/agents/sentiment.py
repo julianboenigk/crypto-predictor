@@ -1,216 +1,142 @@
 # src/agents/sentiment.py
 from __future__ import annotations
 
-import json
 import os
+import json
 import time
-from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import requests
 
-BASE_URL = "https://cryptonews-api.com/api/v1/stat"
-CACHE_DIR = Path("data")
-CACHE_FILE = CACHE_DIR / "sentiment_cryptonews_alltickers.json"
+CACHE_DIR = Path("data/cache")
+CACHE_DIR.mkdir(parents=True, exist_ok=True)
+CACHE_FILE = CACHE_DIR / "sentiment_alltickers.json"
 
+# wie lange der Cache gültig ist (Sekunden)
+CACHE_TTL_SEC = int(os.getenv("SENTIMENT_CACHE_TTL_SEC", "900"))  # 15 min
 
-@dataclass(frozen=True)
-class TickerSentiment:
-    ticker: str
-    score_raw: float  # API: -1.5 .. +1.5
-    ts: int           # unix seconds
+API_BASE = "https://cryptonews-api.com/api/v1/stat"
+API_TOKEN = os.getenv("CRYPTO_NEWS_API_TOKEN", "yv3a4jurrsxc8ixpasmp4ug6oxnpek8zasrczrzz")
 
 
 class SentimentAgent:
     """
-    Batch sentiment via CryptoNewsAPI /api/v1/stat?section=alltickers...
-
-    Non-blocking policy:
-    - If API/ticker missing → score=0.0, confidence=0.05, inputs_fresh=True
-      so it does NOT force HOLD for the whole system.
+    Holt 1x je Lauf die CryptoNews-Sentiment-Statistik für alle Ticker
+    und mappt sie auf unsere Assets. Durch den Cache bleiben wir unter dem
+    API-Limit.
     """
 
-    def __init__(
-        self,
-        api_key: Optional[str] = None,
-        max_cache_age_sec: int = 3600,
-        timeout_sec: int = 6,
-        use_cache_param: bool = True,
-    ) -> None:
-        # try both names so we match the news agent
-        self.api_key = api_key or os.getenv("CRYPTONEWS_API_KEY") or os.getenv("CRYPTONEWS_API_TOKEN")
-        self.max_cache_age_sec = max_cache_age_sec
-        self.timeout_sec = timeout_sec
-        self.use_cache_param = use_cache_param
+    def __init__(self) -> None:
+        self.token = API_TOKEN
+
+    def _load_cache(self) -> Optional[Dict[str, Any]]:
+        if not CACHE_FILE.exists():
+            return None
+        try:
+            data = json.loads(CACHE_FILE.read_text(encoding="utf-8"))
+        except Exception:
+            return None
+        ts = data.get("ts", 0)
+        now = time.time()
+        if (now - ts) > CACHE_TTL_SEC:
+            return None
+        return data
+
+    def _save_cache(self, payload: Dict[str, Any]) -> None:
+        payload = dict(payload)
+        payload["ts"] = time.time()
+        try:
+            CACHE_FILE.write_text(json.dumps(payload), encoding="utf-8")
+        except Exception:
+            pass
+
+    def _fetch_alltickers(self) -> Optional[Dict[str, Any]]:
+        params = {
+            "section": "alltickers",
+            "date": "last30days",
+            "page": 1,
+            "token": self.token,
+            "cache": "false",
+        }
+        try:
+            resp = requests.get(API_BASE, params=params, timeout=15)
+        except Exception:
+            return None
+        if resp.status_code != 200:
+            return None
+        try:
+            return resp.json()
+        except Exception:
+            return None
+
+    @staticmethod
+    def _to_asset(pair: str) -> str:
+        up = pair.upper()
+        for suff in ("USDT", "USD", "BUSD", "EUR"):
+            if up.endswith(suff):
+                return up[: -len(suff)]
+        return up
+
+    def _score_from_item(self, item: Dict[str, Any]) -> float:
+        # die API liefert "sentiment_score" in [-1.5, 1.5]
+        raw = item.get("sentiment_score")
+        if raw is None:
+            return 0.0
+        try:
+            f = float(raw)
+        except Exception:
+            return 0.0
+        # auf [-1,1] normalisieren
+        f = max(-1.0, min(1.0, f / 1.5))
+        return f
 
     def run(self, universe: List[str], asof: datetime) -> List[Dict[str, Any]]:
-        t0 = time.time()
-        sentiments, from_cache = self._load_all_tickers()
-        latency_ms = int((time.time() - t0) * 1000)
+        # 1) Cache versuchen
+        cached = self._load_cache()
+        if cached is None:
+            # 2) neu holen
+            fresh = self._fetch_alltickers()
+            if fresh is not None:
+                self._save_cache(fresh)
+                data = fresh
+            else:
+                data = {}
+        else:
+            data = cached
+
+        # Struktur laut API: { "data": [ { "ticker": "BTC", "sentiment_score": ... }, ... ] }
+        items = {d.get("ticker", "").upper(): d for d in data.get("data", []) if isinstance(d, dict)}
 
         out: List[Dict[str, Any]] = []
         for pair in universe:
-            ticker = self._pair_to_ticker(pair)
-            item = sentiments.get(ticker.upper())
-
+            asset = self._to_asset(pair)
+            item = items.get(asset)
             if item is None:
-                # IMPORTANT: non-blocking fallback
                 out.append(
                     {
                         "pair": pair,
                         "agent": "sentiment",
                         "score": 0.0,
                         "confidence": 0.05,
-                        "inputs_fresh": True,  # ← let other agents decide
+                        "inputs_fresh": False,  # kein Eintrag
                         "asof": asof.isoformat(),
-                        "explanation": f"SentimentAgent: no sentiment for {ticker}; neutral non-blocking fallback.",
-                        "latency_ms": latency_ms,
+                        "explanation": "sentiment: no entry in API",
                     }
                 )
                 continue
-
-            score = self._normalize_score(item.score_raw)
-            confidence = self._confidence_from_raw(item.score_raw)
-
-            if from_cache:
-                age_ok = asof.replace(tzinfo=timezone.utc).timestamp() - item.ts <= self.max_cache_age_sec
-                fresh = age_ok
-            else:
-                fresh = True
-
+            sc = self._score_from_item(item)
             out.append(
                 {
                     "pair": pair,
                     "agent": "sentiment",
-                    "score": score,
-                    "confidence": confidence,
-                    "inputs_fresh": fresh,
+                    "score": sc,
+                    "confidence": 0.7,
+                    "inputs_fresh": True,
                     "asof": asof.isoformat(),
-                    "explanation": (
-                        f"SentimentAgent: CryptoNewsAPI score={item.score_raw:.3f} "
-                        f"(norm={score:.3f}) for {ticker}, fresh={fresh}."
-                    ),
-                    "latency_ms": latency_ms,
+                    "explanation": "sentiment: from CryptoNewsAPI (cached)",
                 }
             )
 
         return out
-
-    # ---------------- internal ----------------
-    def _load_all_tickers(self) -> tuple[Dict[str, TickerSentiment], bool]:
-        fetched = self._fetch_all_tickers()
-        if fetched is not None:
-            self._write_cache(fetched)
-            return fetched, False
-        cached = self._read_cache()
-        if cached is not None:
-            return cached, True
-        return {}, False
-
-    def _fetch_all_tickers(self) -> Optional[Dict[str, TickerSentiment]]:
-        if not self.api_key:
-            return None
-
-        params = {
-            "section": "alltickers",
-            "date": "last30days",
-            "page": 1,
-            "token": self.api_key,
-        }
-        if self.use_cache_param:
-            params["cache"] = "false"
-
-        try:
-            resp = requests.get(BASE_URL, params=params, timeout=self.timeout_sec)
-            resp.raise_for_status()
-            data = resp.json()
-        except Exception:
-            return None
-
-        return self._parse_api_payload(data)
-
-    def _parse_api_payload(self, data: Dict[str, Any]) -> Dict[str, TickerSentiment]:
-        now_ts = int(datetime.now(tz=timezone.utc).timestamp())
-        items = data.get("data") or data.get("stats") or data.get("results") or []
-
-        out: Dict[str, TickerSentiment] = {}
-        for item in items:
-            ticker = (
-                item.get("ticker")
-                or item.get("symbol")
-                or item.get("asset")
-                or item.get("name")
-            )
-            if not ticker:
-                continue
-
-            raw = item.get("sentiment_score") or item.get("score") or item.get("sentiment")
-            if raw is None:
-                continue
-
-            try:
-                raw_f = float(raw)
-            except (TypeError, ValueError):
-                continue
-
-            out[ticker.upper()] = TickerSentiment(
-                ticker=ticker.upper(),
-                score_raw=raw_f,
-                ts=now_ts,
-            )
-
-        return out
-
-    def _write_cache(self, mapping: Dict[str, TickerSentiment]) -> None:
-        try:
-            CACHE_DIR.mkdir(parents=True, exist_ok=True)
-            serializable = {
-                k: {"ticker": v.ticker, "score_raw": v.score_raw, "ts": v.ts}
-                for k, v in mapping.items()
-            }
-            CACHE_FILE.write_text(json.dumps(serializable), encoding="utf-8")
-        except Exception:
-            return
-
-    def _read_cache(self) -> Optional[Dict[str, TickerSentiment]]:
-        if not CACHE_FILE.exists():
-            return None
-        try:
-            raw = json.loads(CACHE_FILE.read_text(encoding="utf-8"))
-            out: Dict[str, TickerSentiment] = {}
-            for k, v in raw.items():
-                out[k.upper()] = TickerSentiment(
-                    ticker=v["ticker"].upper(),
-                    score_raw=float(v["score_raw"]),
-                    ts=int(v["ts"]),
-                )
-            return out
-        except Exception:
-            return None
-
-    @staticmethod
-    def _pair_to_ticker(pair: str) -> str:
-        upper = pair.upper()
-        for suffix in ("USDT", "USDC", "BUSD", "EUR", "USD"):
-            if upper.endswith(suffix):
-                return upper[: -len(suffix)]
-        return upper
-
-    @staticmethod
-    def _normalize_score(raw: float) -> float:
-        norm = raw / 1.5
-        if norm > 1.0:
-            norm = 1.0
-        if norm < -1.0:
-            norm = -1.0
-        return round(norm, 3)
-
-    @staticmethod
-    def _confidence_from_raw(raw: float) -> float:
-        mag = abs(raw) / 1.5
-        conf = 0.1 + 0.9 * mag
-        if conf > 1.0:
-            conf = 1.0
-        return round(conf, 3)

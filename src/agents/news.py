@@ -2,126 +2,118 @@
 from __future__ import annotations
 
 import os
-import math
+import json
 import time
-import requests
 from datetime import datetime, timezone
-from typing import List, Dict, Any
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
-# ========== CONFIG ==========
-CRYPTONEWS_API_KEY = os.getenv("CRYPTONEWS_API_KEY", "")
-CRYPTONEWS_WINDOW = os.getenv("CRYPTONEWS_WINDOW", "last60min")  # e.g. last60min, last6h, last24h
-API_URL = "https://cryptonews-api.com/api/v1"
+import requests
 
-# ========== KEYWORDS ==========
-_POSITIVE = {
-    "bullish", "surge", "rally", "breakout", "buy", "accumulate", "upgrade",
-    "strong", "growth", "institutional", "inflow", "adoption", "partnership",
-    "approval", "etf", "record", "all-time", "ath", "optimism", "support",
-    "rebound", "reversal", "momentum", "profit", "gain", "uptrend"
-}
-_NEGATIVE = {
-    "bearish", "dump", "sell", "downgrade", "weak", "fall", "decline",
-    "outflow", "hack", "exploit", "ban", "lawsuit", "fud", "fraud", "scam",
-    "insolvency", "bankrupt", "crackdown", "risk", "resistance", "rejection",
-    "delay", "recession", "loss", "fear"
-}
+CACHE_DIR = Path("data/cache")
+CACHE_DIR.mkdir(parents=True, exist_ok=True)
+CACHE_FILE = CACHE_DIR / "news_general.json"
+CACHE_TTL_SEC = int(os.getenv("NEWS_CACHE_TTL_SEC", "900"))  # 15 min
+
+API_BASE = "https://cryptonews-api.com/api/v1/stat"
+API_TOKEN = os.getenv("CRYPTO_NEWS_API_TOKEN", "yv3a4jurrsxc8ixpasmp4ug6oxnpek8zasrczrzz")
 
 
-# ========== HELPERS ==========
-def _pair_to_ticker(pair: str) -> str:
-    """Extracts base asset from a symbol like BTCUSDT -> BTC."""
-    for q in ("USDT", "USDC", "BUSD", "EUR", "USD", "BTC", "ETH"):
-        if pair.endswith(q):
-            return pair[:-len(q)]
-    return pair
-
-
-def _score_headline(text: str) -> float:
-    """Score a headline between -1 (negative) and +1 (positive)."""
-    if not text:
-        return 0.0
-    t = text.lower()
-    pos = sum(1 for w in _POSITIVE if w in t)
-    neg = sum(1 for w in _NEGATIVE if w in t)
-    if pos == 0 and neg == 0:
-        return 0.0
-    raw = (pos - neg) / max(1, pos + neg)
-    return max(-1.0, min(1.0, raw))
-
-
-def _fetch_articles(ticker: str, window: str, items: int = 25) -> List[Dict[str, Any]]:
-    """Fetch recent articles from CryptoNews API for the given ticker."""
-    if not CRYPTONEWS_API_KEY:
-        print("[WARN] CRYPTONEWS_API_KEY not set.")
-        return []
-
-    params = {
-        "tickers": ticker,
-        "items": str(items),
-        "token": CRYPTONEWS_API_KEY,
-        "date": window,
-        "extra-fields": "rankscore,published_at,source,domain",
-        "sortby": "rank",
-        "fallback": "true",
-    }
-    try:
-        r = requests.get(API_URL, params=params, timeout=10)
-        if r.status_code != 200:
-            print(f"[WARN] CryptoNews API {r.status_code}: {r.text[:150]}")
-            return []
-        data = r.json()
-        return data.get("data", []) or data.get("news", [])
-    except Exception as e:
-        print(f"[WARN] fetch_articles({ticker}) failed: {e}")
-        return []
-
-
-def _compute_sentiment(articles: List[Dict[str, Any]]) -> Dict[str, float]:
-    """Aggregate sentiment score and confidence across articles."""
-    if not articles:
-        return {"score": 0.0, "confidence": 0.0}
-
-    scores = [_score_headline(a.get("title", "")) for a in articles]
-    if not scores:
-        return {"score": 0.0, "confidence": 0.0}
-
-    avg_score = sum(scores) / len(scores)
-    # Confidence grows with article count, decays with disagreement
-    dispersion = sum((s - avg_score) ** 2 for s in scores) / len(scores)
-    confidence = max(0.05, min(1.0, 1.0 / (1.0 + dispersion)))
-    confidence *= min(1.0, len(scores) / 10.0)  # up to 10 articles = max confidence
-    return {"score": avg_score, "confidence": confidence}
-
-
-# ========== MAIN AGENT ==========
 class NewsAgent:
-    """Analyzes recent crypto news sentiment per coin."""
+    """
+    Holt 1x die general/alltickers-News-Sentiment und verteilt es auf alle Paare.
+    Damit sparen wir Calls.
+    """
+
+    def __init__(self) -> None:
+        self.token = API_TOKEN
+
+    def _load_cache(self) -> Optional[Dict[str, Any]]:
+        if not CACHE_FILE.exists():
+            return None
+        try:
+            data = json.loads(CACHE_FILE.read_text(encoding="utf-8"))
+        except Exception:
+            return None
+        ts = data.get("ts", 0)
+        if (time.time() - ts) > CACHE_TTL_SEC:
+            return None
+        return data
+
+    def _save_cache(self, payload: Dict[str, Any]) -> None:
+        payload = dict(payload)
+        payload["ts"] = time.time()
+        try:
+            CACHE_FILE.write_text(json.dumps(payload), encoding="utf-8")
+        except Exception:
+            pass
+
+    def _fetch_general(self) -> Optional[Dict[str, Any]]:
+        params = {
+            "section": "general",
+            "date": "last30days",
+            "page": 1,
+            "token": self.token,
+            "cache": "false",
+        }
+        try:
+            resp = requests.get(API_BASE, params=params, timeout=15)
+        except Exception:
+            return None
+        if resp.status_code != 200:
+            return None
+        try:
+            return resp.json()
+        except Exception:
+            return None
+
+    def _score_from_item(self, item: Dict[str, Any]) -> float:
+        raw = item.get("sentiment_score")
+        if raw is None:
+            return 0.0
+        try:
+            f = float(raw)
+        except Exception:
+            return 0.0
+        f = max(-1.0, min(1.0, f / 1.5))
+        return f
 
     def run(self, universe: List[str], asof: datetime) -> List[Dict[str, Any]]:
-        results: List[Dict[str, Any]] = []
+        cached = self._load_cache()
+        if cached is None:
+            fresh = self._fetch_general()
+            if fresh is not None:
+                self._save_cache(fresh)
+                data = fresh
+            else:
+                data = {}
+        else:
+            data = cached
+
+        # general → ein Score für den Gesamtmarkt
+        # wir wenden ihn auf alle Paare an
+        # wenn API mehrere Einträge schickt, nehmen wir den ersten
+        data_list = data.get("data", [])
+        if data_list and isinstance(data_list, list):
+            base_item = data_list[0]
+            sc = self._score_from_item(base_item)
+            conf = 0.7
+        else:
+            sc = 0.0
+            conf = 0.0
+
+        out: List[Dict[str, Any]] = []
         for pair in universe:
-            ticker = _pair_to_ticker(pair)
-            articles = _fetch_articles(ticker, CRYPTONEWS_WINDOW)
-            sentiment = _compute_sentiment(articles)
+            out.append(
+                {
+                    "pair": pair,
+                    "agent": "news",
+                    "score": sc,
+                    "confidence": conf,
+                    "inputs_fresh": conf > 0,
+                    "asof": asof.isoformat(),
+                    "explanation": "news: general market sentiment (cached)",
+                }
+            )
 
-            expl = f"{len(articles)} articles, avg={sentiment['score']:+.2f}, conf={sentiment['confidence']:.2f}"
-
-            results.append({
-                "pair": pair,
-                "agent": "news",
-                "score": sentiment["score"],
-                "confidence": sentiment["confidence"],
-                "inputs_fresh": True,
-                "asof": asof.isoformat(),
-                "explanation": expl,
-            })
-        return results
-
-
-# ========== QUICK TEST ==========
-if __name__ == "__main__":
-    agent = NewsAgent()
-    out = agent.run(["BTCUSDT", "ETHUSDT"], datetime.now(timezone.utc))
-    for r in out:
-        print(r)
+        return out
