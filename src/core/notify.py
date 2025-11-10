@@ -2,7 +2,7 @@
 from __future__ import annotations
 import os
 import requests
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Dict, Any
 from datetime import datetime, timezone
 
 
@@ -35,7 +35,20 @@ def format_signal_message(
     score: float,
     breakdown: List[Tuple[str, float, float]],
     reason: str,
+    order_levels: Optional[Dict[str, Any]] = None,
 ) -> str:
+    """
+    order_levels kann so aussehen:
+    {
+      "side": "LONG",
+      "entry": 64123.1,
+      "stop_loss": 63870.0,
+      "take_profit": 64500.0,
+      "risk_pct": 0.01,
+      "rr": 1.5
+    }
+    Wenn None -> wird einfach nicht angezeigt.
+    """
     emoji_map = {"LONG": "🟢", "SHORT": "🔴", "HOLD": "⏸️"}
     action_text = {
         "LONG": "Buy signal",
@@ -111,6 +124,23 @@ def format_signal_message(
         lines.append(sent_line)
     if research_line:
         lines.append(research_line)
+
+    # optional: Order-Level anzeigen
+    if order_levels:
+        entry = order_levels.get("entry")
+        sl = order_levels.get("stop_loss")
+        tp = order_levels.get("take_profit")
+        rr = order_levels.get("rr")
+        lines.append("")
+        lines.append("🧾 *Paper trade levels*")
+        if entry is not None:
+            lines.append(f"- Entry: `{entry}`")
+        if sl is not None:
+            lines.append(f"- Stop-Loss: `{sl}`")
+        if tp is not None:
+            lines.append(f"- Take-Profit: `{tp}`")
+        if rr is not None:
+            lines.append(f"- R:R: `{rr}`")
 
     lines.append("")
     lines.append(f"💡 {interpretation}")

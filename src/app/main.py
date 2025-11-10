@@ -55,7 +55,6 @@ except Exception as e:
     print(f"[WARN] import SentimentAgent failed: {e}", file=sys.stderr)
     SentimentAgent = None  # type: ignore
 
-# NEU: ResearchAgent
 try:
     from src.agents.research import ResearchAgent  # type: ignore
 except Exception as e:
@@ -76,6 +75,14 @@ except Exception as e:
     print(f"[WARN] notify import failed: {e}", file=sys.stderr)
     format_signal_message = None  # type: ignore
     send_telegram = None  # type: ignore
+
+# Paper Trading (optional)
+try:
+    from src.trade.risk import compute_order_levels  # type: ignore
+    from src.trade.paper import open_paper_trade  # type: ignore
+    PAPER_ENABLED = True
+except Exception:
+    PAPER_ENABLED = False
 
 
 def _read_yaml(path: Path) -> Optional[dict]:
@@ -170,6 +177,15 @@ def _latest_ts_from_rows(rows: Any) -> Optional[float]:
         return None
 
 
+def _latest_close_from_rows(rows: Any) -> Optional[float]:
+    if not rows:
+        return None
+    try:
+        return float(rows[-1][4])
+    except Exception:
+        return None
+
+
 def _interval_to_seconds(interval: str) -> int:
     m = {
         "1m": 60,
@@ -246,17 +262,26 @@ def decide_pair(
     return S, "HOLD", "ok", breakdown
 
 
-def collect_votes(universe: List[str], interval: str, asof: datetime, max_age_sec: int) -> List[Dict[str, Any]]:
+def collect_votes(
+    universe: List[str],
+    interval: str,
+    asof: datetime,
+    max_age_sec: int,
+) -> Tuple[List[Dict[str, Any]], Dict[str, float]]:
     votes: List[Dict[str, Any]] = []
     eff_max_age_sec = _effective_freshness_sec(max_age_sec, interval)
+    last_prices: Dict[str, float] = {}
 
     # technical
     if TechnicalAgent is not None and callable(_get_ohlcv):
         ta = TechnicalAgent()
         for pair in universe:
             rows = _fetch_rows(pair, interval, 300)
-            latest = _latest_ts_from_rows(rows)
-            fresh = _is_fresh(latest, eff_max_age_sec)
+            latest_ts = _latest_ts_from_rows(rows)
+            latest_close = _latest_close_from_rows(rows)
+            if latest_close is not None:
+                last_prices[pair] = latest_close
+            fresh = _is_fresh(latest_ts, eff_max_age_sec)
             candles = _rows_to_tech_candles(rows)
             if not candles:
                 continue
@@ -293,7 +318,7 @@ def collect_votes(universe: List[str], interval: str, asof: datetime, max_age_se
         except Exception as e:
             print(f"[WARN] SentimentAgent.run failed: {e}", file=sys.stderr)
 
-    # research (NEU)
+    # research
     if ResearchAgent is not None:
         try:
             ra = ResearchAgent()
@@ -304,7 +329,7 @@ def collect_votes(universe: List[str], interval: str, asof: datetime, max_age_se
         except Exception as e:
             print(f"[WARN] ResearchAgent.run failed: {e}", file=sys.stderr)
 
-    return votes
+    return votes, last_prices
 
 
 def run_once() -> None:
@@ -315,7 +340,7 @@ def run_once() -> None:
     telegram_score_min = load_telegram_score_min()
 
     t0 = time.time()
-    votes = collect_votes(pairs, interval, asof, max_age_sec)
+    votes, last_prices = collect_votes(pairs, interval, asof, max_age_sec)
 
     results: List[Dict[str, Any]] = []
     for pair in pairs:
@@ -342,16 +367,42 @@ def run_once() -> None:
     except Exception:
         pass
 
-    # Telegram mit Score-Filter
+    # Telegram + Paper + Order-Levels
     if format_signal_message and send_telegram:
         for res in results:
             if res["decision"] in ("LONG", "SHORT") and abs(res["score"]) >= telegram_score_min:
+                order_levels = None
+                if PAPER_ENABLED:
+                    price = last_prices.get(res["pair"])
+                    if price is not None:
+                        order_levels = compute_order_levels(
+                            side=res["decision"],
+                            price=price,
+                            risk_pct=0.01,
+                            rr=1.5,
+                            sl_distance_pct=0.004,
+                        )
+                        open_paper_trade(
+                            pair=res["pair"],
+                            side=order_levels["side"],
+                            entry=order_levels["entry"],
+                            stop_loss=order_levels["stop_loss"],
+                            take_profit=order_levels["take_profit"],
+                            size=1.0,
+                            meta={
+                                "score": res["score"],
+                                "reason": res["reason"],
+                                "breakdown": res["breakdown"],
+                            },
+                        )
+
                 msg = format_signal_message(
                     res["pair"],
                     res["decision"],
                     res["score"],
                     res["breakdown"],
                     res["reason"],
+                    order_levels=order_levels,
                 )
                 send_telegram(msg)
 
@@ -375,7 +426,7 @@ def _debug_pair(pair: str) -> None:
     pairs, interval, max_age_sec = load_universe()
     weights = load_weights()
     thresholds = load_thresholds()
-    votes = collect_votes([pair], interval, asof, max_age_sec)
+    votes, _ = collect_votes([pair], interval, asof, max_age_sec)
     S, decision, reason, breakdown = decide_pair(pair, votes, weights, thresholds)
     print(
         json.dumps(
