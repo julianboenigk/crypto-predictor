@@ -9,7 +9,6 @@ from pathlib import Path
 from typing import Dict, List, Tuple, Any, Optional
 from datetime import datetime, timezone
 
-# .env laden
 try:
     from dotenv import load_dotenv  # type: ignore
     load_dotenv()
@@ -36,7 +35,6 @@ DEFAULT_THRESHOLDS = {
     "short": -0.4,
 }
 
-# Agents
 try:
     from src.agents.technical import TechnicalAgent  # type: ignore
 except Exception as e:
@@ -61,14 +59,12 @@ except Exception as e:
     print(f"[WARN] import ResearchAgent failed: {e}", file=sys.stderr)
     ResearchAgent = None  # type: ignore
 
-# Daten-Fetch
 _get_ohlcv = None
 try:
     from src.data.binance_client import get_ohlcv as _get_ohlcv  # type: ignore
 except Exception as e:
     print(f"[WARN] get_ohlcv unavailable: {e}", file=sys.stderr)
 
-# Notifier
 try:
     from src.core.notify import format_signal_message, send_telegram  # type: ignore
 except Exception as e:
@@ -76,7 +72,6 @@ except Exception as e:
     format_signal_message = None  # type: ignore
     send_telegram = None  # type: ignore
 
-# Paper Trading (optional)
 try:
     from src.trade.risk import compute_order_levels  # type: ignore
     from src.trade.paper import open_paper_trade  # type: ignore
@@ -355,6 +350,7 @@ def run_once() -> None:
                 "breakdown": breakdown,
                 "weights": weights,
                 "interval": interval,
+                "last_price": last_prices.get(pair),
                 "latency_ms": int((time.time() - t0) * 1000),
             }
         )
@@ -367,13 +363,13 @@ def run_once() -> None:
     except Exception:
         pass
 
-    # Telegram + Paper + Order-Levels
+    # Telegram + Paper
     if format_signal_message and send_telegram:
         for res in results:
             if res["decision"] in ("LONG", "SHORT") and abs(res["score"]) >= telegram_score_min:
                 order_levels = None
                 if PAPER_ENABLED:
-                    price = last_prices.get(res["pair"])
+                    price = res.get("last_price")
                     if price is not None:
                         order_levels = compute_order_levels(
                             side=res["decision"],
