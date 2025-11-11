@@ -1,13 +1,18 @@
 # src/core/notify.py
 from __future__ import annotations
+
 import os
-import requests
 from typing import List, Tuple, Optional, Dict, Any
+
+import requests
 
 from src.core.timeutil import fmt_local
 
 
 def send_telegram(message: str, parse_mode: Optional[str] = "Markdown") -> bool:
+    """
+    Sendet eine Textnachricht an Telegram, wenn TELEGRAM_ENABLED=true und Token + Chat-ID vorhanden sind.
+    """
     if os.getenv("TELEGRAM_ENABLED", "false").lower() != "true":
         return False
 
@@ -16,16 +21,51 @@ def send_telegram(message: str, parse_mode: Optional[str] = "Markdown") -> bool:
     if not token or not chat_id:
         return False
 
+    url = f"https://api.telegram.org/bot{token}/sendMessage"
+    payload = {
+        "chat_id": chat_id,
+        "text": message,
+        "parse_mode": parse_mode,
+        "disable_web_page_preview": True,
+    }
     try:
-        url = f"https://api.telegram.org/bot{token}/sendMessage"
-        payload = {
-            "chat_id": chat_id,
-            "text": message,
-            "parse_mode": parse_mode,
-            "disable_web_page_preview": True,
-        }
         r = requests.post(url, json=payload, timeout=10)
-        return r.ok and bool(r.json().get("ok"))
+        if not r.ok:
+            return False
+        data = r.json()
+        return bool(data.get("ok"))
+    except Exception:
+        return False
+
+
+def send_telegram_photo(photo_path: str, caption: str = "") -> bool:
+    """
+    Sendet ein Bild (z. B. PNG) an Telegram. Optional mit Caption.
+    """
+    if os.getenv("TELEGRAM_ENABLED", "false").lower() != "true":
+        return False
+
+    token = os.getenv("TELEGRAM_TOKEN", "")
+    chat_id = os.getenv("TELEGRAM_CHAT_ID", "")
+    if not token or not chat_id:
+        return False
+    if not os.path.exists(photo_path):
+        return False
+
+    url = f"https://api.telegram.org/bot{token}/sendPhoto"
+    try:
+        with open(photo_path, "rb") as f:
+            files = {"photo": f}
+            data = {
+                "chat_id": chat_id,
+                "caption": caption,
+                "parse_mode": "Markdown",
+            }
+            r = requests.post(url, data=data, files=files, timeout=15)
+        if not r.ok:
+            return False
+        data = r.json()
+        return bool(data.get("ok"))
     except Exception:
         return False
 
@@ -38,6 +78,9 @@ def format_signal_message(
     reason: str,
     order_levels: Optional[Dict[str, Any]] = None,
 ) -> str:
+    """
+    Baut eine kompakte, menschlich lesbare Telegram-Nachricht aus einem berechneten Signal.
+    """
     emoji_map = {"LONG": "🟢", "SHORT": "🔴", "HOLD": "⏸️"}
     action_text = {
         "LONG": "Buy signal",
@@ -55,7 +98,7 @@ def format_signal_message(
     research_line = ""
 
     for name, s, c in breakdown:
-        name_l = name.lower()
+        name_l = str(name).lower()
         conf_pct = int(round(c * 100))
         if name_l == "technical":
             if s > 0.3:
@@ -105,6 +148,7 @@ def format_signal_message(
         f"Score: `{score:+.2f}` (range −1 → +1)",
         "",
     ]
+
     if tech_line:
         lines.append(tech_line)
     if news_line:
