@@ -4,9 +4,9 @@ import os
 import json
 from pathlib import Path
 from typing import Dict, Any, Optional
-from datetime import datetime, timezone
 
-# optional Telegram
+from src.core.timeutil import fmt_local
+
 try:
     from src.core.notify import send_telegram
 except Exception:
@@ -26,10 +26,6 @@ def _load_json(path: Path) -> Dict[str, Any]:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def _fmt_float(x: float) -> str:
-    return f"{x:.2f}"
-
-
 def build_summary(bt: Dict[str, Any]) -> str:
     n_trades = int(bt.get("n_trades", 0))
     wins = int(bt.get("wins", 0))
@@ -37,12 +33,12 @@ def build_summary(bt: Dict[str, Any]) -> str:
     unknown = int(bt.get("unknown", 0))
     winrate = (wins / n_trades * 100.0) if n_trades > 0 else 0.0
 
-    ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    ts = fmt_local()
 
     lines = [
         "📊 *Daily backtest summary*",
         f"Trades: *{n_trades}* (wins {wins} / losses {losses} / unknown {unknown})",
-        f"Winrate: *{_fmt_float(winrate)}%*",
+        f"Winrate: *{winrate:.2f}%*",
         "",
         f"_generated at {ts}_",
     ]
@@ -59,9 +55,12 @@ def main() -> None:
     msg = build_summary(bt)
     print(msg)
 
-    # optional Telegram
-    if os.getenv("TELEGRAM_ENABLED", "false").lower() == "true" and send_telegram:
-        send_telegram(msg)
+    enabled = os.getenv("TELEGRAM_ENABLED", "false").lower() == "true"
+    if enabled and send_telegram:
+        ok = send_telegram(msg)
+        print(f"telegram_sent={ok}")
+    else:
+        print("telegram_send_skipped")
 
 
 if __name__ == "__main__":

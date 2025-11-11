@@ -3,7 +3,8 @@ from __future__ import annotations
 import os
 import requests
 from typing import List, Tuple, Optional, Dict, Any
-from datetime import datetime, timezone
+
+from src.core.timeutil import fmt_local
 
 
 def send_telegram(message: str, parse_mode: Optional[str] = "Markdown") -> bool:
@@ -37,18 +38,6 @@ def format_signal_message(
     reason: str,
     order_levels: Optional[Dict[str, Any]] = None,
 ) -> str:
-    """
-    order_levels kann so aussehen:
-    {
-      "side": "LONG",
-      "entry": 64123.1,
-      "stop_loss": 63870.0,
-      "take_profit": 64500.0,
-      "risk_pct": 0.01,
-      "rr": 1.5
-    }
-    Wenn None -> wird einfach nicht angezeigt.
-    """
     emoji_map = {"LONG": "🟢", "SHORT": "🔴", "HOLD": "⏸️"}
     action_text = {
         "LONG": "Buy signal",
@@ -108,7 +97,7 @@ def format_signal_message(
     else:
         interpretation = "Signals mixed. Waiting is reasonable."
 
-    ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+    ts = fmt_local()
 
     lines = [
         f"🔹 *{pair_pretty} — Market Check*",
@@ -125,7 +114,6 @@ def format_signal_message(
     if research_line:
         lines.append(research_line)
 
-    # optional: Order-Level anzeigen
     if order_levels:
         entry = order_levels.get("entry")
         sl = order_levels.get("stop_loss")
