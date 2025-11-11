@@ -35,6 +35,7 @@ DEFAULT_THRESHOLDS = {
     "short": -0.4,
 }
 
+# Agents
 try:
     from src.agents.technical import TechnicalAgent  # type: ignore
 except Exception as e:
@@ -59,12 +60,14 @@ except Exception as e:
     print(f"[WARN] import ResearchAgent failed: {e}", file=sys.stderr)
     ResearchAgent = None  # type: ignore
 
+# data
 _get_ohlcv = None
 try:
     from src.data.binance_client import get_ohlcv as _get_ohlcv  # type: ignore
 except Exception as e:
     print(f"[WARN] get_ohlcv unavailable: {e}", file=sys.stderr)
 
+# notify
 try:
     from src.core.notify import format_signal_message, send_telegram  # type: ignore
 except Exception as e:
@@ -72,12 +75,20 @@ except Exception as e:
     format_signal_message = None  # type: ignore
     send_telegram = None  # type: ignore
 
+# paper
 try:
     from src.trade.risk import compute_order_levels  # type: ignore
     from src.trade.paper import open_paper_trade  # type: ignore
     PAPER_ENABLED = True
 except Exception:
     PAPER_ENABLED = False
+
+# dynamic weights
+try:
+    from src.core.weights import compute_dynamic_weights  # type: ignore
+    DYN_WEIGHTS_AVAILABLE = True
+except Exception:
+    DYN_WEIGHTS_AVAILABLE = False
 
 
 def _read_yaml(path: Path) -> Optional[dict]:
@@ -267,7 +278,6 @@ def collect_votes(
     eff_max_age_sec = _effective_freshness_sec(max_age_sec, interval)
     last_prices: Dict[str, float] = {}
 
-    # technical
     if TechnicalAgent is not None and callable(_get_ohlcv):
         ta = TechnicalAgent()
         for pair in universe:
@@ -290,7 +300,6 @@ def collect_votes(
             except Exception as e:
                 print(f"[WARN] TechnicalAgent.run failed for {pair}: {e}", file=sys.stderr)
 
-    # news
     if NewsAgent is not None:
         try:
             na = NewsAgent()
@@ -302,7 +311,6 @@ def collect_votes(
         except Exception as e:
             print(f"[WARN] NewsAgent.run failed: {e}", file=sys.stderr)
 
-    # sentiment
     if SentimentAgent is not None:
         try:
             sa = SentimentAgent()
@@ -313,7 +321,6 @@ def collect_votes(
         except Exception as e:
             print(f"[WARN] SentimentAgent.run failed: {e}", file=sys.stderr)
 
-    # research
     if ResearchAgent is not None:
         try:
             ra = ResearchAgent()
@@ -330,9 +337,15 @@ def collect_votes(
 def run_once() -> None:
     asof = datetime.now(timezone.utc)
     pairs, interval, max_age_sec = load_universe()
-    weights = load_weights()
+    base_weights = load_weights()
     thresholds = load_thresholds()
     telegram_score_min = load_telegram_score_min()
+
+    # dynamische Gewichte einschalten, wenn Modul da ist
+    if DYN_WEIGHTS_AVAILABLE and os.getenv("DYNAMIC_WEIGHTS", "true").lower() == "true":
+        weights = compute_dynamic_weights(base=base_weights)
+    else:
+        weights = base_weights
 
     t0 = time.time()
     votes, last_prices = collect_votes(pairs, interval, asof, max_age_sec)
@@ -355,7 +368,7 @@ def run_once() -> None:
             }
         )
 
-    # speichern
+    # persist
     try:
         DATA_DIR.mkdir(parents=True, exist_ok=True)
         with (DATA_DIR / "runs.log").open("a", encoding="utf-8") as f:
@@ -363,7 +376,7 @@ def run_once() -> None:
     except Exception:
         pass
 
-    # Telegram + Paper
+    # notify + paper
     if format_signal_message and send_telegram:
         for res in results:
             if res["decision"] in ("LONG", "SHORT") and abs(res["score"]) >= telegram_score_min:
@@ -420,7 +433,11 @@ def _usage() -> None:
 def _debug_pair(pair: str) -> None:
     asof = datetime.now(timezone.utc)
     pairs, interval, max_age_sec = load_universe()
-    weights = load_weights()
+    base_weights = load_weights()
+    if DYN_WEIGHTS_AVAILABLE and os.getenv("DYNAMIC_WEIGHTS", "true").lower() == "true":
+        weights = compute_dynamic_weights(base=base_weights)
+    else:
+        weights = base_weights
     thresholds = load_thresholds()
     votes, _ = collect_votes([pair], interval, asof, max_age_sec)
     S, decision, reason, breakdown = decide_pair(pair, votes, weights, thresholds)
