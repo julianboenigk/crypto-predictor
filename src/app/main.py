@@ -23,17 +23,21 @@ DEFAULT_UNIVERSE = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT", "ADAUSDT", "DOGE
 DEFAULT_INTERVAL = "15m"
 DEFAULT_MAX_AGE_SEC = 900
 
+# Defaults nur als Fallback; eigentliche Werte kommen aus configs/weights.yaml & thresholds.yaml
 DEFAULT_WEIGHTS = {
-    "technical": 0.45,
-    "sentiment": 0.20,
-    "news": 0.20,
-    "research": 0.15,
+    "technical": 0.60,
+    "sentiment": 0.15,
+    "news": 0.15,
+    "research": 0.10,
 }
 
 DEFAULT_THRESHOLDS = {
-    "long": 0.4,
-    "short": -0.4,
+    "long": 0.85,
+    "short": -0.85,
 }
+
+# Trendfilter: wie stark muss Technical sein, um LONG/SHORT zu erlauben?
+MIN_TREND_SCORE = float(os.getenv("MIN_TREND_SCORE", "0.2"))
 
 # Agents
 try:
@@ -75,7 +79,7 @@ except Exception as e:
     format_signal_message = None  # type: ignore
     send_telegram = None  # type: ignore
 
-# paper
+# paper trading
 try:
     from src.trade.risk import compute_order_levels  # type: ignore
     from src.trade.paper import open_paper_trade  # type: ignore
@@ -114,7 +118,7 @@ def load_universe() -> Tuple[List[str], str, int]:
 def load_weights() -> Dict[str, float]:
     data = _read_yaml(CONFIG_DIR / "weights.yaml")
     if not data:
-        return DEFAULT_WEIGHTS.copy()
+        return {k: float(v) for k, v in DEFAULT_WEIGHTS.items()}
     return {str(k).lower(): float(v) for k, v in data.items() if isinstance(v, (int, float))}
 
 
@@ -142,7 +146,8 @@ def load_telegram_score_min() -> float:
             return float(notif_cfg["score_min"])
         except ValueError:
             pass
-    return 0.7
+    # Default eher konservativ
+    return 0.85
 
 
 def _fetch_rows(pair: str, interval: str, limit: int = 300) -> Any:
@@ -258,8 +263,19 @@ def decide_pair(
     if not fresh_all:
         return S, "HOLD", "stale inputs", breakdown
 
-    long_thr = float(thresholds.get("long", 0.4))
-    short_thr = float(thresholds.get("short", -0.4))
+    long_thr = float(thresholds.get("long", DEFAULT_THRESHOLDS["long"]))
+    short_thr = float(thresholds.get("short", DEFAULT_THRESHOLDS["short"]))
+
+    # Trendfilter: Technical muss LONG/SHORT klar unterstützen
+    tech_vote = by_agent.get("technical")
+    if tech_vote is not None:
+        tech_s = float(tech_vote.get("score", 0.0))
+        # LONG nur, wenn Technical klar positiv ist
+        if S >= long_thr and tech_s < MIN_TREND_SCORE:
+            return S, "HOLD", "trend_filter_long", breakdown
+        # SHORT nur, wenn Technical klar negativ ist
+        if S <= short_thr and tech_s > -MIN_TREND_SCORE:
+            return S, "HOLD", "trend_filter_short", breakdown
 
     if S >= long_thr:
         return S, "LONG", "ok", breakdown
@@ -341,7 +357,6 @@ def run_once() -> None:
     thresholds = load_thresholds()
     telegram_score_min = load_telegram_score_min()
 
-    # dynamische Gewichte einschalten, wenn Modul da ist
     if DYN_WEIGHTS_AVAILABLE and os.getenv("DYNAMIC_WEIGHTS", "true").lower() == "true":
         weights = compute_dynamic_weights(base=base_weights)
     else:
@@ -368,7 +383,6 @@ def run_once() -> None:
             }
         )
 
-    # persist
     try:
         DATA_DIR.mkdir(parents=True, exist_ok=True)
         with (DATA_DIR / "runs.log").open("a", encoding="utf-8") as f:
@@ -376,7 +390,6 @@ def run_once() -> None:
     except Exception:
         pass
 
-    # notify + paper
     if format_signal_message and send_telegram:
         for res in results:
             if res["decision"] in ("LONG", "SHORT") and abs(res["score"]) >= telegram_score_min:

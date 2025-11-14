@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import json
 from pathlib import Path
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List
 
 RUNS_PATH = Path("data/runs.log")
 
@@ -12,19 +12,18 @@ DEFAULT_LOOKBACK_LINES = int(os.getenv("WEIGHTS_LOOKBACK_LINES", "500"))
 # ab welchem absoluten Score ein Signal als “relevant” zählt
 DEFAULT_SIGNAL_THR = float(os.getenv("WEIGHTS_SIGNAL_THR", "0.4"))
 
-# Basisgewichte als Fallback
+# Basisgewichte als Fallback (Technical dominiert)
 DEFAULT_BASE_WEIGHTS: Dict[str, float] = {
-    "technical": 0.45,
-    "sentiment": 0.20,
-    "news": 0.20,
-    "research": 0.15,
+    "technical": 0.60,
+    "sentiment": 0.15,
+    "news": 0.15,
+    "research": 0.10,
 }
 
 
 def _tail_lines(path: Path, n: int) -> List[str]:
     if not path.exists():
         return []
-    # einfache, aber robuste Variante
     with path.open("r", encoding="utf-8") as f:
         lines = f.readlines()
     return lines[-n:]
@@ -47,7 +46,7 @@ def compute_dynamic_weights(
     Idee:
     - wir schauen in die letzten N runs
     - für jedes Pair, das |score| >= signal_thr hat, zählen wir die Agenten, die beteiligt waren
-    - Agenten mit vielen Beteiligungen bekommen Faktor > 1
+    - Agenten mit vielen Beteiligungen bekommen mehr Gewicht (multipliziert auf base)
     - am Ende normalisieren wir
     """
     if base is None:
@@ -75,20 +74,16 @@ def compute_dynamic_weights(
                 # Gewichtung nach Confidence
                 agent_hits[name_l] = agent_hits.get(name_l, 0.0) + float(c)
 
-    # wenn überhaupt nichts gezählt wurde, Basis zurück
     if not agent_hits:
         return base
 
-    # wir mappen auf bekannte Agenten aus base
     dyn: Dict[str, float] = {}
     for agent, base_w in base.items():
         contrib = agent_hits.get(agent, 0.0)
-        # einfacher Transform: base * (1 + contrib)
         dyn[agent] = base_w * (1.0 + contrib)
 
-    # evtl. gibt es neue Agenten im Log, die nicht im base stehen
     for agent, contrib in agent_hits.items():
         if agent not in dyn:
-            dyn[agent] = contrib  # neutral einfügen
+            dyn[agent] = contrib
 
     return _normalize(dyn)

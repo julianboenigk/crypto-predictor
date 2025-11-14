@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Dict, Any, List
 
 import matplotlib
-matplotlib.use("Agg")  # kein GUI nötig
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt  # type: ignore
 
 DATA_DIR = Path("data")
@@ -16,9 +16,11 @@ REPORT_DIR.mkdir(parents=True, exist_ok=True)
 
 def _latest_backtest() -> Dict[str, Any] | None:
     if not BACKTEST_DIR.exists():
+        print("no backtest directory (data/backtests) found")
         return None
     files = sorted(BACKTEST_DIR.glob("backtest_*.json"), reverse=True)
     if not files:
+        print("no backtest_*.json files found in data/backtests")
         return None
     latest = files[0]
     return json.loads(latest.read_text(encoding="utf-8"))
@@ -42,7 +44,6 @@ def _build_equity(trades: List[Dict[str, Any]]) -> List[float]:
 def main() -> None:
     bt = _latest_backtest()
     if bt is None:
-        print("no backtest found")
         return
 
     trades = bt.get("trades", [])
