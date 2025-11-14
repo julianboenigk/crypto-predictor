@@ -1,240 +1,142 @@
 # src/agents/research.py
 from __future__ import annotations
-
-import os
-import sys
 import json
+import os
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import List, Dict, Any
 
-import requests
+from src.core.llm import simple_completion
 
-# storage
+
 DATA_DIR = Path("data/research")
 DATA_DIR.mkdir(parents=True, exist_ok=True)
-ERROR_LOG = DATA_DIR / "_last_error.log"
-
-# expected 5 subscores
-EXPECTED_KEYS = [
-    "research_innovation",
-    "econ_evidence",
-    "sustainability_esg",
-    "regulatory_outlook",
-    "thematic_alignment",
-]
-
-
-def _write_error(obj: Dict[str, Any]) -> None:
-    """write last error to disk for inspection"""
-    try:
-        ERROR_LOG.write_text(json.dumps(obj, indent=2), encoding="utf-8")
-    except Exception:
-        pass
 
 
 class ResearchAgent:
     """
-    Weekly, slow, research-focused agent.
-    - holt 1x/Woche eine akademisch/regulatorisch begründete Einschätzung pro Asset
-    - speichert lokal
-    - wenn Datei frisch: wiederverwenden
-    - wenn LLM/Quota/Parsing failt: inputs_fresh = False
+    Research Agent:
+    - ruft für jedes Asset genau EINEN LLM-Call ab
+    - nutzt ONLY akademische / regulatorische / langfristige Quellen
+    - output: score pro Dimension [-1,1] + kurze Notes
     """
 
-    def __init__(
-        self,
-        api_key: Optional[str] = None,
-        model: Optional[str] = None,
-        max_age_days: int = 7,
-    ) -> None:
-        self.api_key = api_key or os.getenv("OPENAI_API_KEY")
-        # env override > fallback
-        self.model = model or os.getenv("RESEARCH_MODEL", "gpt-5")
-        self.max_age_days = max_age_days
+    def __init__(self) -> None:
+        # ENV override möglich
+        self.model = os.getenv("OPENAI_MODEL_RESEARCH", "gpt-4.1-mini")
 
-    def run(self, universe: List[str], asof: datetime) -> List[Dict[str, Any]]:
-        # try to load last research file
-        latest = self._load_latest()
-        if latest and self._is_fresh(latest["ts"], asof):
-            return [self._to_vote(pair, latest["data"].get(self._to_asset(pair)), asof) for pair in universe]
-
-        # else: fetch fresh from LLM, one asset after another
-        fresh: Dict[str, Any] = {}
-        for pair in universe:
-            asset = self._to_asset(pair)
-            resp = self._query_llm(asset)
-            if resp is not None:
-                fresh[asset] = resp
-
-        # save to disk for the next 7 days
-        self._save(asof, fresh)
-
-        # convert to votes
-        return [self._to_vote(pair, fresh.get(self._to_asset(pair)), asof) for pair in universe]
-
-    # ------------------------------------------------------------------
-
-    def _query_llm(self, asset: str) -> Optional[Dict[str, Any]]:
-        """call OpenAI responses API with a research-only prompt"""
-        if not self.api_key:
-            _write_error({"error": "missing OPENAI_API_KEY"})
-            return None
-
-        url = "https://api.openai.com/v1/responses"
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json",
-        }
-
-        # prompt: research, not news
+    def _build_prompt(self, asset: str) -> str:
+        """
+        Baut den Prompt für EIN Asset.
+        """
         prompt = (
-            "You are a research-focused crypto analyst with a trading background.\n"
-            "Your task is to summarize medium- to long-term signals for ONE asset, based ONLY on research-like sources:\n"
+            "You are a research-focused crypto analyst with academic and quantitative background.\n"
+            "Evaluate ONE crypto asset based strictly on medium- to long-term, evidence-based sources:\n"
             "- academic / peer-reviewed / preprints (arXiv, SSRN, IEEE, ACM),\n"
             "- econometric or market microstructure studies (volatility clustering, spillovers, inefficiencies),\n"
-            "- sustainability / ESG assessments of consensus mechanisms (energy use, PoW vs. PoS),\n"
+            "- sustainability / ESG assessments of consensus mechanisms (energy usage, PoW vs. PoS),\n"
             "- regulatory publications and guidance (SEC, CFTC, ESMA, EBA, FATF, MiCA).\n"
-            "IGNORE daily news, blogs, exchange announcements, social media, or price headlines.\n"
-            "Return ONLY this JSON:\n"
-            "{\n"
-            f'  "asset": "{asset}",\n'
-            '  "scores": {\n'
-            '    "research_innovation": number in [-1,1],\n'
-            '    "econ_evidence": number in [-1,1],\n'
-            '    "sustainability_esg": number in [-1,1],\n'
-            '    "regulatory_outlook": number in [-1,1],\n'
-            '    "thematic_alignment": number in [-1,1]\n'
-            "  },\n"
-            '  "notes": "max 60 words. cite concrete papers or institutions if possible."\n'
-            "}\n"
+            "\n"
+            "IGNORE: daily news, blogs, exchange announcements, social media, influencers, price headlines.\n"
+            "Your job is to rate the asset in FIVE dimensions — all in [-1,1]:\n"
+            "- research_innovation\n"
+            "- econ_evidence\n"
+            "- sustainability_esg\n"
+            "- regulatory_outlook\n"
+            "- thematic_alignment\n"
+            "\n"
             "Rules:\n"
-            "- If evidence is mixed, use values near 0.\n"
-            "- If no evidence is found for a field, set it to 0.\n"
-            "- All numbers MUST be floats in [-1,1].\n"
-            "- Do not add extra fields.\n"
+            "- If evidence is mixed: use values near 0.\n"
+            "- If no evidence exists: score = 0.\n"
+            "- You MUST cite 2–3 concrete academic or regulatory sources (arXiv/SSRN/IEEE IDs or institutions).\n"
+            "- Do NOT invent fake papers.\n"
+            "- Do NOT add extra fields.\n"
+            "- Answer ONLY with valid JSON.\n"
+            "\n"
+            "Return exactly this JSON:\n"
+            "{\n"
+            f'  \"asset\": \"{asset}\",\n'
+            "  \"scores\": {\n"
+            "    \"research_innovation\": <float>,\n"
+            "    \"econ_evidence\": <float>,\n"
+            "    \"sustainability_esg\": <float>,\n"
+            "    \"regulatory_outlook\": <float>,\n"
+            "    \"thematic_alignment\": <float>\n"
+            "  },\n"
+            "  \"notes\": \"max 80 words, concise, include 2–3 concrete sources (arXiv/SSRN/IEEE/Regulators).\"\n"
+            "}\n"
+        )
+        return prompt
+
+    def _call_llm(self, asset: str) -> Dict[str, Any]:
+        """
+        Führt einen LLM-Call aus und gibt das JSON zurück.
+        """
+        prompt = self._build_prompt(asset)
+        text = simple_completion(
+            system_prompt="You are an academic crypto research agent.",
+            user_prompt=prompt,
+            model_env_var="OPENAI_MODEL_RESEARCH",
+            default_model=self.model,
+            max_tokens=800,
         )
 
-        payload = {
-            "model": self.model,
-            "input": prompt,
-            "temperature": 0.2,
-        }
-
+        # JSON extrahieren
         try:
-            resp = requests.post(url, headers=headers, json=payload, timeout=40)
-        except Exception as e:
-            _write_error({"error": "request_failed", "exception": str(e)})
-            return None
-
-        if resp.status_code != 200:
-            _write_error(
-                {
-                    "error": "http_error",
-                    "status": resp.status_code,
-                    "text": resp.text,
-                }
-            )
-            return None
-
-        try:
-            data = resp.json()
-        except Exception as e:
-            _write_error({"error": "json_parse_error", "text": resp.text, "exception": str(e)})
-            return None
-
-        # try responses output structure
-        text = None
-        if "output" in data and isinstance(data["output"], list) and data["output"]:
-            first = data["output"][0]
-            if isinstance(first, dict):
-                content = first.get("content")
-                if isinstance(content, list) and content:
-                    maybe_text = content[0].get("text")
-                    if isinstance(maybe_text, str):
-                        text = maybe_text
-
-        # fallback to chat-like
-        if text is None and "choices" in data:
-            text = data["choices"][0]["message"]["content"]
-
-        if text is None:
-            _write_error({"error": "no_text_in_response", "data": data})
-            return None
-
-        try:
-            parsed = json.loads(text)
-            return parsed
-        except Exception as e:
-            _write_error({"error": "content_not_json", "content": text, "exception": str(e)})
-            return None
-
-    # ------------------------------------------------------------------
-
-    def _to_vote(self, pair: str, entry: Optional[Dict[str, Any]], asof: datetime) -> Dict[str, Any]:
-        """convert stored JSON to agent vote for consensus"""
-        if entry is None:
+            obj = json.loads(text)
+            return obj
+        except Exception:
             return {
-                "pair": pair,
-                "agent": "research",
-                "score": 0.0,
-                "confidence": 0.0,
-                "inputs_fresh": False,
-                "asof": asof.isoformat(),
-                "explanation": "research: no data",
+                "asset": asset,
+                "scores": {
+                    "research_innovation": 0.0,
+                    "econ_evidence": 0.0,
+                    "sustainability_esg": 0.0,
+                    "regulatory_outlook": 0.0,
+                    "thematic_alignment": 0.0,
+                },
+                "notes": "Invalid JSON returned by model.",
             }
 
-        scores = entry.get("scores", {})
-        vals: List[float] = []
-        valid = 0
-        for key in EXPECTED_KEYS:
-            v = scores.get(key)
-            if isinstance(v, (int, float)):
-                vv = max(-1.0, min(1.0, float(v)))
-                vals.append(vv)
-                valid += 1
+    def run(self, assets: List[str], asof: datetime) -> List[Dict[str, Any]]:
+        """
+        Hauptmethode für das gesamte System.
+        """
+        results: List[Dict[str, Any]] = []
 
-        final_score = sum(vals) / len(vals) if vals else 0.0
-        confidence = valid / len(EXPECTED_KEYS)
+        for asset in assets:
+            obj = self._call_llm(asset)
+            scores = obj.get("scores", {})
 
-        return {
-            "pair": pair,
-            "agent": "research",
-            "score": round(final_score, 3),
-            "confidence": round(confidence, 3),
-            "inputs_fresh": True,
-            "asof": asof.isoformat(),
-            "explanation": f"research: {valid}/{len(EXPECTED_KEYS)} scores for {pair}",
-        }
+            # Normalisieren (Safety)
+            normalized_scores = {}
+            for k in [
+                "research_innovation",
+                "econ_evidence",
+                "sustainability_esg",
+                "regulatory_outlook",
+                "thematic_alignment",
+            ]:
+                try:
+                    v = float(scores.get(k, 0.0))
+                except Exception:
+                    v = 0.0
+                normalized_scores[k] = max(-1.0, min(1.0, v))
 
-    # ------------------------------------------------------------------
+            results.append(
+                {
+                    "pair": f"{asset}USDT",
+                    "agent": "research",
+                    "score": sum(normalized_scores.values()) / 5.0,
+                    "confidence": len(normalized_scores) / 5.0,
+                    "inputs_fresh": True,
+                    "breakdown": list(normalized_scores.items()),
+                    "timestamp": asof.isoformat(),
+                }
+            )
 
-    def _save(self, asof: datetime, data: Dict[str, Any]) -> None:
-        ts = int(asof.replace(tzinfo=timezone.utc).timestamp())
-        obj = {"ts": ts, "data": data}
-        fname = DATA_DIR / f"research_{asof.date().isoformat()}.json"
-        try:
-            fname.write_text(json.dumps(obj), encoding="utf-8")
-        except Exception:
-            pass
+        # speichern
+        outfile = DATA_DIR / f"research_{asof.strftime('%Y-%m-%d')}.json"
+        outfile.write_text(json.dumps(results, indent=2), encoding="utf-8")
 
-    def _load_latest(self) -> Optional[Dict[str, Any]]:
-        files = sorted(DATA_DIR.glob("research_*.json"), reverse=True)
-        if not files:
-            return None
-        try:
-            return json.loads(files[0].read_text(encoding="utf-8"))
-        except Exception:
-            return None
-
-    def _is_fresh(self, ts: int, asof: datetime) -> bool:
-        age = asof.replace(tzinfo=timezone.utc).timestamp() - ts
-        return age <= self.max_age_days * 86400
-
-    @staticmethod
-    def _to_asset(pair: str) -> str:
-        up = pair.upper()
-        for suff in ("USDT", "USD", "BUSD", "EUR"):
-            if up.endswith(suff):
-                return up[: -len(suff)]
-        return up
+        return results
