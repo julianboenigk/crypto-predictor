@@ -227,61 +227,160 @@ def _normalize_weights(w: Dict[str, float]) -> Dict[str, float]:
     return {k: v / total for k, v in w.items()}
 
 
+def _normalize_votes(raw_votes):
+    """
+    Normalisiert unterschiedliche Darstellungen von Agent-Votes
+    in ein einheitliches Dict:
+        { name: (score, conf, fresh), ... }
+
+    Unterstützt:
+    - dict(name -> (score, conf, fresh))
+    - list[(name, score, conf, fresh), ...]
+    - list[{"name"/"agent", "score", "confidence", "inputs_fresh"}, ...]
+    """
+    if isinstance(raw_votes, dict):
+        return raw_votes
+
+    votes_dict = {}
+    if isinstance(raw_votes, list):
+        for item in raw_votes:
+            # Variante: Dict je Agent
+            if isinstance(item, dict):
+                name = item.get("name") or item.get("agent")
+                score = float(item.get("score", 0.0))
+                conf = float(item.get("confidence", 0.0))
+                fresh = bool(item.get("inputs_fresh", True))
+            # Variante: Tupel/Liste (name, score, conf, fresh)
+            elif isinstance(item, (list, tuple)) and len(item) >= 4:
+                name = str(item[0])
+                score = float(item[1])
+                conf = float(item[2])
+                fresh = bool(item[3])
+            else:
+                continue
+
+            if not name:
+                continue
+            votes_dict[str(name)] = (score, conf, fresh)
+
+    return votes_dict
+
+
 def decide_pair(
     pair: str,
-    votes: List[Dict[str, Any]],
+    votes,
     weights: Dict[str, float],
     thresholds: Dict[str, float],
 ) -> Tuple[float, str, str, List[Tuple[str, float, float]]]:
-    by_agent: Dict[str, Dict[str, Any]] = {}
-    for v in votes:
-        if v.get("pair") == pair:
-            by_agent[str(v.get("agent", "unknown")).lower()] = v
+    """
+    Zweistufige Logik:
+    1) Technical-Agent ist Driver und schlägt LONG/SHORT vor.
+    2) Andere Agenten (News, Sentiment, Research) haben Veto-Recht,
+       wenn sie mit hoher Confidence stark dagegenlaufen.
+    3) Consensus-Score S wird weiterhin für Logging/Telegram/Backtests genutzt.
 
-    norm_w = _normalize_weights(weights)
-    participating = {a: w for a, w in norm_w.items() if a in by_agent and w > 0}
-    if not participating:
-        return 0.0, "HOLD", "no agent outputs", [("none", 0.0, 0.0)]
+    Neu:
+    - Nur „kritische“ Agenten (default: technical) blocken bei stale inputs.
+    - Optionale Agenten (news, sentiment, research) werden bei stale ignoriert,
+      blocken aber keine Trades mehr.
+    """
 
-    num = 0.0
-    den = 0.0
-    fresh_all = True
+    votes_dict = _normalize_votes(votes)
+    if not votes_dict:
+        return 0.0, "HOLD", "no votes", []
+
+    # Kritische Agenten aus ENV (z.B. "technical" oder "technical,news")
+    critical_raw = os.getenv("CRITICAL_AGENTS", "technical")
+    critical_agents = {name.strip() for name in critical_raw.split(",") if name.strip()}
+    if not critical_agents:
+        critical_agents = {"technical"}
+
     breakdown: List[Tuple[str, float, float]] = []
-    for agent, w in participating.items():
-        r = by_agent[agent]
-        s = float(r.get("score", 0.0))
-        c = float(r.get("confidence", 0.0))
-        fr = bool(r.get("inputs_fresh", False))
-        if not fr:
-            fresh_all = False
-        num += w * s * c
-        den += w * c
-        breakdown.append((agent, s, c))
+    weighted_sum = 0.0
+    total_weight = 0.0
+    critical_stale: List[str] = []
 
-    S = num / den if den > 0 else 0.0
+    for name, (score, conf, fresh) in votes_dict.items():
+        breakdown.append((name, score, conf))
 
-    if not fresh_all:
-        return S, "HOLD", "stale inputs", breakdown
+        # Kritische Agenten stale -> merken, aber noch nicht sofort returnen
+        if not fresh and name in critical_agents:
+            critical_stale.append(name)
+            continue
 
-    long_thr = float(thresholds.get("long", DEFAULT_THRESHOLDS["long"]))
-    short_thr = float(thresholds.get("short", DEFAULT_THRESHOLDS["short"]))
+        # Optionale Agenten stale -> werden einfach ignoriert (kein Blocker)
+        if not fresh:
+            continue
 
-    # Trendfilter: Technical muss LONG/SHORT klar unterstützen
-    tech_vote = by_agent.get("technical")
-    if tech_vote is not None:
-        tech_s = float(tech_vote.get("score", 0.0))
-        # LONG nur, wenn Technical klar positiv ist
-        if S >= long_thr and tech_s < MIN_TREND_SCORE:
-            return S, "HOLD", "trend_filter_long", breakdown
-        # SHORT nur, wenn Technical klar negativ ist
-        if S <= short_thr and tech_s > -MIN_TREND_SCORE:
-            return S, "HOLD", "trend_filter_short", breakdown
+        if conf <= 0.0:
+            continue
 
-    if S >= long_thr:
-        return S, "LONG", "ok", breakdown
-    if S <= short_thr:
-        return S, "SHORT", "ok", breakdown
-    return S, "HOLD", "ok", breakdown
+        w = float(weights.get(name, 0.0))
+        eff_w = w * conf
+        weighted_sum += score * eff_w
+        total_weight += eff_w
+
+    if total_weight <= 0.0:
+        S = 0.0
+    else:
+        S = max(-1.0, min(1.0, weighted_sum / total_weight))
+
+    # Wenn kritische Agenten stale sind -> HOLD mit klarer Reason
+    if critical_stale:
+        reason = "critical stale: " + ",".join(sorted(set(critical_stale)))
+        return S, "HOLD", reason, breakdown
+
+    # 1) Technical als Driver
+    tech = votes_dict.get("technical")
+    if tech is None:
+        return S, "HOLD", "no technical agent", breakdown
+
+    tech_score, tech_conf, tech_fresh = tech
+    if not tech_fresh:
+        # redundanter Schutz, falls technical NICHT in CRITICAL_AGENTS gesetzt wäre
+        return S, "HOLD", "critical stale: technical", breakdown
+
+    tech_long_thr = float(os.getenv("TECH_DRIVER_LONG", "0.6"))
+    tech_short_thr = float(os.getenv("TECH_DRIVER_SHORT", "-0.6"))
+
+    proposed: Optional[str] = None
+    if tech_score >= tech_long_thr:
+        proposed = "LONG"
+    elif tech_score <= tech_short_thr:
+        proposed = "SHORT"
+
+    if proposed is None:
+        return S, "HOLD", "no technical edge", breakdown
+
+    # 2) Veto-Logik: andere Agenten können Trade blocken (nur wenn frisch + stark)
+    veto_score_min = float(os.getenv("TECH_VETO_SCORE_MIN", "0.5"))
+    veto_conf_min = float(os.getenv("TECH_VETO_CONF_MIN", "0.5"))
+
+    veto_agents: List[str] = []
+    for name, (score, conf, fresh) in votes_dict.items():
+        if name == "technical":
+            continue
+        if not fresh:
+            # stale optionale Agenten veto-en NICHT
+            continue
+        if conf < veto_conf_min:
+            continue
+        if abs(score) < veto_score_min:
+            continue
+
+        if proposed == "LONG" and score < 0.0:
+            veto_agents.append(name)
+        elif proposed == "SHORT" and score > 0.0:
+            veto_agents.append(name)
+
+    if veto_agents:
+        reason = "veto by " + ",".join(sorted(set(veto_agents)))
+        return S, "HOLD", reason, breakdown
+
+    # 3) Kein Veto: Trade wird akzeptiert, Technical ist Driver
+    decision = proposed
+    reason = "technical driver, no veto"
+    return S, decision, reason, breakdown
 
 
 def collect_votes(
