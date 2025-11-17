@@ -1,78 +1,93 @@
 # src/reports/daily_backtest_summary.py
 from __future__ import annotations
 
-import os
-import sys
 import json
-from pathlib import Path
-from typing import Dict, Any, Optional
+import os
+from datetime import datetime, UTC
+from typing import Any, Dict
 
-from src.core.timeutil import fmt_local
+from src.reports.backtest_pnl_summary import load_latest_backtest, compute_pnl_summary
 
 try:
-    from src.core.notify import send_telegram, send_telegram_photo
-except Exception:
+    from src.core.notify import send_telegram  # type: ignore
+except Exception:  # pragma: no cover
     send_telegram = None  # type: ignore
-    send_telegram_photo = None  # type: ignore
-
-BACKTEST_DIR = Path("data/backtests")
-EQUITY_PNG = Path("data/reports/equity_latest.png")
 
 
-def _latest_backtest_file() -> Optional[Path]:
-    if not BACKTEST_DIR.exists():
-        return None
-    files = sorted(BACKTEST_DIR.glob("backtest_*.json"), reverse=True)
-    return files[0] if files else None
+def _fmt_pct(x: float | None) -> str:
+    if x is None:
+        return "n/a"
+    return f"{x * 100:.1f}%"
 
 
-def _load_json(path: Path) -> Dict[str, Any]:
-    return json.loads(path.read_text(encoding="utf-8"))
+def _fmt_float(x: float | None, digits: int = 2) -> str:
+    if x is None:
+        return "n/a"
+    return f"{x:.{digits}f}"
 
 
-def build_summary(bt: Dict[str, Any]) -> str:
-    n_trades = int(bt.get("n_trades", 0))
-    wins = int(bt.get("wins", 0))
-    losses = int(bt.get("losses", 0))
-    unknown = int(bt.get("unknown", 0))
-    winrate = (wins / n_trades * 100.0) if n_trades > 0 else 0.0
+def build_human_summary(summary: Dict[str, Any]) -> str:
+    """
+    Baue eine verständliche, nicht-technische Zusammenfassung
+    für Telegram.
+    """
+    n_trades = summary.get("n_trades", 0)
+    wins = summary.get("wins", 0)
+    losses = summary.get("losses", 0)
+    winrate = summary.get("winrate")
+    rr = summary.get("rr")
+    pnl_r = summary.get("pnl_r")
+    expectancy_r = summary.get("expectancy_r")
+    profit_factor = summary.get("profit_factor")
 
-    ts = fmt_local()
+    date_str = datetime.now(UTC).strftime("%Y-%m-%d")
 
-    lines = [
-        "📊 *Daily backtest summary*",
-        f"Trades: *{n_trades}* (wins {wins} / losses {losses} / unknown {unknown})",
-        f"Winrate: *{winrate:.2f}%*",
-        "",
-        f"_generated at {ts}_",
-    ]
+    lines = []
+    lines.append(f"Backtest-Auswertung ({date_str}):")
+    lines.append("")
+    lines.append(f"- Anzahl der Trades: {n_trades}")
+    lines.append(f"- Gewinn-Trades: {wins}, Verlust-Trades: {losses}")
+    lines.append(f"- Trefferquote: {_fmt_pct(winrate)}")
+
+    if rr is not None:
+        lines.append(f"- Chance-Risiko-Verhältnis pro Trade (TP/SL): ca. {_fmt_float(rr)} : 1")
+
+    if pnl_r is not None:
+        lines.append(
+            f"- Gesamt-Ergebnis im Backtest: ca. {_fmt_float(pnl_r, 1)} 'R' "
+            "(ein 'R' entspricht deinem Risiko pro Trade, z.B. Abstand zwischen Einstieg und Stop-Loss)."
+        )
+
+    if expectancy_r is not None:
+        lines.append(
+            f"- Durchschnittliches Ergebnis pro Trade: ca. {_fmt_float(expectancy_r, 2)} R "
+            "(also z.B. bei 100 € Risiko pro Trade ≈ "
+            f"{_fmt_float(expectancy_r * 100, 0)} € Gewinn im Schnitt)."
+        )
+
+    if profit_factor is not None:
+        lines.append(
+            f"- Verhältnis aller Gewinne zu allen Verlusten: ca. {_fmt_float(profit_factor, 2)} : 1 "
+            "(je höher, desto stabiler die Strategie)."
+        )
+
     return "\n".join(lines)
 
 
 def main() -> None:
-    latest = _latest_backtest_file()
-    if latest is None:
-        print("no backtest files found")
-        return
+    data = load_latest_backtest()
+    summary = compute_pnl_summary(data)
 
-    bt = _load_json(latest)
-    msg = build_summary(bt)
-    print(msg)
+    # JSON-Ausgabe für Logs / Files
+    print(json.dumps(summary, indent=2))
 
-    enabled = os.getenv("TELEGRAM_ENABLED", "false").lower() == "true"
-
-    if enabled and send_telegram:
-        ok1 = send_telegram(msg)
-        print(f"telegram_sent={ok1}")
-
-        # falls ein Equity-Plot existiert, mitschicken
-        if EQUITY_PNG.exists() and send_telegram_photo:
-            ok2 = send_telegram_photo(str(EQUITY_PNG), caption="📈 Equity curve (latest backtest)")
-            print(f"telegram_photo_sent={ok2}")
-        else:
-            print("no equity plot found to send")
-    else:
-        print("telegram_send_skipped")
+    # Optional: Telegram-Nachricht
+    if send_telegram is not None and os.getenv("TELEGRAM_BACKTEST_SUMMARY", "true").lower() == "true":
+        msg = build_human_summary(summary)
+        # Telegram-Limit absichern
+        if len(msg) > 3500:
+            msg = msg[:3400] + "\n\n[gekürzt]"
+        send_telegram(msg)
 
 
 if __name__ == "__main__":
