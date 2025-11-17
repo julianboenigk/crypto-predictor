@@ -38,14 +38,11 @@ def compute_pnl_summary(data: Dict[str, Any]) -> Dict[str, Any]:
 
     rr = float(os.getenv("BACKTEST_RR", "1.5"))
 
-    # R-basiert: Gewinn-Trades = +rr, Verlust-Trades = -1
     gross_win_r = wins * rr
-    gross_loss_r = losses * 1.0  # Betrag
+    gross_loss_r = losses * 1.0
     pnl_r = gross_win_r - gross_loss_r
 
     winrate = wins / n_trades
-
-    # Erwartungswert in R pro Trade
     expectancy_r = (winrate * rr) - ((1 - winrate) * 1.0)
 
     if gross_loss_r > 0:
@@ -69,8 +66,6 @@ def compute_pnl_summary(data: Dict[str, Any]) -> Dict[str, Any]:
 def main() -> None:
     data = load_latest_backtest()
     summary = compute_pnl_summary(data)
-
-    # Schön formatiertes JSON für Logs oder manuelle Auswertung
     print(json.dumps(summary, indent=2))
 
 
