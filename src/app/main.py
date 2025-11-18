@@ -87,6 +87,29 @@ try:
 except Exception:
     PAPER_ENABLED = False
 
+# binance spot testnet trading (optional)
+try:
+    from src.exchange.binance_spot_testnet import BinanceSpotTestnetClient  # type: ignore
+
+    BINANCE_TESTNET_ENABLED = os.getenv("BINANCE_TESTNET_ENABLED", "false").lower() == "true"
+    BINANCE_TESTNET_ORDER_QTY = float(os.getenv("BINANCE_TESTNET_ORDER_QTY", "0.001"))
+
+    if BINANCE_TESTNET_ENABLED:
+        try:
+            BINANCE_TESTNET_CLIENT = BinanceSpotTestnetClient.from_env()
+        except Exception as e:  # z.B. fehlende Keys
+            print(f"[WARN] Binance Spot Testnet init failed: {e}", file=sys.stderr)
+            BINANCE_TESTNET_ENABLED = False
+            BINANCE_TESTNET_CLIENT = None
+    else:
+        BINANCE_TESTNET_CLIENT = None
+
+except Exception as e:
+    print(f"[WARN] Binance Spot Testnet client not available: {e}", file=sys.stderr)
+    BINANCE_TESTNET_ENABLED = False
+    BINANCE_TESTNET_CLIENT = None
+    BINANCE_TESTNET_ORDER_QTY = 0.0
+
 # dynamic weights
 try:
     from src.core.weights import compute_dynamic_weights  # type: ignore
@@ -516,6 +539,19 @@ def run_once() -> None:
                                 "breakdown": res["breakdown"],
                             },
                         )
+                        # Optional: reale Order ins Binance Spot Testnet schicken
+                        if BINANCE_TESTNET_ENABLED and BINANCE_TESTNET_CLIENT is not None:
+                            try:
+                                BINANCE_TESTNET_CLIENT.create_market_order(
+                                    symbol=res["pair"],
+                                    side=order_levels["side"],
+                                    quantity=BINANCE_TESTNET_ORDER_QTY,
+                                )
+                            except Exception as e:
+                                print(
+                                    f"[ERROR] Failed to send Binance testnet order for {res['pair']}: {e}",
+                                    file=sys.stderr,
+                                )
 
                 msg = format_signal_message(
                     res["pair"],
