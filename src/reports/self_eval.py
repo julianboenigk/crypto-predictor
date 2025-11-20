@@ -105,6 +105,7 @@ Antworte in Deutsch.
         model_env_var="OPENAI_MODEL_SELF_EVAL",
         default_model="gpt-5.1-2025-11-13",
         max_tokens=900,
+	context="self_eval",
     )
 
     ts = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
