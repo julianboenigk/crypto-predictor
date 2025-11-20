@@ -15,6 +15,27 @@ try:
 except Exception:
     pass
 
+# -------------------------------------------------------------------
+# Trading & Environment Configuration
+# -------------------------------------------------------------------
+
+ENVIRONMENT = os.getenv("ENVIRONMENT", "paper").lower()
+if ENVIRONMENT not in ("paper", "testnet", "live"):
+    print(f"[WARN] Invalid ENVIRONMENT={ENVIRONMENT}, fallback to 'paper'", file=sys.stderr)
+    ENVIRONMENT = "paper"
+
+DRY_RUN = os.getenv("DRY_RUN", "true").lower() == "true"
+TRADING_HARD_STOP = os.getenv("TRADING_HARD_STOP", "false").lower() == "true"
+
+MAX_OPEN_TRADES = int(os.getenv("MAX_OPEN_TRADES", "0"))
+MAX_TRADES_PER_DAY = int(os.getenv("MAX_TRADES_PER_DAY", "0"))
+MAX_DAILY_RISK_R = float(os.getenv("MAX_DAILY_RISK_R", "0.0"))
+MAX_RISK_PER_TRADE_R = float(os.getenv("MAX_RISK_PER_TRADE_R", "1.0"))
+
+# -------------------------------------------------------------------
+# Paths & Defaults
+# -------------------------------------------------------------------
+
 ROOT = Path(__file__).resolve().parents[2]
 CONFIG_DIR = ROOT / "configs"
 DATA_DIR = ROOT / "data"
@@ -83,6 +104,10 @@ except Exception as e:
 try:
     from src.trade.risk import compute_order_levels  # type: ignore
     from src.trade.paper import open_paper_trade  # type: ignore
+    from src.trade.limits import (  # type: ignore
+        check_trading_limits,
+        update_trading_state_after_trade,
+    )
     PAPER_ENABLED = True
 except Exception:
     PAPER_ENABLED = False
@@ -562,7 +587,6 @@ def run_once() -> None:
                     order_levels=order_levels,
                 )
                 send_telegram(msg)
-
     print(
         json.dumps(
             {
