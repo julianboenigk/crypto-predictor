@@ -79,6 +79,7 @@ class ResearchAgent:
             model_env_var="OPENAI_MODEL_RESEARCH",
             default_model=self.model,
             max_tokens=800,
+            context="research",
         )
 
         # JSON extrahieren

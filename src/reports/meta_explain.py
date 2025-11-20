@@ -110,6 +110,7 @@ PAIR: <pair>
         model_env_var="OPENAI_MODEL_META",
         default_model="gpt-5.1-2025-11-13",
         max_tokens=900,
+        context="meta_explain",
     )
 
     obj = {
