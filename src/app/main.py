@@ -537,109 +537,117 @@ def run_once() -> None:
             f.write(json.dumps({"run_at": asof.isoformat(), "results": results}) + "\n")
     except Exception:
         pass
-    if format_signal_message and send_telegram:
-        for res in results:
-            if res["decision"] in ("LONG", "SHORT") and abs(res["score"]) >= telegram_score_min:
+    for res in results:
+        if res["decision"] not in ("LONG", "SHORT"):
+            continue
 
-                order_levels = None
-                price = res.get("last_price")
+        score_abs = abs(res["score"])
+        order_levels = None
+        price = res.get("last_price")
 
-                # Order-Levels nur berechnen, wenn wir einen Preis haben
-                if price is not None:
-                    order_levels = compute_order_levels(
-                        side=res["decision"],
-                        price=price,
-                        risk_pct=0.01,
-                        rr=1.5,
-                        sl_distance_pct=0.004,
-                    )
+        # -------------------------------------------------
+        # Order-Levels berechnen
+        # -------------------------------------------------
+        if price is not None:
+            order_levels = compute_order_levels(
+                side=res["decision"],
+                price=price,
+                risk_pct=0.01,
+                rr=1.5,
+                sl_distance_pct=0.004,
+            )
 
-                # -------------------------------------------------
-                # RISK-GATE: Hard Stop + Tageslimits
-                # -------------------------------------------------
-                can_trade = True
-                risk_reason = ""
+        # -------------------------------------------------
+        # RISK-GATE (für echte Orders)
+        # -------------------------------------------------
+        can_trade = True
+        risk_reason = ""
 
-                # 1) Master-Not-Aus
-                if TRADING_HARD_STOP:
-                    can_trade = False
-                    risk_reason = "TRADING_HARD_STOP active"
+        # Hard Stop
+        if TRADING_HARD_STOP:
+            can_trade = False
+            risk_reason = "TRADING_HARD_STOP active"
 
-                # 2) Score-Mindestanforderung für echte Orders (Testnet/Live)
-                if can_trade and abs(res["score"]) < FINAL_SCORE_MIN:
-                    can_trade = False
-                    risk_reason = f"score {res['score']:.3f} < FINAL_SCORE_MIN {FINAL_SCORE_MIN:.3f}"
+        # Mindest-Score für echte Orders
+        if can_trade and score_abs < FINAL_SCORE_MIN:
+            can_trade = False
+            risk_reason = (
+                f"score {res['score']:.3f} < FINAL_SCORE_MIN {FINAL_SCORE_MIN:.3f}"
+            )
 
-                # 3) Tages-Limits (nur wenn konfiguriert)
-                if can_trade:
-                    ok_limits, reason = check_trading_limits(
-                        max_trades_per_day=MAX_TRADES_PER_DAY,
-                        max_daily_risk_r=MAX_DAILY_RISK_R,
-                        max_risk_per_trade_r=MAX_RISK_PER_TRADE_R,
-                        assumed_r_per_trade=1.0,
-                    )
-                    if not ok_limits:
-                        can_trade = False
-                        risk_reason = reason
+        # Tages-Limits
+        if can_trade:
+            ok_limits, reason = check_trading_limits(
+                max_trades_per_day=MAX_TRADES_PER_DAY,
+                max_daily_risk_r=MAX_DAILY_RISK_R,
+                max_risk_per_trade_r=MAX_RISK_PER_TRADE_R,
+                assumed_r_per_trade=1.0,
+            )
+            if not ok_limits:
+                can_trade = False
+                risk_reason = reason
 
-                # -------------------------------------------------
-                # Orders: ENVIRONMENT-abhängig
-                # -------------------------------------------------
-                # Paper-Trades sind immer erlaubt (Simu), auch wenn ENVIRONMENT != "testnet"/"live"
-                if price is not None and order_levels is not None and PAPER_ENABLED:
-                    open_paper_trade(
-                        pair=res["pair"],
-                        side=order_levels["side"],             # type: ignore[index]
-                        entry=order_levels["entry"],           # type: ignore[index]
-                        stop_loss=order_levels["stop_loss"],   # type: ignore[index]
-                        take_profit=order_levels["take_profit"],  # type: ignore[index]
-                        size=1.0,
-                        meta={
-                            "score": res["score"],
-                            "reason": res["reason"],
-                            "breakdown": res["breakdown"],
-                        },
-                    )
+        # -------------------------------------------------
+        # PAPER TRADES (immer erlaubt)
+        # -------------------------------------------------
+        if PAPER_ENABLED and price is not None and order_levels is not None:
+            open_paper_trade(
+                pair=res["pair"],
+                side=order_levels["side"],
+                entry=order_levels["entry"],
+                stop_loss=order_levels["stop_loss"],
+                take_profit=order_levels["take_profit"],
+                size=1.0,
+                meta={
+                    "score": res["score"],
+                    "reason": res["reason"],
+                    "breakdown": res["breakdown"],
+                },
+            )
 
-                # Testnet-Orders nur, wenn:
-                # - ENVIRONMENT == "testnet"
-                # - BINANCE_TESTNET_ENABLED == true
-                # - kein Hard-Stop, Limits ok, Score >= FINAL_SCORE_MIN
-                if (
-                    can_trade
-                    and ENVIRONMENT == "testnet"
-                    and BINANCE_TESTNET_ENABLED
-                    and BINANCE_TESTNET_CLIENT is not None
-                    and price is not None
-                    and order_levels is not None
-                ):
-                    try:
-                        BINANCE_TESTNET_CLIENT.create_market_order(
-                            symbol=res["pair"],
-                            side=order_levels["side"],          # type: ignore[index]
-                            quantity=BINANCE_TESTNET_ORDER_QTY,
-                        )
-                        update_trading_state_after_trade(assumed_r_per_trade=1.0)
-                    except Exception as e:
-                        print(
-                            f"[ERROR] Failed to send Binance testnet order for {res['pair']}: {e}",
-                            file=sys.stderr,
-                        )
-
-                # -------------------------------------------------
-                # Telegram Nachricht (immer senden)
-                # -------------------------------------------------
-                msg = format_signal_message(
-                    res["pair"],
-                    res["decision"],
-                    res["score"],
-                    res["breakdown"],
-                    res["reason"],
-                    order_levels=order_levels,
+        # -------------------------------------------------
+        # TESTNET ORDERS (wenn can_trade == True)
+        # -------------------------------------------------
+        if (
+            can_trade
+            and ENVIRONMENT == "testnet"
+            and BINANCE_TESTNET_ENABLED
+            and BINANCE_TESTNET_CLIENT is not None
+            and price is not None
+            and order_levels is not None
+        ):
+            try:
+                BINANCE_TESTNET_CLIENT.create_market_order(
+                    symbol=res["pair"],
+                    side=order_levels["side"],
+                    quantity=BINANCE_TESTNET_ORDER_QTY,
                 )
-                if risk_reason:
-                    msg += f"\n[RiskGate] {risk_reason}"
-                send_telegram(msg)
+                update_trading_state_after_trade(assumed_r_per_trade=1.0)
+            except Exception as e:
+                print(
+                    f"[ERROR] Failed to send Binance testnet order for {res['pair']}: {e}",
+                    file=sys.stderr,
+                )
+
+        # -------------------------------------------------
+        # TELEGRAM (erst ab telegram_score_min)
+        # -------------------------------------------------
+        if (
+            format_signal_message
+            and send_telegram
+            and score_abs >= telegram_score_min
+        ):
+            msg = format_signal_message(
+                res["pair"],
+                res["decision"],
+                res["score"],
+                res["breakdown"],
+                res["reason"],
+                order_levels=order_levels,
+            )
+            if risk_reason:
+                msg += f"\n[RiskGate] {risk_reason}"
+            send_telegram(msg)
 
     print(
         json.dumps(

@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Dict, Any, List
 from datetime import datetime, timezone
 
-TRADES_DIR = Path("data/trades/")
+TRADES_DIR = Path("data/")
 DAILY_STATE = Path("data/trading_daily_state.json")
 RUNS_LOG = Path("data/runs.log")
 ERRORS_LOG = Path("data/errors.log")
