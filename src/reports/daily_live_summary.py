@@ -6,20 +6,13 @@ from datetime import datetime, UTC, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
-
-# ------------------------------------------------------------
 # .env laden, damit TELEGRAM_* und andere Settings verfügbar sind
-# ------------------------------------------------------------
 try:
     from dotenv import load_dotenv  # type: ignore
     load_dotenv()
 except Exception:
     pass
 
-
-# ------------------------------------------------------------
-# Telegram-Funktion importieren
-# ------------------------------------------------------------
 try:
     from src.core.notify import send_telegram  # type: ignore
 except Exception:
@@ -27,8 +20,9 @@ except Exception:
 
 
 DATA_DIR = Path("data")
-PAPER_TRADES_PATH = DATA_DIR / "paper_trades_closed.jsonl"   # neu: nur abgeschlossene Trades
-TESTNET_TRADES_PATH = DATA_DIR / "testnet_trades.jsonl"      # bleibt ggf. wie bisher / später analog
+# Wichtig: wir werten nur ABGESCHLOSSENE Paper-Trades aus
+PAPER_TRADES_PATH = DATA_DIR / "paper_trades_closed.jsonl"
+TESTNET_TRADES_PATH = DATA_DIR / "testnet_trades.jsonl"
 
 
 # ------------------------------------------------------------
@@ -56,7 +50,6 @@ def _parse_ts(raw: Any) -> datetime | None:
         return None
     s = str(raw)
     try:
-        # ISO-Strings wie "2025-11-21T20:00:00Z" oder "+00:00"
         return datetime.fromisoformat(s.replace("Z", "+00:00")).astimezone(UTC)
     except Exception:
         return None
@@ -90,8 +83,8 @@ def _filter_last_24h(trades: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     filtered: List[Dict[str, Any]] = []
     for tr in trades:
         ts = (
-            _parse_ts(tr.get("t"))
-            or _parse_ts(tr.get("exit_time"))
+            _parse_ts(tr.get("exit_time"))
+            or _parse_ts(tr.get("t"))
             or _parse_ts(tr.get("time"))
             or _parse_ts(tr.get("closed_at"))
         )
@@ -122,7 +115,7 @@ def _classify_outcome(tr: Dict[str, Any]) -> Tuple[bool | None, float]:
     outcome = tr.get("outcome")
     status = str(tr.get("status", "")).lower()
 
-    # Wenn outcome vorhanden ist (z.B. "TP"/"SL")
+    # Outcome-Feld (z.B. "TP"/"SL"/"MANUAL")
     if isinstance(outcome, str):
         o = outcome.upper()
         if o == "TP":
@@ -136,7 +129,7 @@ def _classify_outcome(tr: Dict[str, Any]) -> Tuple[bool | None, float]:
     if "loss" in status or "lose" in status:
         return False, pnl_r
 
-    # sonst: Heuristik über pnl_r
+    # Heuristik über pnl_r
     if pnl_r > 0:
         return True, pnl_r
     if pnl_r < 0:
@@ -205,14 +198,14 @@ def build_message(
     stats_testnet: Dict[str, Any] | None = None,
 ) -> str:
     """
-    Baut eine kompakte, nicht-technische Zusammenfassung für Telegram.
+    Kompakte, nicht-technische Zusammenfassung für Telegram.
     Fokus: letzte 24h, reale Performance.
     """
     now = datetime.now(UTC)
     date_str = now.strftime("%Y-%m-%d %H:%M UTC")
 
     lines: List[str] = []
-    lines.append(f"📊 Live Trading – letzte 24h (Paper/Testnet)")
+    lines.append("📊 Live Trading – letzte 24h")
     lines.append(f"Stand: {date_str}")
     lines.append("")
 
@@ -232,7 +225,7 @@ def build_message(
         f"- Profit Factor: {_fmt_float(stats_paper['profit_factor'], 2)}"
     )
 
-    # --- Testnet ---
+    # --- Testnet (optional) ---
     if stats_testnet is not None:
         lines.append("")
         lines.append("Testnet-Trades (letzte 24h):")
@@ -252,7 +245,7 @@ def build_message(
 
     lines.append("")
     lines.append(
-        "Hinweis: Nur abgeschlossene Trades mit verfügbarem Ergebnis (R) werden berücksichtigt."
+        "Hinweis: Es werden nur abgeschlossene Trades mit verfügbarem Ergebnis (R) berücksichtigt."
     )
 
     return "\n".join(lines)
@@ -267,7 +260,7 @@ def main() -> None:
     paper_trades = _load_trades(PAPER_TRADES_PATH)
     testnet_trades = _load_trades(TESTNET_TRADES_PATH)
 
-    # Auf letzte 24h filtern
+    # Auf letzte 24h filtern (Exit-Zeitpunkt)
     paper_24h = _filter_last_24h(paper_trades)
     testnet_24h = _filter_last_24h(testnet_trades) if testnet_trades else []
 
@@ -282,8 +275,16 @@ def main() -> None:
     }
     print(json.dumps(summary, indent=2))
 
-    # Telegram-Flag (separat, damit du es bei Bedarf einfach steuern kannst)
+    # Wenn in den letzten 24h überhaupt keine Trades abgeschlossen wurden:
+    has_trades_24h = stats_paper["n_trades"] > 0 or (
+        stats_testnet is not None and stats_testnet["n_trades"] > 0
+    )
+
     send_flag = os.getenv("TELEGRAM_LIVE_SUMMARY", "true").lower() == "true"
+
+    if not has_trades_24h:
+        # Keine Telegram-Nachricht, nur Log
+        return
 
     if send_telegram is not None and send_flag:
         msg = build_message(stats_paper, stats_testnet)
