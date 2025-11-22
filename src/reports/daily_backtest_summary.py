@@ -4,11 +4,12 @@ from __future__ import annotations
 import json
 import os
 from datetime import datetime, UTC
+from pathlib import Path
 from typing import Any, Dict
 
 from src.reports.backtest_pnl_summary import load_latest_backtest, compute_pnl_summary
 
-# .env laden, damit TELEGRAM_BACKTEST_SUMMARY gesetzt wird
+# .env laden, damit TELEGRAM_* Flags verfügbar sind
 try:
     from dotenv import load_dotenv  # type: ignore
     load_dotenv()
@@ -16,9 +17,10 @@ except Exception:
     pass
 
 try:
-    from src.core.notify import send_telegram  # type: ignore
+    from src.core.notify import send_telegram, send_telegram_photo  # type: ignore
 except Exception:
     send_telegram = None  # type: ignore
+    send_telegram_photo = None  # type: ignore
 
 
 def _fmt_pct(x: float | None) -> str:
@@ -107,15 +109,28 @@ def main() -> None:
     # JSON für Logs / Debug
     print(json.dumps(summary, indent=2))
 
-    # Telegram-Flag (Backtest-Report)
-    if (
-        send_telegram is not None
-        and os.getenv("TELEGRAM_BACKTEST_SUMMARY", "true").lower() == "true"
-    ):
+    # Text-Report via Telegram
+    backtest_flag = os.getenv("TELEGRAM_BACKTEST_SUMMARY", "true").lower() == "true"
+
+    if send_telegram is not None and backtest_flag:
         msg = build_human_summary(summary)
         if len(msg) > 3500:
             msg = msg[:3400] + "\n\n[gekürzt]"
         send_telegram(msg)
+
+    # Equity-Kurve (PNG) via Telegram
+    # Erwartet: data/reports/equity_latest.png aus src.reports.plot_equity
+    equity_flag = os.getenv("TELEGRAM_BACKTEST_EQUITY", "true").lower() == "true"
+    png_path = Path("data/reports/equity_latest.png")
+
+    if (
+        send_telegram_photo is not None
+        and equity_flag
+        and png_path.exists()
+    ):
+        caption = "Equity-Kurve (letzter Backtest)"
+        # Pfad als String übergeben
+        send_telegram_photo(str(png_path), caption)
 
 
 if __name__ == "__main__":
