@@ -113,6 +113,13 @@ try:
 except Exception:
     PAPER_ENABLED = False
 
+# close paper + mirror to testnet
+try:
+    from src.trade.close_paper_trades import main as close_paper_trades_main  # type: ignore
+except Exception as e:
+    print(f"[WARN] close_paper_trades unavailable: {e}", file=sys.stderr)
+    close_paper_trades_main = None  # type: ignore
+
 # binance spot testnet trading (optional)
 try:
     from src.exchange.binance_spot_testnet import BinanceSpotTestnetClient  # type: ignore
@@ -504,6 +511,30 @@ def run_once() -> None:
     base_weights = load_weights()
     thresholds = load_thresholds()
     telegram_score_min = load_telegram_score_min()
+
+def run_once() -> None:
+    asof = datetime.now(timezone.utc)
+    pairs, interval, max_age_sec = load_universe()
+    base_weights = load_weights()
+    thresholds = load_thresholds()
+    telegram_score_min = load_telegram_score_min()
+
+    # -----------------------------------------------
+    # Realtime-Exit: offene Paper-/Testnet-Trades schließen
+    # -----------------------------------------------
+    if close_paper_trades_main is not None:
+        try:
+            close_paper_trades_main()
+        except Exception as e:
+            print(f"[WARN] close_paper_trades_main failed: {e}", file=sys.stderr)
+
+    if DYN_WEIGHTS_AVAILABLE and os.getenv("DYNAMIC_WEIGHTS", "true").lower() == "true":
+        weights = compute_dynamic_weights(base=base_weights)
+    else:
+        weights = base_weights
+
+    t0 = time.time()
+    votes, last_prices = collect_votes(pairs, interval, asof, max_age_sec)
 
     if DYN_WEIGHTS_AVAILABLE and os.getenv("DYNAMIC_WEIGHTS", "true").lower() == "true":
         weights = compute_dynamic_weights(base=base_weights)

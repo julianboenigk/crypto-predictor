@@ -317,6 +317,7 @@ def main() -> None:
         "errors": errors,
     }
     print(json.dumps(summary, indent=2))
+    return summary
 
 
 if __name__ == "__main__":
