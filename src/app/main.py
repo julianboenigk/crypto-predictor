@@ -190,20 +190,58 @@ def load_thresholds() -> Dict[str, float]:
 
 
 def load_telegram_score_min() -> float:
-    env_val = os.getenv("TELEGRAM_SCORE_MIN")
-    if env_val:
+    try:
+        return float(os.getenv("TELEGRAM_SCORE_MIN", "0.4"))
+    except ValueError:
+        return 0.4
+
+
+def load_testnet_score_min() -> float:
+    """
+    Score-Schwelle für Testnet-Orders.
+
+    Default:
+    - TESTNET_SCORE_MIN, falls gesetzt
+    - sonst TELEGRAM_SCORE_MIN
+    - sonst 0.4
+    """
+    # Fallback-Kaskade
+    raw = os.getenv("TESTNET_SCORE_MIN")
+    if raw is not None:
         try:
-            return float(env_val)
+            return float(raw)
         except ValueError:
             pass
-    notif_cfg = _read_yaml(CONFIG_DIR / "notifications.yaml") or {}
-    if "score_min" in notif_cfg:
+
+    raw_tel = os.getenv("TELEGRAM_SCORE_MIN")
+    if raw_tel is not None:
         try:
-            return float(notif_cfg["score_min"])
+            return float(raw_tel)
         except ValueError:
             pass
-    # Default eher konservativ
-    return 0.85
+
+    return 0.4
+
+
+def load_live_score_min() -> float:
+    """
+    Score-Schwelle für spätere Live-Orders.
+
+    Default:
+    - LIVE_SCORE_MIN, falls gesetzt
+    - sonst TESTNET_SCORE_MIN
+    - sonst TELEGRAM_SCORE_MIN
+    - sonst 0.4
+    """
+    for key in ("LIVE_SCORE_MIN", "TESTNET_SCORE_MIN", "TELEGRAM_SCORE_MIN"):
+        raw = os.getenv(key)
+        if raw is None:
+            continue
+        try:
+            return float(raw)
+        except ValueError:
+            continue
+    return 0.4
 
 
 def _fetch_rows(pair: str, interval: str, limit: int = 300) -> Any:
@@ -511,13 +549,9 @@ def run_once() -> None:
     base_weights = load_weights()
     thresholds = load_thresholds()
     telegram_score_min = load_telegram_score_min()
+    testnet_score_min = load_testnet_score_min()
+    live_score_min = load_live_score_min()
 
-def run_once() -> None:
-    asof = datetime.now(timezone.utc)
-    pairs, interval, max_age_sec = load_universe()
-    base_weights = load_weights()
-    thresholds = load_thresholds()
-    telegram_score_min = load_telegram_score_min()
 
     # -----------------------------------------------
     # Realtime-Exit: offene Paper-/Testnet-Trades schließen
@@ -527,14 +561,6 @@ def run_once() -> None:
             close_paper_trades_main()
         except Exception as e:
             print(f"[WARN] close_paper_trades_main failed: {e}", file=sys.stderr)
-
-    if DYN_WEIGHTS_AVAILABLE and os.getenv("DYNAMIC_WEIGHTS", "true").lower() == "true":
-        weights = compute_dynamic_weights(base=base_weights)
-    else:
-        weights = base_weights
-
-    t0 = time.time()
-    votes, last_prices = collect_votes(pairs, interval, asof, max_age_sec)
 
     if DYN_WEIGHTS_AVAILABLE and os.getenv("DYNAMIC_WEIGHTS", "true").lower() == "true":
         weights = compute_dynamic_weights(base=base_weights)
@@ -641,6 +667,7 @@ def run_once() -> None:
         # -------------------------------------------------
         if (
             can_trade
+	    and score_abs >= testnet_score_min
             and ENVIRONMENT == "testnet"
             and BINANCE_TESTNET_ENABLED
             and BINANCE_TESTNET_CLIENT is not None
