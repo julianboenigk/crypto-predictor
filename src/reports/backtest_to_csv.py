@@ -2,7 +2,6 @@
 from __future__ import annotations
 import csv
 from pathlib import Path
-from typing import Dict, Any, List
 from src.reports.backtest_analyzer import load_all_backtests, summarize
 
 OUT_FILE = Path("data/backtests_summary.csv")

@@ -1,6 +1,6 @@
 # src/backtest/agent_stats.py
 from __future__ import annotations
-from typing import Dict, Any, List
+from typing import Dict, Any
 from src.backtest.loader import load_runs
 
 

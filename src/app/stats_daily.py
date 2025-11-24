@@ -1,5 +1,5 @@
 from __future__ import annotations
-import json, os, time
+import json
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from collections import defaultdict, Counter
@@ -9,16 +9,19 @@ ROOT = Path(__file__).resolve().parents[2]
 RUNS = ROOT / "data" / "runs.log"
 
 def _load():
-    if not RUNS.exists(): return []
-    out=[]
+    if not RUNS.exists():
+        return []
+
+    out = []
     with RUNS.open("r", encoding="utf-8") as f:
         for line in f:
-            line=line.strip()
-            if not line: continue
+            line = line.strip()
+            if not line:
+                continue
             try:
                 out.append(json.loads(line))
             except Exception:
-                pass
+                continue
     return out
 
 def main():
@@ -32,7 +35,8 @@ def main():
             t = datetime.fromisoformat(r["run_at"])
         except Exception:
             continue
-        if t < since: continue
+        if t < since: 
+            continue
         for res in r.get("results", []):
             recs.append((t, res.get("pair","?"), res.get("decision","HOLD").upper(), float(res.get("score",0.0))))
 

@@ -5,7 +5,7 @@ import json
 import math
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Iterable
+from typing import Any, Dict, List, Iterable
 
 
 PAPER_CLOSED_PATH = Path("data/paper_trades_closed.jsonl")

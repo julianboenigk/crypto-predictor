@@ -5,7 +5,7 @@ import json
 import os
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Tuple
+from typing import Any, Dict, List, Tuple
 
 # .env laden (u. a. für BINANCE_TESTNET_ENABLED)
 try:
