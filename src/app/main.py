@@ -109,6 +109,8 @@ try:
         check_trading_limits,
         update_trading_state_after_trade,
     )
+    from src.trade.live_dry_run import log_live_dry_run_trade  # type: ignore
+
     PAPER_ENABLED = True
 except Exception:
     PAPER_ENABLED = False
@@ -661,6 +663,61 @@ def run_once() -> None:
                     "breakdown": res["breakdown"],
                 },
             )
+
+        # -------------------------------------------------
+        # LIVE DRY-RUN (ENVIRONMENT=live + DRY_RUN=true)
+        # -> KEINE echten Orders, nur Logging
+        # -------------------------------------------------
+        if (
+            can_trade
+            and score_abs >= live_score_min
+            and ENVIRONMENT == "live"
+            and DRY_RUN
+            and price is not None
+            and order_levels is not None
+        ):
+            log_live_dry_run_trade(
+                pair=res["pair"],
+                side=order_levels["side"],
+                entry=order_levels["entry"],
+                stop_loss=order_levels["stop_loss"],
+                take_profit=order_levels["take_profit"],
+                score=res["score"],
+                reason=res["reason"],
+                meta={
+                    "interval": interval,
+                    "env": ENVIRONMENT,
+                    "score_abs": score_abs,
+                    "risk_reason": risk_reason,
+                },
+            )
+
+
+        # -------------------------------------------------
+        # TESTNET ORDERS (optional)
+        # -------------------------------------------------
+        if (
+            can_trade
+            and score_abs >= testnet_score_min
+            and ENVIRONMENT == "testnet"
+            and BINANCE_TESTNET_ENABLED
+            and BINANCE_TESTNET_CLIENT is not None
+            and price is not None
+            and order_levels is not None
+        ):
+            try:
+                BINANCE_TESTNET_CLIENT.create_market_order(
+                    symbol=res["pair"],
+                    side=order_levels["side"],
+                    quantity=BINANCE_TESTNET_ORDER_QTY,
+                )
+                update_trading_state_after_trade(assumed_r_per_trade=1.0)
+            except Exception as e:
+                print(
+                    f"[ERROR] Failed to send Binance testnet order for {res['pair']}: {e}",
+                    file=sys.stderr,
+                )
+
 
         # -------------------------------------------------
         # TESTNET ORDERS (wenn can_trade == True)

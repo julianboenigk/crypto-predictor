@@ -4,31 +4,111 @@ from __future__ import annotations
 import os
 import json
 import time
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import requests
 
+# Cache für News, um API-Limit zu schonen
 CACHE_DIR = Path("data/cache")
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 CACHE_FILE = CACHE_DIR / "news_general.json"
-CACHE_TTL_SEC = int(os.getenv("NEWS_CACHE_TTL_SEC", "900"))  # 15 min
 
-API_BASE = "https://cryptonews-api.com/api/v1/stat"
-API_TOKEN = os.getenv("CRYPTO_NEWS_API_TOKEN", "yv3a4jurrsxc8ixpasmp4ug6oxnpek8zasrczrzz")
+NEWS_CACHE_TTL_SEC = int(os.getenv("NEWS_CACHE_TTL_SEC", "900"))  # 15 min
+
+# CryptoNews-Endpoint für allgemeine Crypto-News
+NEWS_API_BASE = "https://cryptonews-api.com/api/v1/category"
+
+# Token aus ENV (gleich wie SentimentAgent)
+CRYPTONEWS_API_KEY = os.getenv("CRYPTONEWS_API_KEY", "")
+
+
+def _score_headline(headline: str) -> float:
+    """
+    Sehr einfache Heuristik:
+    - bullish Keywords → +1
+    - bearish Keywords → -1
+    - gemischt → 0
+    Ergebnis wird in [-1, 1] gekappt.
+    """
+    text = headline.lower()
+
+    bullish = [
+        "bull",
+        "bullish",
+        "rally",
+        "surge",
+        "soars",
+        "breakout",
+        "all-time high",
+        "ath",
+        "approval",
+        "etf approval",
+        "institutional inflows",
+        "record highs",
+        "optimistic",
+        "strong gains",
+        "momentum",
+    ]
+    bearish = [
+	"bear",
+        "bearish",
+        "dump",
+        "crash",
+        "plunge",
+        "sell-off",
+        "sell off",
+        "sell pressure",        # hinzugefügt
+        "regulatory crackdown",
+        "ban",
+        "negative",
+        "lawsuit",
+        "hacked",               # bereits drin
+        "hack",                 # hinzugefügt
+        "exploit",
+        "liquidation cascade",
+    ]
+
+    score = 0.0
+
+    for w in bullish:
+        if w in text:
+            score += 0.5
+
+    for w in bearish:
+        if w in text:
+            score -= 0.5
+
+    if score > 1.0:
+        score = 1.0
+    if score < -1.0:
+        score = -1.0
+
+    return score
 
 
 class NewsAgent:
     """
-    Holt 1x die general/alltickers-News-Sentiment und verteilt es auf alle Paare.
-    Damit sparen wir Calls.
+    Holt allgemeine Crypto-News (section=general) und leitet daraus
+    einen Marktsentiment-Score ab, den wir auf alle Paare anwenden.
+
+    api_key:
+        - None  → nimmt CRYPTONEWS_API_KEY (ENV)
+        - ""    → kein Key → neutraler Fallback
+        - str   → explizit gesetzter Key
     """
 
-    def __init__(self) -> None:
-        self.token = API_TOKEN
+    def __init__(self, api_key: Optional[str] = None, use_cache: bool = True) -> None:
+        if api_key is None:
+            self.api_key = CRYPTONEWS_API_KEY or ""
+        else:
+            self.api_key = api_key
+        self.use_cache = use_cache
 
     def _load_cache(self) -> Optional[Dict[str, Any]]:
+        if not self.use_cache:
+            return None
         if not CACHE_FILE.exists():
             return None
         try:
@@ -36,11 +116,14 @@ class NewsAgent:
         except Exception:
             return None
         ts = data.get("ts", 0)
-        if (time.time() - ts) > CACHE_TTL_SEC:
+        now = time.time()
+        if (now - ts) > NEWS_CACHE_TTL_SEC:
             return None
         return data
 
     def _save_cache(self, payload: Dict[str, Any]) -> None:
+        if not self.use_cache:
+            return
         payload = dict(payload)
         payload["ts"] = time.time()
         try:
@@ -49,36 +132,58 @@ class NewsAgent:
             pass
 
     def _fetch_general(self) -> Optional[Dict[str, Any]]:
-        params = {
-            "section": "general",
-            "date": "last30days",
-            "page": 1,
-            "token": self.token,
-            "cache": "false",
+        """
+        Holt allgemeine Crypto-News. Struktur laut Doku ungefähr:
+
+        {
+          "data": [
+            {"title": "...", "news_url": "...", ...},
+            ...
+          ],
+          ...
         }
+
+        Falls die API etwas anderes liefert, fangen wir das ab und
+        fallen neutral zurück.
+        """
+        if not self.api_key:
+            return None
+
+        params: Dict[str, Any] = {
+            "section": "general",
+            "items": 50,
+            "token": self.api_key,
+        }
+
         try:
-            resp = requests.get(API_BASE, params=params, timeout=15)
+            resp = requests.get(NEWS_API_BASE, params=params, timeout=15)
         except Exception:
             return None
-        if resp.status_code != 200:
-            return None
+
         try:
             return resp.json()
         except Exception:
             return None
 
-    def _score_from_item(self, item: Dict[str, Any]) -> float:
-        raw = item.get("sentiment_score")
-        if raw is None:
-            return 0.0
-        try:
-            f = float(raw)
-        except Exception:
-            return 0.0
-        f = max(-1.0, min(1.0, f / 1.5))
-        return f
-
     def run(self, universe: List[str], asof: datetime) -> List[Dict[str, Any]]:
+        # 0) Kein API-Key → kompletter neutraler Fallback
+        if not self.api_key:
+            out: List[Dict[str, Any]] = []
+            for pair in universe:
+                out.append(
+                    {
+                        "pair": pair,
+                        "agent": "news",
+                        "score": 0.0,
+                        "confidence": 0.0,
+                        "inputs_fresh": False,
+                        "asof": asof.isoformat(),
+                        "explanation": "news: neutral fallback (no API key)",
+                    }
+                )
+            return out
+
+        # 1) Cache versuchen
         cached = self._load_cache()
         if cached is None:
             fresh = self._fetch_general()
@@ -90,29 +195,53 @@ class NewsAgent:
         else:
             data = cached
 
-        # general → ein Score für den Gesamtmarkt
-        # wir wenden ihn auf alle Paare an
-        # wenn API mehrere Einträge schickt, nehmen wir den ersten
-        data_list = data.get("data", [])
-        if data_list and isinstance(data_list, list):
-            base_item = data_list[0]
-            sc = self._score_from_item(base_item)
-            conf = 0.7
-        else:
-            sc = 0.0
-            conf = 0.0
+        # 2) Headlines extrahieren
+        raw_list = data.get("data", [])
+        headlines: List[str] = []
+        if isinstance(raw_list, list):
+            for item in raw_list:
+                if isinstance(item, dict):
+                    title = item.get("title")
+                    if isinstance(title, str) and title.strip():
+                        headlines.append(title.strip())
 
+        # 3) Kein vernünftiger Input → neutraler Fallback (aber: Token war da)
+        if not headlines:
+            out: List[Dict[str, Any]] = []
+            for pair in universe:
+                out.append(
+                    {
+                        "pair": pair,
+                        "agent": "news",
+                        "score": 0.0,
+                        "confidence": 0.1,
+                        "inputs_fresh": False,
+                        "asof": asof.isoformat(),
+                        "explanation": "news: neutral fallback (no headlines from API)",
+                    }
+                )
+            return out
+
+        # 4) Headlines scor en und mitteln
+        scores = [_score_headline(h) for h in headlines]
+        if scores:
+            avg_score = sum(scores) / len(scores)
+        else:
+            avg_score = 0.0
+
+        # 5) Ergebnis auf alle Paare anwenden
         out: List[Dict[str, Any]] = []
+        explanation = f"news: average sentiment from {len(headlines)} headlines (cached or live)"
         for pair in universe:
             out.append(
                 {
                     "pair": pair,
                     "agent": "news",
-                    "score": sc,
-                    "confidence": conf,
-                    "inputs_fresh": conf > 0,
+                    "score": avg_score,
+                    "confidence": 0.7,
+                    "inputs_fresh": True,
                     "asof": asof.isoformat(),
-                    "explanation": "news: general market sentiment (cached)",
+                    "explanation": explanation,
                 }
             )
 
