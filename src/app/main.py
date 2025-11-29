@@ -655,6 +655,19 @@ def run_once() -> None:
         # PAPER TRADES (immer erlaubt)
         # -------------------------------------------------
         if PAPER_ENABLED and price is not None and order_levels is not None:
+
+            # --- Score & Agent-Outputs erfassen ---
+            entry_ts = asof.isoformat()
+            entry_score = res["score"]
+
+            # breakdown → agent_outputs (saubere Struktur)
+            agent_outputs = {}
+            for name, score, conf in res["breakdown"]:
+                agent_outputs[name] = {
+                    "score": score,
+                    "confidence": conf,
+                }
+
             open_paper_trade(
                 pair=res["pair"],
                 side=order_levels["side"],
@@ -663,7 +676,10 @@ def run_once() -> None:
                 take_profit=order_levels["take_profit"],
                 size=1.0,
                 meta={
-                    "score": res["score"],
+                    "entry_ts": entry_ts,
+                    "entry_score": entry_score,
+                    "agent_outputs": agent_outputs,
+                    "decision": res["decision"],
                     "reason": res["reason"],
                     "breakdown": res["breakdown"],
                 },
