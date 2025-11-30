@@ -1,13 +1,12 @@
-# src/reports/score_vs_performance_v2.py
+# src/reports/score_vs_performance_v3.py
 
 import json
 import os
 import matplotlib.pyplot as plt
 
 PAPER_FILE = "data/paper_trades_closed.jsonl"
-OUT_JSON = "data/reports/score_vs_performance_v2.json"
-OUT_CSV = "data/reports/score_vs_performance_v2.csv"
-OUT_PNG = "data/reports/score_vs_performance_v2.png"
+OUT_JSON = "data/reports/score_vs_performance_v3.json"
+OUT_PNG = "data/reports/score_vs_performance_v3.png"
 
 BUCKETS = [
     (-1.0, -0.6),
@@ -22,7 +21,7 @@ def bucket_name(lo, hi):
     return f"{lo:.1f}…{hi:.1f}"
 
 
-def load_paper():
+def load_trades():
     if not os.path.exists(PAPER_FILE):
         return []
     out = []
@@ -35,13 +34,10 @@ def load_paper():
     return out
 
 
-def extract_score(t: dict):
-    """
-    Robust score extraction supporting all past and current trade formats.
-    """
-
+def extract_score(t):
     meta = t.get("meta", {})
 
+    # Best available score field
     candidates = [
         meta.get("entry_score"),
         t.get("entry_score"),
@@ -49,40 +45,28 @@ def extract_score(t: dict):
         meta.get("score"),
         t.get("final_score"),
     ]
-
     for c in candidates:
         if isinstance(c, (int, float)):
             return float(c)
-
     return None
 
 
-def extract_pnl(t: dict):
-    """
-    Robust PnL extraction across formats.
-    """
-
+def extract_pnl(t):
     meta = t.get("meta", {})
-
     candidates = [
         t.get("pnl_r"),
         meta.get("pnl_r"),
         t.get("pnl"),
         meta.get("pnl"),
     ]
-
     for c in candidates:
         if isinstance(c, (int, float)):
             return float(c)
-
     return None
 
 
 def analyze():
-    trades = load_paper()
-
-    if len(trades) < 20:
-        print("WARNING: not enough paper trades for meaningful analysis.")
+    trades = load_trades()
 
     buckets = {bucket_name(lo, hi): [] for (lo, hi) in BUCKETS}
 
@@ -98,9 +82,11 @@ def analyze():
                 buckets[bucket_name(lo, hi)].append(pnl)
                 break
 
-    # Compute stats
+    # Calculate metrics
     result = {}
-    pf_values = []
+    pf_vals = []
+    wr_vals = []
+    exp_vals = []
     labels = []
 
     for lo, hi in BUCKETS:
@@ -115,13 +101,16 @@ def analyze():
                 "winrate": None,
                 "expectancy": None,
             }
-            pf_values.append(0)
+            pf_vals.append(0)
+            wr_vals.append(0)
+            exp_vals.append(0)
             labels.append(name)
             continue
 
         wins = sum(1 for x in values if x > 0)
         gross_profit = sum(x for x in values if x > 0)
         gross_loss = -sum(x for x in values if x < 0)
+
         pf = gross_profit / gross_loss if gross_loss > 0 else None
         winrate = wins / n
         expectancy = sum(values) / n
@@ -133,32 +122,39 @@ def analyze():
             "expectancy": expectancy,
         }
 
-        pf_values.append(pf if pf is not None else 0)
+        pf_vals.append(pf if pf is not None else 0)
+        wr_vals.append(winrate)
+        exp_vals.append(expectancy)
         labels.append(name)
 
+    # Save JSON
     os.makedirs("data/reports", exist_ok=True)
-
     with open(OUT_JSON, "w") as f:
         json.dump(result, f, indent=2)
 
-    with open(OUT_CSV, "w") as f:
-        f.write("bucket,n,pf,winrate,expectancy\n")
-        for k, v in result.items():
-            f.write(
-                f"{k},{v['n']},{v['pf']},{v['winrate']},{v['expectancy']}\n"
-            )
+    # Plot combined figure
+    fig, axes = plt.subplots(3, 1, figsize=(11, 14))
 
-    plt.figure(figsize=(10, 5))
-    plt.bar(labels, pf_values, color="dodgerblue")
-    plt.title("Score vs Performance (PF per Bucket)")
-    plt.ylabel("Profit Factor")
-    plt.xlabel("Score Bucket")
-    plt.grid(axis="y", linestyle="--", alpha=0.5)
+    # PF
+    axes[0].bar(labels, pf_vals, color="dodgerblue")
+    axes[0].set_title("Profit Factor per Score Bucket")
+    axes[0].grid(axis="y", linestyle="--", alpha=0.5)
+
+    # Winrate
+    axes[1].bar(labels, wr_vals, color="darkorange")
+    axes[1].set_title("Winrate per Score Bucket")
+    axes[1].grid(axis="y", linestyle="--", alpha=0.5)
+
+    # Expectancy
+    axes[2].bar(labels, exp_vals, color="seagreen")
+    axes[2].set_title("Expectancy (R) per Score Bucket")
+    axes[2].grid(axis="y", linestyle="--", alpha=0.5)
+
     plt.tight_layout()
     plt.savefig(OUT_PNG)
     plt.close()
 
-    print("saved:", OUT_JSON, OUT_CSV, OUT_PNG)
+    print(f"saved: {OUT_JSON} and {OUT_PNG}")
 
 
 if __name__ == "__main__":
