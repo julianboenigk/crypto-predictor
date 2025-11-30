@@ -1,14 +1,15 @@
+# src/reports/agent_heatmap.py
 import json
 import os
 import numpy as np
 import matplotlib.pyplot as plt
 
 PAPER_FILE = "data/paper_trades_closed.jsonl"
-RUNS_LOG = "data/runs.log"
 OUT_JSON = "data/reports/agent_heatmap.json"
 OUT_PNG = "data/reports/agent_heatmap.png"
 
-BUCKETS = [
+# Technical score buckets
+TECH_BUCKETS = [
     (-1.0, -0.6),
     (-0.6, -0.2),
     (-0.2, +0.2),
@@ -16,17 +17,18 @@ BUCKETS = [
     (+0.6, +1.0),
 ]
 
-
-def bucket_index(score):
-    for idx, (lo, hi) in enumerate(BUCKETS):
-        if lo <= score < hi:
-            return idx
-    return None
+# Sentiment score buckets
+SENT_BUCKETS = TECH_BUCKETS[:]   # Same bins for symmetry
 
 
-def load_paper():
+def bucket(lo, hi):
+    return f"{lo:.1f}…{hi:.1f}"
+
+
+def load_trades():
     if not os.path.exists(PAPER_FILE):
         return []
+
     out = []
     with open(PAPER_FILE, "r") as f:
         for line in f:
@@ -37,46 +39,22 @@ def load_paper():
     return out
 
 
-def load_runs():
-    if not os.path.exists(RUNS_LOG):
-        return {}
-    lookup = {}
-    with open(RUNS_LOG, "r") as f:
-        for line in f:
-            try:
-                r = json.loads(line)
-            except:
-                continue
-
-            pair = r.get("pair")
-            ts = r.get("asof")
-            if not pair or not ts:
-                continue
-
-            key = (pair, ts)
-            lookup[key] = r.get("agent_outputs", {})
-    return lookup
-
-
 def analyze():
-    trades = load_paper()
-    runs = load_runs()
+    trades = load_trades()
 
-    # 5x5 matrix of lists
-    matrix = [[[] for _ in range(5)] for _ in range(5)]
+    heatmap_matrix = [
+        [ [] for _ in SENT_BUCKETS ]
+        for _ in TECH_BUCKETS
+    ]
 
+    # Iterate all trades
     for t in trades:
-        pair = t.get("pair")
-        ts = t.get("entry_ts") or t.get("timestamp") or t.get("t")
         pnl = t.get("pnl_r")
-
-        if pair is None or ts is None or pnl is None:
+        if pnl is None:
             continue
 
-        key = (pair, ts)
-        agents = runs.get(key)
-        if not agents:
-            continue
+        meta = t.get("meta") or {}
+        agents = meta.get("agent_outputs") or {}
 
         tech = agents.get("technical", {}).get("score")
         sent = agents.get("sentiment", {}).get("score")
@@ -84,48 +62,68 @@ def analyze():
         if tech is None or sent is None:
             continue
 
-        i = bucket_index(tech)
-        j = bucket_index(sent)
-        if i is None or j is None:
+        # Assign bucket indices
+        tech_idx = None
+        sent_idx = None
+
+        for i, (lo, hi) in enumerate(TECH_BUCKETS):
+            if lo <= tech < hi:
+                tech_idx = i
+                break
+
+        for j, (lo, hi) in enumerate(SENT_BUCKETS):
+            if lo <= sent < hi:
+                sent_idx = j
+                break
+
+        if tech_idx is None or sent_idx is None:
             continue
 
-        matrix[i][j].append(pnl)
+        heatmap_matrix[tech_idx][sent_idx].append(pnl)
 
-    # compute PF matrix
-    pf_matrix = [[None for _ in range(5)] for _ in range(5)]
+    # Compute PF per cell
+    pf_matrix = []
+    result_json = []
 
-    for i in range(5):
-        for j in range(5):
-            vals = matrix[i][j]
-            if len(vals) < 10:
-                pf_matrix[i][j] = None
+    for i, row in enumerate(heatmap_matrix):
+        pf_row = []
+        json_row = []
+
+        for values in row:
+            if len(values) == 0:
+                pf_row.append(None)
+                json_row.append(None)
                 continue
 
-            gross_profit = sum(x for x in vals if x > 0)
-            gross_loss = -sum(x for x in vals if x < 0)
+            gross_profit = sum(x for x in values if x > 0)
+            gross_loss = -sum(x for x in values if x < 0)
             pf = gross_profit / gross_loss if gross_loss > 0 else None
-            pf_matrix[i][j] = pf
 
-    # save json
+            pf_row.append(pf)
+            json_row.append(pf)
+
+        pf_matrix.append(pf_row)
+        result_json.append(json_row)
+
     os.makedirs("data/reports", exist_ok=True)
+
+    # Save JSON
     with open(OUT_JSON, "w") as f:
-        json.dump(pf_matrix, f, indent=2)
+        json.dump(result_json, f, indent=2)
 
-    # PNG heatmap
-    plt.figure(figsize=(8, 6))
-    data = np.array([[x if x is not None else 0 for x in row] for row in pf_matrix])
-    cmap = plt.cm.viridis
+    # Plot heatmap
+    arr = np.array([[x if x is not None else np.nan for x in row] for row in pf_matrix])
 
-    plt.imshow(data, cmap=cmap, interpolation="nearest")
-    plt.title("Technical Score × Sentiment Score — PF Heatmap")
+    plt.figure(figsize=(10, 8))
+    plt.imshow(arr, cmap="viridis", interpolation="nearest")
+    plt.title("Agent Heatmap (PF): Technical vs Sentiment")
+    plt.xlabel("Sentiment Bucket")
+    plt.ylabel("Technical Bucket")
     plt.colorbar(label="Profit Factor")
 
-    tick_labels = [f"{lo:.1f}..{hi:.1f}" for lo, hi in BUCKETS]
-    plt.xticks(range(5), tick_labels, rotation=45)
-    plt.yticks(range(5), tick_labels)
+    plt.xticks(range(len(SENT_BUCKETS)), [bucket(lo, hi) for lo, hi in SENT_BUCKETS])
+    plt.yticks(range(len(TECH_BUCKETS)), [bucket(lo, hi) for lo, hi in TECH_BUCKETS])
 
-    plt.xlabel("Sentiment Score Bucket")
-    plt.ylabel("Technical Score Bucket")
     plt.tight_layout()
     plt.savefig(OUT_PNG)
     plt.close()

@@ -550,9 +550,13 @@ def collect_votes(
     return votes, last_prices
 
 
-def run_once() -> None:
+def run_once(single_pair: str | None = None,
+             override_price: float | None = None,
+             backtest_mode: bool = False):
     asof = datetime.now(timezone.utc)
     pairs, interval, max_age_sec = load_universe()
+    if single_pair is not None:
+        pairs = [single_pair]
     base_weights = load_weights()
     thresholds = load_thresholds()
     telegram_score_min = load_telegram_score_min()
@@ -601,13 +605,50 @@ def run_once() -> None:
             f.write(json.dumps({"run_at": asof.isoformat(), "results": results}) + "\n")
     except Exception:
         pass
+
     for res in results:
         if res["decision"] not in ("LONG", "SHORT"):
             continue
 
-        score_abs = abs(res["score"])
+        # -------------------------------------------------
+        # SCORE-GATE (Trade-Filter based on v3 analysis)
+        # -------------------------------------------------
+        score = res["score"]
+        score_abs = abs(score)
+
+        # Zulässige Score-Zone:
+        # profitabel: -0.6 bis -0.2
+        allow_trade = (-0.6 <= score < -0.2)
+
+        # --- Score-Gate: Logging für Backtest & Paper & Live ---
+        try:
+            with (DATA_DIR / "score_gate.log").open("a", encoding="utf-8") as f:
+                f.write(json.dumps({
+                    "t": asof.isoformat(),
+                    "pair": res["pair"],
+                    "score": score,
+                    "score_abs": score_abs,
+                    "decision": res["decision"],
+                    "reason": res["reason"],
+                    "breakdown": res["breakdown"],
+                    "interval": interval,
+                    "allow_trade": allow_trade,
+                    "backtest_mode": backtest_mode,
+                }) + "\n")
+        except Exception as e:
+            print(f"[WARN] failed writing score_gate.log: {e}", file=sys.stderr)
+
+        if not allow_trade:
+            # HARD FILTER: keine Papiertrades, keine Orders, keine Telegram Alerts
+            continue
+
+
+        # -------------------------------------------------
+        # Original-Code
+        # -------------------------------------------------
         order_levels = None
-        price = res.get("last_price")
+        price = override_price if (backtest_mode and override_price is not None) else res.get("last_price")
+
 
         # -------------------------------------------------
         # Order-Levels berechnen
@@ -651,10 +692,19 @@ def run_once() -> None:
                 can_trade = False
                 risk_reason = reason
 
+        # BACKTEST: kein Paper-Trading, keine Orders, keine Trades speichern
+        if backtest_mode:
+            continue
+
         # -------------------------------------------------
         # PAPER TRADES (immer erlaubt)
         # -------------------------------------------------
-        if PAPER_ENABLED and price is not None and order_levels is not None:
+        if (
+            PAPER_ENABLED 
+            and price is not None 
+            and order_levels is not None
+            and score_abs >= FINAL_SCORE_MIN
+        ):
 
             # --- Score & Agent-Outputs erfassen ---
             entry_ts = asof.isoformat()
@@ -743,7 +793,8 @@ def run_once() -> None:
         # TELEGRAM (erst ab telegram_score_min)
         # -------------------------------------------------
         if (
-            format_signal_message
+            single_pair is None
+            and format_signal_message
             and send_telegram
             and score_abs >= telegram_score_min
         ):
@@ -758,6 +809,7 @@ def run_once() -> None:
             if risk_reason:
                 msg += f"\n[RiskGate] {risk_reason}"
             send_telegram(msg)
+    return results
 
     print(
         json.dumps(
