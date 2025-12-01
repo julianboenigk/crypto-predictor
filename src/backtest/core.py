@@ -1,55 +1,63 @@
 # src/backtest/core.py
 
 from __future__ import annotations
-from typing import List, Dict, Any, Tuple
-import time
+from typing import List, Dict, Any
 
-from src.app.main import run_once  # nutzt existierende Signal-Engine
+from src.backtest.signal_engine import compute_backtest_signal
 from src.trade.risk import compute_order_levels
 
 
-def simulate_backtest(pair: str, candles: List[Dict[str, Any]],
-                      score_min: float = 0.0,
-                      rr: float = 1.5,
-                      sl_pct: float = 0.004) -> Dict[str, Any]:
-
+def simulate_backtest(
+    pair: str,
+    candles: List[Dict[str, Any]],
+    score_min: float = 0.0,
+    rr: float = 1.5,
+    sl_pct: float = 0.004,
+    history_len: int = 300,
+) -> Dict[str, Any]:
     """
     Kern-Backtest:
-    - Iteriert über Candles
-    - ruft main.run_once() für jedes Candle auf
+    - iteriert über Candles
+    - ruft die reine Backtest-Signalengine für jedes Candle auf
+      (TechnicalAgent, offline)
     - simuliert SL/TP
-    - aggregiert Ergebnisse
+    - aggregiert Ergebnisse (R-Multiples)
     """
 
-    trades = []
-    open_trade = None
+    trades: List[Dict[str, Any]] = []
+    open_trade: Dict[str, Any] | None = None
+
+    # Debug-Zähler
+    sig_long = 0
+    sig_short = 0
+    sig_hold = 0
+    opened_trades = 0
 
     for idx, candle in enumerate(candles):
-        price = candle["c"]
+        price = float(candle["c"])
 
-        # -------------------------------------------------
-        # 1) Run signal engine (calls all agents)
-        # -------------------------------------------------
-        results = run_once(single_pair=pair, override_price=price)
+        # History-Fenster für Signal-Engine bestimmen
+        start_idx = max(0, idx - history_len + 1)
+        history = candles[start_idx : idx + 1]
 
-        if not results:
-            continue
+        signal = compute_backtest_signal(pair, history)
+        score = float(signal.get("score", 0.0))
+        decision = str(signal.get("decision", "HOLD"))
+        breakdown = signal.get("breakdown", [])
 
-        res = results[0]  # single pair execution
+        # Debug-Zähler
+        if decision == "LONG":
+            sig_long += 1
+        elif decision == "SHORT":
+            sig_short += 1
+        else:
+            sig_hold += 1
 
-        score = res["score"]
-        decision = res["decision"]
-        breakdown = res["breakdown"]
-
-        # -------------------------------------------------
         # Score-Gate
-        # -------------------------------------------------
         if abs(score) < score_min:
             continue
 
-        # -------------------------------------------------
-        # Order-Levels (wenn LONG / SHORT)
-        # -------------------------------------------------
+        # Neuer Trade nur, wenn keiner offen ist
         if decision in ("LONG", "SHORT") and open_trade is None:
             ol = compute_order_levels(
                 side=decision,
@@ -70,17 +78,14 @@ def simulate_backtest(pair: str, candles: List[Dict[str, Any]],
                 "entry_score": score,
                 "breakdown": breakdown,
             }
-
+            opened_trades += 1
             continue
 
-        # -------------------------------------------------
-        # SL/TP Simulation
-        # -------------------------------------------------
-        if open_trade:
-            low = candle["l"]
-            high = candle["h"]
+        # SL/TP Simulation für offenen Trade
+        if open_trade is not None:
+            low = float(candle["low"])
+            high = float(candle["h"])
 
-            # LONG
             if open_trade["side"] == "LONG":
                 if low <= open_trade["stop_loss"]:
                     pnl = -1.0
@@ -90,9 +95,7 @@ def simulate_backtest(pair: str, candles: List[Dict[str, Any]],
                     exit_price = open_trade["take_profit"]
                 else:
                     continue
-
-            # SHORT
-            else:
+            else:  # SHORT
                 if high >= open_trade["stop_loss"]:
                     pnl = -1.0
                     exit_price = open_trade["stop_loss"]
@@ -102,7 +105,7 @@ def simulate_backtest(pair: str, candles: List[Dict[str, Any]],
                 else:
                     continue
 
-            # Closed trade
+            # Trade schließen
             open_trade["exit_idx"] = idx
             open_trade["exit_ts"] = candle["t"]
             open_trade["exit"] = exit_price
@@ -110,9 +113,13 @@ def simulate_backtest(pair: str, candles: List[Dict[str, Any]],
             trades.append(open_trade)
             open_trade = None
 
-    # -------------------------------------------------
+    # Debug-Output für dieses Pair
+    print(
+        f"[BACKTEST] {pair}: signals L/S/H = {sig_long}/{sig_short}/{sig_hold}, "
+        f"opened={opened_trades}, closed={len(trades)}"
+    )
+
     # Aggregation
-    # -------------------------------------------------
     wins = sum(1 for t in trades if t["pnl_r"] > 0)
     losses = sum(1 for t in trades if t["pnl_r"] < 0)
     n = len(trades)

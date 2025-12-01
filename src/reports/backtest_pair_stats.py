@@ -19,7 +19,45 @@ def load_latest_backtest() -> Dict[str, Any]:
 
 
 def compute_pair_stats(data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Aggregiert Pair-Stats aus einem Backtest-JSON.
+
+    Unterstützt zwei Varianten:
+    - Top-Level "trades": Liste aller Trades
+    - oder Pair-basierte Struktur: data[pair]["trades"]
+    """
+
     trades = data.get("trades", [])
+
+    # Falls oben keine Trades: aus den Pair-Einträgen zusammensammeln
+    if not trades:
+        collected = []
+        for key, val in data.items():
+            if not isinstance(val, dict):
+                continue
+            pair_trades = val.get("trades")
+            if not pair_trades:
+                continue
+            for t in pair_trades:
+                t_copy = dict(t)
+                # outcome aus pnl_r ableiten, falls nicht gesetzt
+                if "outcome" not in t_copy:
+                    pnl = t_copy.get("pnl_r")
+                    if pnl is not None:
+                        try:
+                            pnl_f = float(pnl)
+                        except (TypeError, ValueError):
+                            pnl_f = 0.0
+                        if pnl_f > 0:
+                            t_copy["outcome"] = "TP"
+                        elif pnl_f < 0:
+                            t_copy["outcome"] = "SL"
+                        else:
+                            t_copy["outcome"] = "BE"
+                collected.append(t_copy)
+
+        trades = collected
+
     if not trades:
         return {
             "file": data.get("_file"),
@@ -55,13 +93,10 @@ def compute_pair_stats(data: Dict[str, Any]) -> Dict[str, Any]:
             # unknown / BE / cancelled -> zählt als Trade, aber 0R
             pass
 
-    # Winrate je Pair berechnen
+    # Winrate je Pair
     for pair, stats in pairs.items():
         n = stats["trades"]
-        if n > 0:
-            stats["winrate"] = stats["wins"] / n
-        else:
-            stats["winrate"] = None
+        stats["winrate"] = stats["wins"] / n if n > 0 else None
 
     return {
         "file": data.get("_file"),
