@@ -1,10 +1,10 @@
 # src/backtest/core.py
-from __future__ import annotations
 
+from __future__ import annotations
 from typing import List, Dict, Any
 
-from src.app.main import run_once  # nutzt deine bestehende Signal-Engine
-from src.trade.risk import compute_order_levels  # gleiche Risk-Logik wie live
+from src.backtest.signal_engine import compute_backtest_signal
+from src.trade.risk import compute_order_levels
 
 
 def simulate_backtest(
@@ -13,60 +13,51 @@ def simulate_backtest(
     score_min: float = 0.0,
     rr: float = 1.5,
     sl_pct: float = 0.004,
+    history_len: int = 300,
 ) -> Dict[str, Any]:
     """
     Kern-Backtest:
     - iteriert über Candles
-    - ruft main.run_once() für jedes Candle auf (im backtest_mode)
-    - simuliert SL/TP über compute_order_levels
-    - aggregiert Ergebnisse in R (Risk-Multiples)
+    - ruft die reine Backtest-Signalengine für jedes Candle auf
+      (TechnicalAgent, offline)
+    - simuliert SL/TP
+    - aggregiert Ergebnisse (R-Multiples)
     """
 
     trades: List[Dict[str, Any]] = []
     open_trade: Dict[str, Any] | None = None
 
+    # Debug-Zähler
+    sig_long = 0
+    sig_short = 0
+    sig_hold = 0
+    opened_trades = 0
+
     for idx, candle in enumerate(candles):
-        # Erwartetes Candle-Format:
-        # {
-        #   "t": ...,
-        #   "o": ...,
-        #   "h": ...,
-        #   "low": ...,
-        #   "c": ...,
-        #   "v": ...
-        # }
         price = float(candle["c"])
 
-        # -------------------------------------------------
-        # 1) Signal-Engine für dieses Candle ausführen
-        # -------------------------------------------------
-        # WICHTIG: backtest_mode=True, damit keine Paper-Trades,
-        # keine echten Orders und keine Telegram-Nachrichten ausgelöst werden.
-        results = run_once(
-            single_pair=pair,
-            override_price=price,
-            backtest_mode=True,
-        )
+        # History-Fenster für Signal-Engine bestimmen
+        start_idx = max(0, idx - history_len + 1)
+        history = candles[start_idx : idx + 1]
 
-        if not results:
-            continue
+        signal = compute_backtest_signal(pair, history)
+        score = float(signal.get("score", 0.0))
+        decision = str(signal.get("decision", "HOLD"))
+        breakdown = signal.get("breakdown", [])
 
-        # Da wir single_pair verwenden, kommt genau ein Ergebnis zurück
-        res = results[0]
+        # Debug-Zähler
+        if decision == "LONG":
+            sig_long += 1
+        elif decision == "SHORT":
+            sig_short += 1
+        else:
+            sig_hold += 1
 
-        score = float(res.get("score", 0.0))
-        decision = str(res.get("decision") or "HOLD").upper()
-        breakdown = res.get("breakdown", [])
-
-        # -------------------------------------------------
-        # Score-Filter (optional, zusätzlicher Threshold)
-        # -------------------------------------------------
+        # Score-Gate
         if abs(score) < score_min:
             continue
 
-        # -------------------------------------------------
-        # Neue Position eröffnen, wenn flat und LONG/SHORT
-        # -------------------------------------------------
+        # Neuer Trade nur, wenn keiner offen ist
         if decision in ("LONG", "SHORT") and open_trade is None:
             ol = compute_order_levels(
                 side=decision,
@@ -83,62 +74,52 @@ def simulate_backtest(
                 "stop_loss": ol["stop_loss"],
                 "take_profit": ol["take_profit"],
                 "entry_idx": idx,
-                "entry_ts": candle.get("t"),
+                "entry_ts": candle["t"],
                 "entry_score": score,
                 "breakdown": breakdown,
             }
-
-            # Nächstes Candle, SL/TP wird weiter unten simuliert
+            opened_trades += 1
             continue
 
-        # -------------------------------------------------
-        # Falls keine offene Position: nichts zu managen
-        # -------------------------------------------------
-        if open_trade is None:
-            continue
+        # SL/TP Simulation für offenen Trade
+        if open_trade is not None:
+            low = float(candle["low"])
+            high = float(candle["h"])
 
-        # -------------------------------------------------
-        # SL/TP Simulation auf Basis High/Low des Candles
-        # -------------------------------------------------
-        low = float(candle["low"])
-        high = float(candle["h"])
+            if open_trade["side"] == "LONG":
+                if low <= open_trade["stop_loss"]:
+                    pnl = -1.0
+                    exit_price = open_trade["stop_loss"]
+                elif high >= open_trade["take_profit"]:
+                    pnl = rr
+                    exit_price = open_trade["take_profit"]
+                else:
+                    continue
+            else:  # SHORT
+                if high >= open_trade["stop_loss"]:
+                    pnl = -1.0
+                    exit_price = open_trade["stop_loss"]
+                elif low <= open_trade["take_profit"]:
+                    pnl = rr
+                    exit_price = open_trade["take_profit"]
+                else:
+                    continue
 
-        # LONG
-        if open_trade["side"] == "LONG":
-            if low <= open_trade["stop_loss"]:
-                pnl = -1.0
-                exit_price = open_trade["stop_loss"]
-            elif high >= open_trade["take_profit"]:
-                pnl = rr
-                exit_price = open_trade["take_profit"]
-            else:
-                continue
+            # Trade schließen
+            open_trade["exit_idx"] = idx
+            open_trade["exit_ts"] = candle["t"]
+            open_trade["exit"] = exit_price
+            open_trade["pnl_r"] = pnl
+            trades.append(open_trade)
+            open_trade = None
 
-        # SHORT
-        else:
-            if high >= open_trade["stop_loss"]:
-                pnl = -1.0
-                exit_price = open_trade["stop_loss"]
-            elif low <= open_trade["take_profit"]:
-                pnl = rr
-                exit_price = open_trade["take_profit"]
-            else:
-                continue
+    # Debug-Output für dieses Pair
+    print(
+        f"[BACKTEST] {pair}: signals L/S/H = {sig_long}/{sig_short}/{sig_hold}, "
+        f"opened={opened_trades}, closed={len(trades)}"
+    )
 
-        # -------------------------------------------------
-        # Trade schließen und speichern
-        # -------------------------------------------------
-        open_trade["exit_idx"] = idx
-        open_trade["exit_ts"] = candle.get("t")
-        open_trade["exit"] = float(exit_price)
-        open_trade["pnl_r"] = float(pnl)
-
-        trades.append(open_trade)
-        open_trade = None
-
-    # -------------------------------------------------
-    # Aggregation der Ergebnisse
-    # -------------------------------------------------
+    # Aggregation
     wins = sum(1 for t in trades if t["pnl_r"] > 0)
     losses = sum(1 for t in trades if t["pnl_r"] < 0)
     n = len(trades)
@@ -146,14 +127,11 @@ def simulate_backtest(
     if n > 0:
         gross_profit = sum(t["pnl_r"] for t in trades if t["pnl_r"] > 0)
         gross_loss = -sum(t["pnl_r"] for t in trades if t["pnl_r"] < 0)
-
         pf = gross_profit / gross_loss if gross_loss > 0 else None
         expectancy = sum(t["pnl_r"] for t in trades) / n
         winrate = wins / n
     else:
-        pf = None
-        expectancy = None
-        winrate = None
+        pf = expectancy = winrate = None
 
     return {
         "pair": pair,

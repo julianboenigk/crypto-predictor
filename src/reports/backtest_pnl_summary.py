@@ -32,13 +32,43 @@ def _compute_fee_r_per_trade() -> float:
 
 
 def compute_pnl_summary(data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    PnL-Summary für den letzten Backtest.
+
+    Falls das Backtest-JSON bereits Top-Level-Felder "n_trades", "wins", "losses"
+    enthält, werden diese verwendet.
+
+    Falls NICHT, werden die Kennzahlen aus den Pair-Einträgen aggregiert
+    (data[pair]["n_trades"/"wins"/"losses"]).
+    """
+    # 1) Basis-Parameter
+    rr = float(os.getenv("BACKTEST_RR", "1.5"))
+    fee_r_per_trade = _compute_fee_r_per_trade()
+
+    # 2) Top-Level lesen
     n_trades = int(data.get("n_trades", 0))
     wins = int(data.get("wins", 0))
     losses = int(data.get("losses", 0))
 
-    rr = float(os.getenv("BACKTEST_RR", "1.5"))
-    fee_r_per_trade = _compute_fee_r_per_trade()
+    # 3) Falls Top-Level leer ist → aus Pair-Stats aggregieren
+    if n_trades == 0 and wins == 0 and losses == 0:
+        agg_wins = 0
+        agg_losses = 0
 
+        for key, val in data.items():
+            if not isinstance(val, dict):
+                continue
+            if "n_trades" not in val:
+                continue
+
+            agg_wins += int(val.get("wins", 0))
+            agg_losses += int(val.get("losses", 0))
+
+        wins = agg_wins
+        losses = agg_losses
+        n_trades = wins + losses
+
+    # 4) Wenn immer noch keine Trades → leeres Result
     if n_trades == 0:
         return {
             "file": data.get("_file"),
@@ -63,7 +93,7 @@ def compute_pnl_summary(data: Dict[str, Any]) -> Dict[str, Any]:
     pnl_r_gross = gross_win_r - gross_loss_r
 
     winrate = wins / n_trades if n_trades > 0 else None
-    expectancy_r_gross = (winrate * rr) - ((1 - winrate) * 1.0)
+    expectancy_r_gross = (winrate * rr) - ((1 - winrate) * 1.0) if winrate is not None else None
 
     profit_factor_gross = (
         gross_win_r / gross_loss_r if gross_loss_r > 0 else None
@@ -73,8 +103,10 @@ def compute_pnl_summary(data: Dict[str, Any]) -> Dict[str, Any]:
     fee_total_r = n_trades * fee_r_per_trade
 
     # --- Netto ---
-    pnl_r_net = pnl_r_gross - fee_total_r
-    expectancy_r_net = expectancy_r_gross - fee_r_per_trade
+    pnl_r_net = pnl_r_gross - fee_total_r if pnl_r_gross is not None else None
+    expectancy_r_net = (
+        expectancy_r_gross - fee_r_per_trade if expectancy_r_gross is not None else None
+    )
 
     profit_after = wins * (rr - fee_r_per_trade)
     loss_after = losses * (1.0 + fee_r_per_trade)
@@ -85,6 +117,7 @@ def compute_pnl_summary(data: Dict[str, Any]) -> Dict[str, Any]:
 
     return {
         "file": data.get("_file"),
+            # Aggregiert über alle Pairs
         "n_trades": n_trades,
         "wins": wins,
         "losses": losses,
