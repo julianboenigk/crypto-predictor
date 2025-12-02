@@ -21,14 +21,12 @@ def load_latest_backtest() -> Dict[str, Any]:
 def _compute_fee_r_per_trade() -> float:
     fee_pct = float(os.getenv("BINANCE_FEE_PCT", "0.001"))
     fee_sides = float(os.getenv("BACKTEST_FEE_SIDES", "2.0"))
-    sl_pct = float(os.getenv("BACKTEST_SL_PCT", "0.004"))
+    sl_pct = float(os.getenv("BACKTEST_SL_PCT", "0.012"))
 
-    if sl_pct <= 0:
-        return 0.0
+    roundtrip_fee = fee_pct * fee_sides
 
-    roundtrip_fee_pct = fee_pct * fee_sides
-    fee_r = roundtrip_fee_pct / sl_pct
-    return fee_r
+    # Fee in R-Multiples (prozentual)
+    return roundtrip_fee / sl_pct
 
 
 def compute_pnl_summary(data: Dict[str, Any]) -> Dict[str, Any]:
