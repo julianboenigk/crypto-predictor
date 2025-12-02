@@ -617,8 +617,8 @@ def run_once(single_pair: str | None = None,
         score_abs = abs(score)
 
         # Zulässige Score-Zone:
-        # profitabel: -0.6 bis -0.2
-        allow_trade = (-0.6 <= score < -0.2)
+        # Trade nur bei |score| >= FINAL_SCORE_MIN
+        allow_trade = (score_abs >= FINAL_SCORE_MIN)
 
         # --- Score-Gate: Logging für Backtest & Paper & Live ---
         try:

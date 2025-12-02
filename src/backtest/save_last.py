@@ -4,7 +4,7 @@ from src.backtest.run_latest import run_all
 from src.reports.backtest_pnl_summary import load_latest_backtest
 
 
-def main(score_min: float = 0.0) -> None:
+def main(score_min: float = 0.6) -> None:
     """
     Läuft die neue Backtest-Pipeline (run_all) und gibt danach
     das neueste Backtest-JSON kompakt auf stdout aus.

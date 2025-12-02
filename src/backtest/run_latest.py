@@ -50,7 +50,7 @@ def run_all(score_min: float = 0.0) -> str:
 
 def main() -> None:
     # hier explizit Score-Gate setzen
-    run_all(score_min=0.4)
+    run_all(score_min=0.6)
 
 
 if __name__ == "__main__":
