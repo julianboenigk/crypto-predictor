@@ -1,5 +1,6 @@
 # src/app/main.py
 from __future__ import annotations
+from src.tools.log_rotation import maybe_rotate_all_logs
 
 import os
 import sys
@@ -554,6 +555,12 @@ def run_once(single_pair: str | None = None,
              override_price: float | None = None,
              backtest_mode: bool = False):
     asof = datetime.now(timezone.utc)
+
+    # -----------------------------------------------
+    # Log-Rotation (nur Logs, keine Backtest-Files)
+    # -----------------------------------------------
+    maybe_rotate_all_logs()
+
     pairs, interval, max_age_sec = load_universe()
     if single_pair is not None:
         pairs = [single_pair]
