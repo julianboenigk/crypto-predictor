@@ -32,7 +32,7 @@ MAX_OPEN_TRADES = int(os.getenv("MAX_OPEN_TRADES", "0"))
 MAX_TRADES_PER_DAY = int(os.getenv("MAX_TRADES_PER_DAY", "0"))
 MAX_DAILY_RISK_R = float(os.getenv("MAX_DAILY_RISK_R", "0.0"))
 MAX_RISK_PER_TRADE_R = float(os.getenv("MAX_RISK_PER_TRADE_R", "1.0"))
-FINAL_SCORE_MIN = float(os.getenv("FINAL_SCORE_MIN", "0.4"))
+FINAL_SCORE_MIN = float(os.getenv("FINAL_SCORE_MIN", "0.6"))
 
 # -------------------------------------------------------------------
 # Paths & Defaults
@@ -55,8 +55,8 @@ DEFAULT_WEIGHTS = {
 }
 
 DEFAULT_THRESHOLDS = {
-    "long": 0.85,
-    "short": -0.85,
+    "long": 0.6,
+    "short": -0.6,
 }
 
 # Trendfilter: wie stark muss Technical sein, um LONG/SHORT zu erlauben?
@@ -187,21 +187,58 @@ def load_weights() -> Dict[str, float]:
 
 
 def load_thresholds() -> Dict[str, float]:
-    data = _read_yaml(CONFIG_DIR / "thresholds.yaml")
-    if not data:
-        return DEFAULT_THRESHOLDS.copy()
+    """
+    Konsens-Schwellen:
+    - primär aus ENV: CONSENSUS_LONG / CONSENSUS_SHORT
+    - sonst aus configs/thresholds.yaml
+    - sonst DEFAULT_THRESHOLDS (0.6 / -0.6)
+    """
+    # 1) ENV versuchen
+    env_long = os.getenv("CONSENSUS_LONG")
+    env_short = os.getenv("CONSENSUS_SHORT")
+    if env_long is not None and env_short is not None:
+        try:
+            return {
+                "long": float(env_long),
+                "short": float(env_short),
+            }
+        except ValueError:
+            pass  # Fallback auf YAML/Defaults
+
+    # 2) YAML-Fallback
+    data = _read_yaml(CONFIG_DIR / "thresholds.yaml") or {}
     cons = data.get("consensus") or data
-    return {
-        "long": float(cons.get("long", DEFAULT_THRESHOLDS["long"])),
-        "short": float(cons.get("short", DEFAULT_THRESHOLDS["short"])),
-    }
+    long_val = cons.get("long")
+    short_val = cons.get("short")
+
+    try:
+        long_thr = float(long_val) if long_val is not None else DEFAULT_THRESHOLDS["long"]
+    except ValueError:
+        long_thr = DEFAULT_THRESHOLDS["long"]
+
+    try:
+        short_thr = float(short_val) if short_val is not None else DEFAULT_THRESHOLDS["short"]
+    except ValueError:
+        short_thr = DEFAULT_THRESHOLDS["short"]
+
+    return {"long": long_thr, "short": short_thr}
 
 
 def load_telegram_score_min() -> float:
+    """
+    Basis-Schwelle für Telegram-Alerts.
+    Default:
+    - TELEGRAM_SCORE_MIN, falls gesetzt
+    - sonst FINAL_SCORE_MIN
+    """
+    base = FINAL_SCORE_MIN
+    raw = os.getenv("TELEGRAM_SCORE_MIN")
+    if raw is None:
+        return base
     try:
-        return float(os.getenv("TELEGRAM_SCORE_MIN", "0.4"))
+        return float(raw)
     except ValueError:
-        return 0.4
+        return base
 
 
 def load_testnet_score_min() -> float:
@@ -209,11 +246,11 @@ def load_testnet_score_min() -> float:
     Score-Schwelle für Testnet-Orders.
 
     Default:
-    - TESTNET_SCORE_MIN, falls gesetzt
+    - TESTNET_SCORE_MIN
     - sonst TELEGRAM_SCORE_MIN
-    - sonst 0.4
+    - sonst FINAL_SCORE_MIN
     """
-    # Fallback-Kaskade
+    # 1) TESTNET_SCORE_MIN
     raw = os.getenv("TESTNET_SCORE_MIN")
     if raw is not None:
         try:
@@ -221,6 +258,7 @@ def load_testnet_score_min() -> float:
         except ValueError:
             pass
 
+    # 2) TELEGRAM_SCORE_MIN
     raw_tel = os.getenv("TELEGRAM_SCORE_MIN")
     if raw_tel is not None:
         try:
@@ -228,7 +266,8 @@ def load_testnet_score_min() -> float:
         except ValueError:
             pass
 
-    return 0.4
+    # 3) Fallback: FINAL_SCORE_MIN
+    return FINAL_SCORE_MIN
 
 
 def load_live_score_min() -> float:
@@ -236,10 +275,10 @@ def load_live_score_min() -> float:
     Score-Schwelle für spätere Live-Orders.
 
     Default:
-    - LIVE_SCORE_MIN, falls gesetzt
+    - LIVE_SCORE_MIN
     - sonst TESTNET_SCORE_MIN
     - sonst TELEGRAM_SCORE_MIN
-    - sonst 0.4
+    - sonst FINAL_SCORE_MIN
     """
     for key in ("LIVE_SCORE_MIN", "TESTNET_SCORE_MIN", "TELEGRAM_SCORE_MIN"):
         raw = os.getenv(key)
@@ -249,7 +288,7 @@ def load_live_score_min() -> float:
             return float(raw)
         except ValueError:
             continue
-    return 0.4
+    return FINAL_SCORE_MIN
 
 
 def _fetch_rows(pair: str, interval: str, limit: int = 300) -> Any:
