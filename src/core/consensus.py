@@ -1,6 +1,8 @@
 from __future__ import annotations
 from typing import Dict, List, TypedDict
 
+import os
+
 class Vote(TypedDict):
     agent: str
     score: float        # [-1,+1]
@@ -12,7 +14,10 @@ class Decision(TypedDict):
     decision: str       # LONG | SHORT | HOLD
     reason: str
 
-DEFAULT_THRESHOLDS = {"long": 0.4, "short": -0.4}
+DEFAULT_THRESHOLDS = {
+    "long": float(os.getenv("CONSENSUS_LONG", os.getenv("FINAL_SCORE_MIN", "0.6"))),
+    "short": float(os.getenv("CONSENSUS_SHORT", "-" + os.getenv("FINAL_SCORE_MIN", "0.6"))),
+}
 
 def decide(votes: List[Vote], weights: Dict[str, float] | None = None,
            thresholds: Dict[str, float] | None = None) -> Decision:

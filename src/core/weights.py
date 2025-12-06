@@ -10,7 +10,7 @@ RUNS_PATH = Path("data/runs.log")
 # wie viele Zeilen aus runs.log wir für die Gewichtung betrachten
 DEFAULT_LOOKBACK_LINES = int(os.getenv("WEIGHTS_LOOKBACK_LINES", "500"))
 # ab welchem absoluten Score ein Signal als “relevant” zählt
-DEFAULT_SIGNAL_THR = float(os.getenv("WEIGHTS_SIGNAL_THR", "0.4"))
+DEFAULT_SIGNAL_THR = float(os.getenv("WEIGHTS_SIGNAL_THR", "0.6"))
 
 # Basisgewichte als Fallback (Technical dominiert)
 DEFAULT_BASE_WEIGHTS: Dict[str, float] = {
