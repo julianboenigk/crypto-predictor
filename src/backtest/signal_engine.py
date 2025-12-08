@@ -58,7 +58,7 @@ def compute_backtest_signal(
     score = float(res.get("score", 0.0))
     conf = float(res.get("confidence", 0.0))
 
-    long_thr = float(os.getenv("TECH_DRIVER_LONG", "0.6"))
+    long_thr = float(os.getenv("TECH_DRIVER_LONG", "0.7"))
     short_thr = float(os.getenv("TECH_DRIVER_SHORT", "-0.6"))
 
     if score >= long_thr:
