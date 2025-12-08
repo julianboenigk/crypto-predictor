@@ -42,7 +42,7 @@ ROOT = Path(__file__).resolve().parents[2]
 CONFIG_DIR = ROOT / "configs"
 DATA_DIR = ROOT / "data"
 
-DEFAULT_UNIVERSE = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "XRPUSDT", "ADAUSDT", "DOGEUSDT"]
+DEFAULT_UNIVERSE = ["BTCUSDT", "ETHUSDT", "XRPUSDT", "SOLUSDT"]
 DEFAULT_INTERVAL = "15m"
 DEFAULT_MAX_AGE_SEC = 900
 
@@ -481,7 +481,7 @@ def decide_pair(
         # redundanter Schutz, falls technical NICHT in CRITICAL_AGENTS gesetzt wäre
         return S, "HOLD", "critical stale: technical", breakdown
 
-    tech_long_thr = float(os.getenv("TECH_DRIVER_LONG", "0.6"))
+    tech_long_thr = float(os.getenv("TECH_DRIVER_LONG", "0.7"))
     tech_short_thr = float(os.getenv("TECH_DRIVER_SHORT", "-0.6"))
 
     proposed: Optional[str] = None
