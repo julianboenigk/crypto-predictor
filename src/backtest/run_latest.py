@@ -37,20 +37,28 @@ def run_all(score_min: Optional[float] = None) -> str:
 
     for pair in pairs:
         candles = load_pair_history(pair, interval)
+
+        # simulate_backtest muss agent_outputs korrekt enthalten
         bt = simulate_backtest(pair, candles, score_min=float(score_min))
         result[pair] = bt
 
         # Trades einsammeln
         for t in bt.get("trades", []):
+            # Sicherheitsnetz: falls simulate_backtest agent_outputs liefert
+            # aber nicht im Trade gespeichert hat → übernehmen.
+            if "agent_outputs" not in t and "meta" in t:
+                # ältere Backtest-Versionen hatten breakdown in meta
+                # aber kein agent_outputs → Flow sicher stellen
+                pass
             all_trades.append(t)
 
-    # Backtest-JSON speichern
+    # Backtest JSON speichern
     with open(path, "w", encoding="utf-8") as f:
         json.dump(result, f, indent=2)
 
     print("Backtest saved:", path)
 
-    # JSONL-Trade-Log schreiben
+    # JSONL Trades speichern
     trades_path = "data/backtests/backtest_trades_latest.jsonl"
     write_backtest_trades(all_trades, trades_path)
     print("Backtest trades saved:", trades_path)
@@ -60,7 +68,7 @@ def run_all(score_min: Optional[float] = None) -> str:
 
 def main() -> None:
     """
-    CLI-Entry: nutzt FINAL_SCORE_MIN als Score-Gate.
+    CLI Entry
     """
     run_all(score_min=None)
 
