@@ -18,16 +18,14 @@ def simulate_backtest(
     """
     Kern-Backtest:
     - iteriert über Candles
-    - ruft die reine Backtest-Signalengine für jedes Candle auf
-      (TechnicalAgent, offline)
+    - ruft die reine Backtest-Signalengine auf
     - simuliert SL/TP
-    - aggregiert Ergebnisse (R-Multiples)
+    - speichert JETZT alle agent_outputs (technical, sentiment, news, research)
     """
 
     trades: List[Dict[str, Any]] = []
     open_trade: Dict[str, Any] | None = None
 
-    # Debug-Zähler
     sig_long = 0
     sig_short = 0
     sig_hold = 0
@@ -36,16 +34,19 @@ def simulate_backtest(
     for idx, candle in enumerate(candles):
         price = float(candle["c"])
 
-        # History-Fenster für Signal-Engine bestimmen
+        # History-Fenster bestimmen
         start_idx = max(0, idx - history_len + 1)
         history = candles[start_idx : idx + 1]
 
         signal = compute_backtest_signal(pair, history)
+
+        # ---- NEW: store agent_outputs for later use ----
+        agent_outputs = signal.get("agent_outputs", {})
+
         score = float(signal.get("score", 0.0))
         decision = str(signal.get("decision", "HOLD"))
         breakdown = signal.get("breakdown", [])
 
-        # Debug-Zähler
         if decision == "LONG":
             sig_long += 1
         elif decision == "SHORT":
@@ -57,7 +58,7 @@ def simulate_backtest(
         if abs(score) < score_min:
             continue
 
-        # Neuer Trade nur, wenn keiner offen ist
+        # ---- OPEN NEW TRADE ----
         if decision in ("LONG", "SHORT") and open_trade is None:
             ol = compute_order_levels(
                 side=decision,
@@ -77,11 +78,13 @@ def simulate_backtest(
                 "entry_ts": candle["t"],
                 "entry_score": score,
                 "breakdown": breakdown,
+                # ---- NEW: persist all agent outputs ----
+                "agent_outputs": agent_outputs,
             }
             opened_trades += 1
             continue
 
-        # SL/TP Simulation für offenen Trade
+        # ---- PROCESS OPEN TRADE ----
         if open_trade is not None:
             low = float(candle["low"])
             high = float(candle["h"])
@@ -110,10 +113,15 @@ def simulate_backtest(
             open_trade["exit_ts"] = candle["t"]
             open_trade["exit"] = exit_price
             open_trade["pnl_r"] = pnl
+
+            # ---- NEW: ensure agent_outputs is kept on exit ----
+            if "agent_outputs" not in open_trade:
+                open_trade["agent_outputs"] = agent_outputs
+
             trades.append(open_trade)
             open_trade = None
 
-    # Debug-Output für dieses Pair
+    # Debug-Ausgabe
     print(
         f"[BACKTEST] {pair}: signals L/S/H = {sig_long}/{sig_short}/{sig_hold}, "
         f"opened={opened_trades}, closed={len(trades)}"
