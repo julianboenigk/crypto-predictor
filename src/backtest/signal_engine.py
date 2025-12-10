@@ -2,49 +2,33 @@
 from __future__ import annotations
 
 import os
-from typing import Any, Dict, List, Sequence
+from typing import Any, Dict, List, Tuple
 
-from src.agents.base import Candle, AgentResult
 from src.agents.technical import TechnicalAgent
-from src.agents.sentiment import SentimentAgent
-from src.agents.news import NewsAgent
-from src.agents.research import ResearchAgent
 
 
-def _run_agent(agent_cls, pair: str, candles: Sequence[Candle]) -> AgentResult | None:
+# Default-Schwellen für den Backtest, separat von Consensus-Live-Logic
+BACKTEST_TECH_LONG = float(os.getenv("BACKTEST_TECH_LONG", os.getenv("TECH_DRIVER_LONG", "0.7")))
+BACKTEST_TECH_SHORT = float(os.getenv("BACKTEST_TECH_SHORT", os.getenv("TECH_DRIVER_SHORT", "-0.65")))
+
+# Einen TechnicalAgent einmalig instanzieren
+_TECH_AGENT = TechnicalAgent()
+
+
+def compute_backtest_signal(pair: str, candles: List[Dict[str, Any]]) -> Dict[str, Any]:
     """
-    Runs an agent safely and returns a normalized AgentResult or None.
-    """
-    try:
-        a = agent_cls()
-        res: AgentResult = a.run(pair, candles, inputs_fresh=True)
-        if not isinstance(res, dict):
-            return None
-        if "score" not in res:
-            return None
-        return {
-            "score": float(res.get("score", 0.0)),
-            "confidence": float(res.get("confidence", 1.0)),
+    Backtest-Signallogik (v1):
+    - nutzt ausschließlich den TechnicalAgent
+    - kein LLM, keine News/Sentiment/Research
+    - Entscheidung nur auf Basis der Technical-Score-Schwellen
+
+    Rückgabe-Format:
+        {
+          "pair": str,
+          "score": float,
+          "decision": "LONG" | "SHORT" | "HOLD",
+          "breakdown": [("technical", score, confidence)],
         }
-    except Exception:
-        return None
-
-
-def compute_backtest_signal(
-    pair: str,
-    candles: Sequence[Candle],
-) -> Dict[str, Any]:
-    """
-    Deterministic Backtest-Signalengine – jetzt mit ALLEN Agents:
-
-    - Technical baseline
-    - Sentiment
-    - News
-    - Research
-
-    Es wird weiterhin NUR der Technical-Score für LONG/SHORT verwendet
-    (der Backtest muss deterministisch und "pure" bleiben),
-    aber wir loggen ALLE agent_outputs für spätere Analysen.
     """
 
     if not candles:
@@ -52,65 +36,28 @@ def compute_backtest_signal(
             "pair": pair,
             "score": 0.0,
             "decision": "HOLD",
-            "reason": "no candles",
-            "agent_outputs": {},
             "breakdown": [],
         }
 
-    # ---- RUN TECHNICAL (REQUIRED) ----
-    tech = _run_agent(TechnicalAgent, pair, candles)
-    if tech is None:
-        return {
-            "pair": pair,
-            "score": 0.0,
-            "decision": "HOLD",
-            "reason": "technical agent failed",
-            "agent_outputs": {},
-            "breakdown": [],
-        }
+    # Im Backtest betrachten wir jedes Candle-Fenster als "fresh"
+    res = _TECH_AGENT.run(pair, candles, inputs_fresh=True)
 
-    technical_score = tech["score"]
-    technical_conf = tech["confidence"]
+    score = float(res.get("score", 0.0))
+    conf = float(res.get("confidence", 0.0))
 
-    # ---- RUN OPTIONAL AGENTS ----
-    sentiment = _run_agent(SentimentAgent, pair, candles)
-    news = _run_agent(NewsAgent, pair, candles)
-    research = _run_agent(ResearchAgent, pair, candles)
-
-    agent_outputs = {
-        "technical": tech,
-        "sentiment": sentiment or {"score": 0.0, "confidence": 0.0},
-        "news": news or {"score": 0.0, "confidence": 0.0},
-        "research": research or {"score": 0.0, "confidence": 0.0},
-    }
-
-    # ---- DECISION BASED ONLY ON TECHNICAL ----
-    long_thr = float(os.getenv("TECH_DRIVER_LONG", "0.7"))
-    short_thr = float(os.getenv("TECH_DRIVER_SHORT", "-0.65"))
-
-    if technical_score >= long_thr:
+    decision = "HOLD"
+    if score >= BACKTEST_TECH_LONG:
         decision = "LONG"
-        reason = f"technical score {technical_score:.3f} >= {long_thr:.3f}"
-    elif technical_score <= short_thr:
+    elif score <= BACKTEST_TECH_SHORT:
         decision = "SHORT"
-        reason = f"technical score {technical_score:.3f} <= {short_thr:.3f}"
-    else:
-        decision = "HOLD"
-        reason = "no technical edge"
 
-    breakdown: List[tuple] = [
-        ("technical", technical_score, technical_conf),
-        ("sentiment", agent_outputs["sentiment"]["score"], agent_outputs["sentiment"]["confidence"]),
-        ("news", agent_outputs["news"]["score"], agent_outputs["news"]["confidence"]),
-        ("research", agent_outputs["research"]["score"], agent_outputs["research"]["confidence"]),
+    breakdown: List[Tuple[str, float, float]] = [
+        ("technical", score, conf)
     ]
 
-    # ---- FINAL OUTPUT ----
     return {
         "pair": pair,
-        "score": technical_score,      # system uses technical score for direction
+        "score": score,
         "decision": decision,
-        "reason": reason,
-        "agent_outputs": agent_outputs,
         "breakdown": breakdown,
     }

@@ -5,7 +5,8 @@ import json
 from datetime import datetime, timezone
 from typing import List
 
-from src.agents.research import ResearchAgent  # type: ignore
+from src.agents.ai_research_agent import AIResearchAgent
+  # type: ignore
 
 try:
     # wir nutzen die bestehende Universe-Logik aus main
