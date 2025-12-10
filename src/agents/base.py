@@ -1,21 +1,22 @@
-from __future__ import annotations
-from typing import Protocol, Sequence, TypedDict
+# src/agents/base.py
+
+"""
+Legacy placeholder – Technical Agent nutzt keine gemeinsame Base mehr.
+AI Agents nutzen die neue AIAgent Base (see src/agents/ai_base.py).
+Kein echter Code notwendig. Datei bleibt für Import-Kompatibilität bestehen.
+"""
+
+from typing import TypedDict, Any
 
 class Candle(TypedDict):
-    t: int
+    t: Any
     o: float
     h: float
-    low: float
+    l: float
     c: float
     v: float
 
 class AgentResult(TypedDict):
-    pair: str
+    agent: str
     score: float
     confidence: float
-    explanation: str
-    inputs_fresh: bool
-    latency_ms: int
-
-class Agent(Protocol):
-    def run(self, pair: str, candles: Sequence[Candle], inputs_fresh: bool) -> AgentResult: ...

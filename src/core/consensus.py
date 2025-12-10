@@ -1,49 +1,87 @@
 from __future__ import annotations
-from typing import Dict, List, TypedDict
-
+from typing import Dict, Any, List
+import yaml
 import os
 
-class Vote(TypedDict):
-    agent: str
-    score: float        # [-1,+1]
-    confidence: float   # [0,1]
-    explanation: str
+"""
+Multi-Agent Consensus V2.0 (AI-ready)
+------------------------------------
 
-class Decision(TypedDict):
-    consensus: float
-    decision: str       # LONG | SHORT | HOLD
-    reason: str
+Aggregiert Scores & Confidences der Agents:
+    final_score = Σ (score_i * weight_i * confidence_i) / Σ (weight_i * confidence_i)
 
-DEFAULT_THRESHOLDS = {
-    "long": float(os.getenv("CONSENSUS_LONG", os.getenv("FINAL_SCORE_MIN", "0.7"))),
-    "short": float(os.getenv("CONSENSUS_SHORT", "-" + os.getenv("FINAL_SCORE_MIN", "0.6"))),
-}
+Breakdown für Logging + Backtest:
+    [
+        (agent, score, confidence, weight, weighted),
+        ...
+    ]
 
-def decide(votes: List[Vote], weights: Dict[str, float] | None = None,
-           thresholds: Dict[str, float] | None = None) -> Decision:
-    if thresholds is None:
-        thresholds = DEFAULT_THRESHOLDS
-    if not votes:
-        return {"consensus": 0.0, "decision": "HOLD", "reason": "no votes"}
+Wenn Daten fehlen oder Agent zurückgibt score=None → Agent wird ignoriert.
+"""
 
-    w = weights or {}
+
+# ---------------------------------------------------------------------
+# LOAD WEIGHTS
+# ---------------------------------------------------------------------
+
+def load_agent_weights() -> Dict[str, float]:
+    path = os.path.join("src", "config", "weights.yaml")
+    with open(path, "r") as f:
+        return yaml.safe_load(f)
+
+
+# ---------------------------------------------------------------------
+# MAIN CONSENSUS FUNCTION
+# ---------------------------------------------------------------------
+
+def aggregate_agent_outputs(agent_outputs: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """
+    Eingabe:
+        [
+            {"agent": "technical", "score": ..., "confidence": ..., "explanation": ...},
+            {"agent": "news", ...},
+            {"agent": "sentiment", ...},
+            {"agent": "research", ...},
+        ]
+    Rückgabe:
+        {
+            "final_score": float,
+            "breakdown": [...],
+            "valid_agents": int
+        }
+    """
+
+    weights = load_agent_weights()
+
     num = 0.0
     den = 0.0
-    parts: List[str] = []
-    for v in votes:
-        a = v["agent"]
-        ww = float(w.get(a, 1.0))
-        eff = v["score"] * max(0.0, min(1.0, v["confidence"]))
-        num += ww * eff
-        den += abs(ww)
-        parts.append(f"{a}={eff:+.2f}×w{ww:g}")
+    breakdown_rows = []
 
-    s = num / den if den > 0 else 0.0
-    if s >= thresholds["long"]:
-        d = "LONG"
-    elif s <= thresholds["short"]:
-        d = "SHORT"
+    for out in agent_outputs:
+        agent = out.get("agent")
+        score = out.get("score")
+        conf = out.get("confidence", 0.0)
+
+        if score is None or agent not in weights:
+            continue
+
+        w = float(weights.get(agent, 0.0))
+        weighted = score * conf * w
+
+        breakdown_rows.append(
+            (agent, float(score), float(conf), w, weighted)
+        )
+
+        num += weighted
+        den += abs(w) * max(1e-9, conf)
+
+    if den <= 0:
+        final = 0.0
     else:
-        d = "HOLD"
-    reason = f"S={s:+.3f} from " + ", ".join(parts)
-    return {"consensus": float(s), "decision": d, "reason": reason}
+        final = max(-1.0, min(1.0, num / den))
+
+    return {
+        "final_score": final,
+        "breakdown": breakdown_rows,
+        "valid_agents": len(breakdown_rows),
+    }

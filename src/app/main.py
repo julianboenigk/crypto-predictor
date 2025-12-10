@@ -64,28 +64,59 @@ MIN_TREND_SCORE = float(os.getenv("MIN_TREND_SCORE", "0.2"))
 
 # Agents
 try:
-    from src.agents.technical import TechnicalAgent  # type: ignore
+    from src.agents.technical import TechnicalAgent
 except Exception as e:
     print(f"[WARN] import TechnicalAgent failed: {e}", file=sys.stderr)
-    TechnicalAgent = None  # type: ignore
+    TechnicalAgent = None
 
 try:
-    from src.agents.news import NewsAgent  # type: ignore
+    from src.agents.ai_news import AINews
 except Exception as e:
-    print(f"[WARN] import NewsAgent failed: {e}", file=sys.stderr)
-    NewsAgent = None  # type: ignore
+    print(f"[WARN] import AINews failed: {e}", file=sys.stderr)
+    AINews = None
 
 try:
-    from src.agents.sentiment import SentimentAgent  # type: ignore
+    from src.agents.ai_sentiment import AISentiment
 except Exception as e:
-    print(f"[WARN] import SentimentAgent failed: {e}", file=sys.stderr)
-    SentimentAgent = None  # type: ignore
+    print(f"[WARN] import AISentiment failed: {e}", file=sys.stderr)
+    AISentiment = None
 
 try:
-    from src.agents.research import ResearchAgent  # type: ignore
+    from src.agents.ai_research import AIResearch
 except Exception as e:
-    print(f"[WARN] import ResearchAgent failed: {e}", file=sys.stderr)
-    ResearchAgent = None  # type: ignore
+    print(f"[WARN] import AIResearch failed: {e}", file=sys.stderr)
+    AIResearch = None
+
+
+def load_all_agents():
+    """
+    Lädt alle produktiven Agents in der gewünschten Reihenfolge.
+
+    Reihenfolge:
+    - Technical (Driver)
+    - News (Event-driven sentiment)
+    - Sentiment (Market mood)
+    - Research (Macro + structural)
+
+    Falls ein Agent nicht importiert werden konnte:
+    → wird er übersprungen.
+    """
+    agents = []
+
+    if TechnicalAgent is not None:
+        agents.append(TechnicalAgent())
+
+    if AINews is not None:
+        agents.append(AINews())
+
+    if AISentiment is not None:
+        agents.append(AISentiment())
+
+    if AIResearch is not None:
+        agents.append(AIResearch())
+
+    return agents
+
 
 # data
 _get_ohlcv = None
@@ -530,62 +561,108 @@ def collect_votes(
     asof: datetime,
     max_age_sec: int,
 ) -> Tuple[List[Dict[str, Any]], Dict[str, float]]:
+    """
+    Vereinheitlichte Multi-Agent Vote Collection v2.
+
+    - TechnicalAgent wird wie bisher per Pair und Candles aufgerufen.
+    - AI Agents (News/Sentiment/Research) laufen universe-wide.
+    - Jeder Agent liefert:
+        {
+            "pair": str,
+            "agent": str,
+            "score": float,
+            "confidence": float,
+            "inputs_fresh": bool,
+            ...
+        }
+    """
+
     votes: List[Dict[str, Any]] = []
-    eff_max_age_sec = _effective_freshness_sec(max_age_sec, interval)
     last_prices: Dict[str, float] = {}
 
-    if TechnicalAgent is not None and callable(_get_ohlcv):
-        ta = TechnicalAgent()
-        for pair in universe:
-            rows = _fetch_rows(pair, interval, 300)
-            latest_ts = _latest_ts_from_rows(rows)
-            latest_close = _latest_close_from_rows(rows)
-            if latest_close is not None:
-                last_prices[pair] = latest_close
-            fresh = _is_fresh(latest_ts, eff_max_age_sec)
+    # -------------------------------------------------
+    # technische OHLCV-Daten laden
+    # -------------------------------------------------
+    eff_max_age_sec = _effective_freshness_sec(max_age_sec, interval)
+
+    ohlcv_rows: Dict[str, Any] = {}
+    candles_map: Dict[str, List[dict]] = {}
+    fresh_map: Dict[str, bool] = {}
+
+    for pair in universe:
+        rows = _fetch_rows(pair, interval, 300)
+        ohlcv_rows[pair] = rows
+
+        if rows:
+            ts = _latest_ts_from_rows(rows)
+            fresh_map[pair] = _is_fresh(ts, eff_max_age_sec)
+            last_close = _latest_close_from_rows(rows)
+            if last_close is not None:
+                last_prices[pair] = last_close
+
             candles = _rows_to_tech_candles(rows)
-            if not candles:
-                continue
+            if candles:
+                candles_map[pair] = candles
+
+    # -------------------------------------------------
+    # Agents laden
+    # -------------------------------------------------
+    agent_objects = load_all_agents()
+
+    # -------------------------------------------------
+    # Agent-Execution
+    # -------------------------------------------------
+    for agent in agent_objects:
+
+        name = agent.__class__.__name__
+
+        # -------------------------------
+        # TechnicalAgent (per Pair)
+        # -------------------------------
+        if name.lower().startswith("technical"):
+            for pair in universe:
+                candles = candles_map.get(pair)
+                if not candles:
+                    continue
+
+                inputs_fresh = fresh_map.get(pair, False)
+
+                try:
+                    out = agent.run(pair, candles, inputs_fresh)
+                except Exception as e:
+                    print(f"[WARN] {name}.run failed for {pair}: {e}", file=sys.stderr)
+                    continue
+
+                if not isinstance(out, dict):
+                    continue
+
+                out.setdefault("agent", "technical")
+                out.setdefault("pair", pair)
+                out.setdefault("inputs_fresh", inputs_fresh)
+                votes.append(out)
+
+        # -------------------------------
+        # AI-Agents (universe wide)
+        # run(universe, asof)
+        # -------------------------------
+        else:
             try:
-                res = ta.run(pair, candles, fresh)
-                if isinstance(res, dict):
-                    res.setdefault("agent", "technical")
-                    res.setdefault("inputs_fresh", fresh)
-                    res.setdefault("pair", pair)
-                    votes.append(res)
+                agent_output = agent.run(universe, asof)
             except Exception as e:
-                print(f"[WARN] TechnicalAgent.run failed for {pair}: {e}", file=sys.stderr)
+                print(f"[WARN] {name}.run failed: {e}", file=sys.stderr)
+                continue
 
-    if NewsAgent is not None:
-        try:
-            na = NewsAgent()
-            out = na.run(universe, asof)
-            for r in out:
-                r.setdefault("agent", "news")
-                r.setdefault("inputs_fresh", True)
-                votes.append(r)
-        except Exception as e:
-            print(f"[WARN] NewsAgent.run failed: {e}", file=sys.stderr)
+            if not agent_output:
+                continue
 
-    if SentimentAgent is not None:
-        try:
-            sa = SentimentAgent()
-            out = sa.run(universe, asof)
-            for r in out:
-                r.setdefault("agent", "sentiment")
-                votes.append(r)
-        except Exception as e:
-            print(f"[WARN] SentimentAgent.run failed: {e}", file=sys.stderr)
+            # ai_agents liefern Liste je Pair
+            for out in agent_output:
+                if not isinstance(out, dict):
+                    continue
 
-    if ResearchAgent is not None:
-        try:
-            ra = ResearchAgent()
-            out = ra.run(universe, asof)
-            for r in out:
-                r.setdefault("agent", "research")
-                votes.append(r)
-        except Exception as e:
-            print(f"[WARN] ResearchAgent.run failed: {e}", file=sys.stderr)
+                out.setdefault("agent", agent.agent_name)
+                out.setdefault("inputs_fresh", True)
+                votes.append(out)
 
     return votes, last_prices
 
