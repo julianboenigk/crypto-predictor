@@ -1,6 +1,8 @@
 # src/app/main.py
 from __future__ import annotations
-from src.tools.log_rotation import maybe_rotate_all_logs
+
+# BOOTSTRAP ENV – EINMAL
+from src.bootstrap.env import env_debug  # noqa: F401
 
 import os
 import sys
@@ -10,11 +12,8 @@ from pathlib import Path
 from typing import Dict, List, Tuple, Any, Optional
 from datetime import datetime, timezone
 
-try:
-    from dotenv import load_dotenv  # type: ignore
-    load_dotenv()
-except Exception:
-    pass
+from src.tools.log_rotation import maybe_rotate_all_logs
+
 
 # -------------------------------------------------------------------
 # Trading & Environment Configuration
@@ -49,9 +48,6 @@ DEFAULT_MAX_AGE_SEC = 900
 # Defaults nur als Fallback; eigentliche Werte kommen aus configs/weights.yaml & thresholds.yaml
 DEFAULT_WEIGHTS = {
     "technical": 0.60,
-    "sentiment": 0.15,
-    "news": 0.15,
-    "research": 0.10,
 }
 
 DEFAULT_THRESHOLDS = {
@@ -69,24 +65,6 @@ except Exception as e:
     print(f"[WARN] import TechnicalAgent failed: {e}", file=sys.stderr)
     TechnicalAgent = None
 
-try:
-    from src.agents.ai_news import AINews
-except Exception as e:
-    print(f"[WARN] import AINews failed: {e}", file=sys.stderr)
-    AINews = None
-
-try:
-    from src.agents.ai_sentiment import AISentiment
-except Exception as e:
-    print(f"[WARN] import AISentiment failed: {e}", file=sys.stderr)
-    AISentiment = None
-
-try:
-    from src.agents.ai_research import AIResearch
-except Exception as e:
-    print(f"[WARN] import AIResearch failed: {e}", file=sys.stderr)
-    AIResearch = None
-
 
 def load_all_agents():
     """
@@ -94,9 +72,6 @@ def load_all_agents():
 
     Reihenfolge:
     - Technical (Driver)
-    - News (Event-driven sentiment)
-    - Sentiment (Market mood)
-    - Research (Macro + structural)
 
     Falls ein Agent nicht importiert werden konnte:
     → wird er übersprungen.
@@ -106,17 +81,7 @@ def load_all_agents():
     if TechnicalAgent is not None:
         agents.append(TechnicalAgent())
 
-    if AINews is not None:
-        agents.append(AINews())
-
-    if AISentiment is not None:
-        agents.append(AISentiment())
-
-    if AIResearch is not None:
-        agents.append(AIResearch())
-
     return agents
-
 
 # data
 _get_ohlcv = None

@@ -1,65 +1,75 @@
 from __future__ import annotations
+from src.bootstrap.env import env_debug  # noqa: F401
 
-import hashlib
-import json
+# ============================================================
+# VERY EARLY ENV LOADING (before anything else)
+# ============================================================
 import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+ENV_PATH = PROJECT_ROOT / ".env"
+
+# ============================================================
+# Standard imports
+# ============================================================
+import json
+import hashlib
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Tuple
 from datetime import datetime
 
 # ============================================================
-# Load .env EARLY
-# ============================================================
-import pathlib
-from dotenv import load_dotenv
-
-ENV_PATH = pathlib.Path("/home/crypto/crypto-predictor/.env")
-if ENV_PATH.exists():
-    load_dotenv(dotenv_path=ENV_PATH, override=True)
-else:
-    print(f"[AI_BASE] WARNING: .env not found at {ENV_PATH}")
-
-# ============================================================
-# OpenAI Client (new API, required for openai>=1.0)
+# OpenAI Client (SDK >=1.0)
 # ============================================================
 from openai import OpenAI
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+if not OPENAI_API_KEY:
+    print("[AI_BASE] WARNING: OPENAI_API_KEY not set")
+
 client = OpenAI(api_key=OPENAI_API_KEY)
 
 # ============================================================
-# Limits
+# Limits (0 = disabled)
 # ============================================================
-MAX_LLM_CALLS_PER_DAY = int(os.getenv("MAX_LLM_CALLS_PER_DAY", "1000"))
-MAX_LLM_TOKENS_PER_DAY = int(os.getenv("MAX_LLM_TOKENS_PER_DAY", "400000"))
+def _int_env(name: str, default: int = 0) -> int:
+    try:
+        return int(os.getenv(name, default))
+    except Exception:
+        return default
+
+MAX_LLM_CALLS_PER_DAY = _int_env("MAX_LLM_CALLS_PER_DAY", 0)
+MAX_LLM_TOKENS_PER_DAY = _int_env("MAX_LLM_TOKENS_PER_DAY", 0)
+
 OPENAI_MODEL_DEFAULT = os.getenv("OPENAI_MODEL_DEFAULT", "gpt-4.1-mini")
 
 # ============================================================
-# Utility: deterministic hashing
+# Utility
 # ============================================================
 def deterministic_hash(data: Any) -> str:
     try:
-        encoded = json.dumps(data, sort_keys=True).encode("utf-8")
+        encoded = json.dumps(data, sort_keys=True, ensure_ascii=False).encode("utf-8")
     except Exception:
         encoded = str(data).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
 
 # ============================================================
-# Cache Management
+# Cache
 # ============================================================
-def cache_path(agent_name: str, key: str) -> str:
-    directory = f"data/agent_cache/{agent_name}"
-    os.makedirs(directory, exist_ok=True)
-    return f"{directory}/{key}.json"
+def cache_path(agent_name: str, key: str) -> Path:
+    path = PROJECT_ROOT / "data" / "agent_cache" / agent_name
+    path.mkdir(parents=True, exist_ok=True)
+    return path / f"{key}.json"
 
 
 def load_cache(agent_name: str, key: str) -> Optional[Dict[str, Any]]:
     path = cache_path(agent_name, key)
-    if not os.path.exists(path):
+    if not path.exists():
         return None
     try:
-        with open(path, "r", encoding="utf-8") as f:
-            return json.load(f)
+        return json.loads(path.read_text(encoding="utf-8"))
     except Exception:
         return None
 
@@ -67,93 +77,99 @@ def load_cache(agent_name: str, key: str) -> Optional[Dict[str, Any]]:
 def save_cache(agent_name: str, key: str, data: Dict[str, Any]) -> None:
     path = cache_path(agent_name, key)
     try:
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2)
+        path.write_text(json.dumps(data, indent=2), encoding="utf-8")
     except Exception:
         pass
 
 # ============================================================
 # LLM Usage Tracking
 # ============================================================
+USAGE_PATH = PROJECT_ROOT / "data" / "llm_usage.json"
+
+def _today() -> str:
+    return datetime.utcnow().strftime("%Y-%m-%d")
+
+
 def load_llm_usage() -> Tuple[int, int]:
-    path = "data/llm_usage.json"
-    if not os.path.exists(path):
+    if not USAGE_PATH.exists():
         return 0, 0
     try:
-        with open(path, "r") as f:
-            data = json.load(f)
-        today = datetime.utcnow().strftime("%Y-%m-%d")
-        return data.get(today, {}).get("calls", 0), data.get(today, {}).get("tokens", 0)
+        data = json.loads(USAGE_PATH.read_text())
+        today = data.get(_today(), {})
+        return int(today.get("calls", 0)), int(today.get("tokens", 0))
     except Exception:
         return 0, 0
 
 
 def save_llm_usage(calls: int, tokens: int) -> None:
-    today = datetime.utcnow().strftime("%Y-%m-%d")
-    path = "data/llm_usage.json"
-
-    if os.path.exists(path):
+    data = {}
+    if USAGE_PATH.exists():
         try:
-            with open(path, "r") as f:
-                data = json.load(f)
+            data = json.loads(USAGE_PATH.read_text())
         except Exception:
-            data = {}
-    else:
-        data = {}
+            pass
 
-    data[today] = {"calls": calls, "tokens": tokens}
-    with open(path, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2)
+    data[_today()] = {"calls": calls, "tokens": tokens}
+    USAGE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    USAGE_PATH.write_text(json.dumps(data, indent=2))
 
-
-def check_limits(tokens_required: int = 0) -> bool:
+# ============================================================
+# Limit Check (clean & explicit)
+# ============================================================
+def check_limits(tokens_required: int = 0) -> Tuple[bool, str]:
     calls, tokens_used = load_llm_usage()
-    if calls >= MAX_LLM_CALLS_PER_DAY:
-        print("[AI_BASE] max LLM calls/day exceeded")
-        return False
-    if tokens_used + tokens_required >= MAX_LLM_TOKENS_PER_DAY:
-        print("[AI_BASE] max LLM tokens/day exceeded")
-        return False
-    return True
+
+    if MAX_LLM_CALLS_PER_DAY > 0 and calls >= MAX_LLM_CALLS_PER_DAY:
+        return False, "MAX_CALLS_REACHED"
+
+    if MAX_LLM_TOKENS_PER_DAY > 0 and (tokens_used + tokens_required) > MAX_LLM_TOKENS_PER_DAY:
+        return False, "MAX_TOKENS_REACHED"
+
+    return True, ""
 
 # ============================================================
 # Prompt Loader
 # ============================================================
 def load_prompt(prompt_file: str) -> str:
-    path = f"prompts/{prompt_file}"
+    path = PROJECT_ROOT / "prompts" / prompt_file
     try:
-        with open(path, "r", encoding="utf-8") as f:
-            return f.read()
+        return path.read_text(encoding="utf-8")
     except Exception:
         return "SCORE: 0\nCONFIDENCE: 0"
 
 # ============================================================
-# NEW OpenAI LLM Call
+# LLM Call
 # ============================================================
 def run_llm(prompt: str, model: str = OPENAI_MODEL_DEFAULT) -> Dict[str, Any]:
-    if not check_limits(tokens_required=len(prompt.split())):
-        return {"raw_output": "LIMIT_REACHED", "score": 0.0, "confidence": 0.0}
+    token_estimate = max(1, len(prompt.split()))
 
-    try:
-        response = client.chat.completions.create(
-            model=model,
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0,
-            max_tokens=128,
-        )
+    allowed, reason = check_limits(token_estimate)
+    if not allowed:
+        print(f"[AI_BASE] LLM blocked: {reason}")
+        return {
+            "raw_output": "LIMIT_REACHED",
+            "limit_reason": reason,
+        }
 
-        raw = response.choices[0].message.content
+    response = client.chat.completions.create(
+        model=model,
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0,
+        max_tokens=128,
+    )
 
-        calls, tokens_used = load_llm_usage()
-        save_llm_usage(
-            calls + 1,
-            tokens_used + (response.usage.total_tokens or 0)
-        )
+    raw = response.choices[0].message.content or ""
 
-        return {"raw_output": raw, "response": response}
+    calls, tokens_used = load_llm_usage()
+    save_llm_usage(
+        calls + 1,
+        tokens_used + (response.usage.total_tokens or 0),
+    )
 
-    except Exception as e:
-        return {"raw_output": f"ERROR: {e}", "score": 0.0, "confidence": 0.0}
+    return {
+        "raw_output": raw,
+        "response": response,
+    }
 
 # ============================================================
 # Dataclass
@@ -165,16 +181,8 @@ class AgentOutput:
     confidence: float
     raw: Dict[str, Any]
 
-    def to_dict(self):
-        return {
-            "agent": self.agent,
-            "score": self.score,
-            "confidence": self.confidence,
-            "raw": self.raw,
-        }
-
 # ============================================================
-# Base Class
+# Base Agent
 # ============================================================
 class AIAgent:
     agent_name: str = "ai_base"
@@ -182,47 +190,48 @@ class AIAgent:
     model_name: str = OPENAI_MODEL_DEFAULT
 
     def build_prompt(self, candle_window: Any, external_data: Dict[str, Any]) -> str:
-        try:
-            template = load_prompt(self.prompt_file)
-            return template.format(
-                candles=json.dumps(candle_window, ensure_ascii=False),
-                data=json.dumps(external_data, ensure_ascii=False),
-            )
-        except Exception as e:
-            return f"SCORE: 0\nCONFIDENCE: 0\nERROR: {e}"
+        template = load_prompt(self.prompt_file)
+        return template.format(
+            candles=json.dumps(candle_window, ensure_ascii=False),
+            data=json.dumps(external_data, ensure_ascii=False),
+        )
 
     def run(self, candle_window: Any, external_data: Dict[str, Any]) -> AgentOutput:
-        safe_external = external_data if isinstance(external_data, dict) else {"data": str(external_data)}
-        safe_candles = candle_window if isinstance(candle_window, (list, dict)) else []
-
-        key = deterministic_hash({"c": safe_candles, "e": safe_external})
+        key = deterministic_hash({"c": candle_window, "e": external_data})
 
         cached = load_cache(self.agent_name, key)
         if cached:
-            return AgentOutput(self.agent_name, cached["score"], cached["confidence"], cached["raw"])
+            return AgentOutput(
+                self.agent_name,
+                cached["score"],
+                cached["confidence"],
+                cached["raw"],
+            )
 
-        prompt = self.build_prompt(safe_candles, safe_external)
+        prompt = self.build_prompt(candle_window, external_data)
         out = run_llm(prompt, model=self.model_name)
+
         score, conf = self.parse_output(out.get("raw_output", ""))
 
-        result = {"score": score, "confidence": conf, "raw": out}
+        result = {
+            "score": score,
+            "confidence": conf,
+            "raw": out,
+        }
         save_cache(self.agent_name, key, result)
 
         return AgentOutput(self.agent_name, score, conf, out)
 
     @staticmethod
     def parse_output(text: str) -> Tuple[float, float]:
-        if not text:
+        if not text or "LIMIT_REACHED" in text:
             return 0.0, 0.0
-        try:
-            score = 0.0
-            conf = 0.0
-            for line in text.splitlines():
-                up = line.upper()
-                if "SCORE:" in up:
-                    score = float(line.split(":")[1].strip())
-                if "CONFIDENCE:" in up:
-                    conf = float(line.split(":")[1].strip())
-            return score, conf
-        except Exception:
-            return 0.0, 0.0
+
+        score = 0.0
+        conf = 0.0
+        for line in text.splitlines():
+            if line.upper().startswith("SCORE:"):
+                score = float(line.split(":", 1)[1].strip())
+            elif line.upper().startswith("CONFIDENCE:"):
+                conf = float(line.split(":", 1)[1].strip())
+        return score, conf
