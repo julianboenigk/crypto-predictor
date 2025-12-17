@@ -1,87 +1,84 @@
 from __future__ import annotations
-from typing import Dict, Any, List
-import yaml
-import os
+from typing import Dict, Any, List, Tuple
+
 
 """
-Multi-Agent Consensus V2.0 (AI-ready)
-------------------------------------
+Consensus V3 — Simplified (Step 3)
 
-Aggregiert Scores & Confidences der Agents:
-    final_score = Σ (score_i * weight_i * confidence_i) / Σ (weight_i * confidence_i)
-
-Breakdown für Logging + Backtest:
-    [
-        (agent, score, confidence, weight, weighted),
-        ...
-    ]
-
-Wenn Daten fehlen oder Agent zurückgibt score=None → Agent wird ignoriert.
+Design principles:
+- Only two agents exist: technical + news_sentiment
+- Technical decides direction
+- News/Sentiment adjusts conviction only
+- No vetoes, no dynamic weights, no learning
+- Deterministic and backtest-safe
 """
 
 
-# ---------------------------------------------------------------------
-# LOAD WEIGHTS
-# ---------------------------------------------------------------------
-
-def load_agent_weights() -> Dict[str, float]:
-    path = os.path.join("src", "config", "weights.yaml")
-    with open(path, "r") as f:
-        return yaml.safe_load(f)
+TECH_WEIGHT = 0.8
+NEWS_WEIGHT = 0.2
 
 
-# ---------------------------------------------------------------------
-# MAIN CONSENSUS FUNCTION
-# ---------------------------------------------------------------------
-
-def aggregate_agent_outputs(agent_outputs: List[Dict[str, Any]]) -> Dict[str, Any]:
+def decide_pair(
+    pair: str,
+    votes: List[Dict[str, Any]],
+    thresholds: Dict[str, float],
+) -> Tuple[float, str, str, Dict[str, float]]:
     """
-    Eingabe:
-        [
-            {"agent": "technical", "score": ..., "confidence": ..., "explanation": ...},
-            {"agent": "news", ...},
-            {"agent": "sentiment", ...},
-            {"agent": "research", ...},
+    Input:
+        votes = [
+            {"agent": "technical", "score": float, ...},
+            {"agent": "news_sentiment", "score": float, ...},
         ]
-    Rückgabe:
-        {
-            "final_score": float,
-            "breakdown": [...],
-            "valid_agents": int
-        }
+
+    Output:
+        (
+            final_score: float,
+            decision: "LONG" | "SHORT" | "HOLD",
+            reason: str,
+            breakdown: {
+                "technical": float,
+                "news_sentiment": float
+            }
+        )
     """
 
-    weights = load_agent_weights()
+    tech_vote = None
+    news_vote = None
 
-    num = 0.0
-    den = 0.0
-    breakdown_rows = []
+    for v in votes:
+        if v.get("agent") == "technical":
+            tech_vote = v
+        elif v.get("agent") == "news_sentiment":
+            news_vote = v
 
-    for out in agent_outputs:
-        agent = out.get("agent")
-        score = out.get("score")
-        conf = out.get("confidence", 0.0)
+    # --- HARD REQUIREMENT: Technical must exist ---
+    if tech_vote is None:
+        return 0.0, "HOLD", "NO_TECHNICAL_SIGNAL", {}
 
-        if score is None or agent not in weights:
-            continue
+    tech_score = float(tech_vote.get("score", 0.0))
+    news_score = float(news_vote.get("score", 0.0)) if news_vote else 0.0
 
-        w = float(weights.get(agent, 0.0))
-        weighted = score * conf * w
+    # --- Final score (simple, explicit) ---
+    final_score = TECH_WEIGHT * tech_score + NEWS_WEIGHT * news_score
+    final_score = max(-1.0, min(1.0, final_score))
 
-        breakdown_rows.append(
-            (agent, float(score), float(conf), w, weighted)
-        )
-
-        num += weighted
-        den += abs(w) * max(1e-9, conf)
-
-    if den <= 0:
-        final = 0.0
+    # --- Decision ---
+    if final_score >= thresholds["long"]:
+        decision = "LONG"
+    elif final_score <= thresholds["short"]:
+        decision = "SHORT"
     else:
-        final = max(-1.0, min(1.0, num / den))
+        decision = "HOLD"
 
-    return {
-        "final_score": final,
-        "breakdown": breakdown_rows,
-        "valid_agents": len(breakdown_rows),
+    reason = (
+        f"technical={tech_score:+.3f}, "
+        f"news_sentiment={news_score:+.3f}, "
+        f"final={final_score:+.3f}"
+    )
+
+    breakdown = {
+        "technical": tech_score,
+        "news_sentiment": news_score,
     }
+
+    return final_score, decision, reason, breakdown
