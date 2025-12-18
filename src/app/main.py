@@ -1,6 +1,8 @@
 # src/app/main.py
 from __future__ import annotations
-from src.tools.log_rotation import maybe_rotate_all_logs
+
+# BOOTSTRAP ENV – EINMAL
+from src.bootstrap.env import env_debug  # noqa: F401
 
 import os
 import sys
@@ -10,11 +12,8 @@ from pathlib import Path
 from typing import Dict, List, Tuple, Any, Optional
 from datetime import datetime, timezone
 
-try:
-    from dotenv import load_dotenv  # type: ignore
-    load_dotenv()
-except Exception:
-    pass
+from src.tools.log_rotation import maybe_rotate_all_logs
+
 
 # -------------------------------------------------------------------
 # Trading & Environment Configuration
@@ -48,10 +47,7 @@ DEFAULT_MAX_AGE_SEC = 900
 
 # Defaults nur als Fallback; eigentliche Werte kommen aus configs/weights.yaml & thresholds.yaml
 DEFAULT_WEIGHTS = {
-    "technical": 0.60,
-    "sentiment": 0.15,
-    "news": 0.15,
-    "research": 0.10,
+    "technical": 1.0,
 }
 
 DEFAULT_THRESHOLDS = {
@@ -63,59 +59,14 @@ DEFAULT_THRESHOLDS = {
 MIN_TREND_SCORE = float(os.getenv("MIN_TREND_SCORE", "0.2"))
 
 # Agents
-try:
-    from src.agents.technical import TechnicalAgent
-except Exception as e:
-    print(f"[WARN] import TechnicalAgent failed: {e}", file=sys.stderr)
-    TechnicalAgent = None
-
-try:
-    from src.agents.ai_news import AINews
-except Exception as e:
-    print(f"[WARN] import AINews failed: {e}", file=sys.stderr)
-    AINews = None
-
-try:
-    from src.agents.ai_sentiment import AISentiment
-except Exception as e:
-    print(f"[WARN] import AISentiment failed: {e}", file=sys.stderr)
-    AISentiment = None
-
-try:
-    from src.agents.ai_research import AIResearch
-except Exception as e:
-    print(f"[WARN] import AIResearch failed: {e}", file=sys.stderr)
-    AIResearch = None
-
-
 def load_all_agents():
-    """
-    Lädt alle produktiven Agents in der gewünschten Reihenfolge.
+    from src.agents.technical import TechnicalAgent
+    from src.agents.ai_news_sentiment import AINewsSentimentAgent
 
-    Reihenfolge:
-    - Technical (Driver)
-    - News (Event-driven sentiment)
-    - Sentiment (Market mood)
-    - Research (Macro + structural)
-
-    Falls ein Agent nicht importiert werden konnte:
-    → wird er übersprungen.
-    """
-    agents = []
-
-    if TechnicalAgent is not None:
-        agents.append(TechnicalAgent())
-
-    if AINews is not None:
-        agents.append(AINews())
-
-    if AISentiment is not None:
-        agents.append(AISentiment())
-
-    if AIResearch is not None:
-        agents.append(AIResearch())
-
-    return agents
+    return [
+        TechnicalAgent(),
+        AINewsSentimentAgent(),
+    ]
 
 
 # data
@@ -447,13 +398,13 @@ def decide_pair(
     """
     Zweistufige Logik:
     1) Technical-Agent ist Driver und schlägt LONG/SHORT vor.
-    2) Andere Agenten (News, Sentiment, Research) haben Veto-Recht,
+    2) Andere Agenten haben Veto-Recht,
        wenn sie mit hoher Confidence stark dagegenlaufen.
     3) Consensus-Score S wird weiterhin für Logging/Telegram/Backtests genutzt.
 
     Neu:
     - Nur „kritische“ Agenten (default: technical) blocken bei stale inputs.
-    - Optionale Agenten (news, sentiment, research) werden bei stale ignoriert,
+    - Optionale Agenten werden bei stale ignoriert,
       blocken aber keine Trades mehr.
     """
 
@@ -560,12 +511,13 @@ def collect_votes(
     interval: str,
     asof: datetime,
     max_age_sec: int,
+    backtest_mode: bool = False,
 ) -> Tuple[List[Dict[str, Any]], Dict[str, float]]:
     """
     Vereinheitlichte Multi-Agent Vote Collection v2.
 
     - TechnicalAgent wird wie bisher per Pair und Candles aufgerufen.
-    - AI Agents (News/Sentiment/Research) laufen universe-wide.
+    - AI Agents laufen universe-wide.
     - Jeder Agent liefert:
         {
             "pair": str,
@@ -608,6 +560,13 @@ def collect_votes(
     # Agents laden
     # -------------------------------------------------
     agent_objects = load_all_agents()
+
+    if backtest_mode:
+        agent_objects = [
+            a for a in agent_objects
+            if getattr(a, "agent_name", "").lower() == "technical"
+        ]
+
 
     # -------------------------------------------------
     # Agent-Execution
@@ -702,7 +661,13 @@ def run_once(single_pair: str | None = None,
         weights = base_weights
 
     t0 = time.time()
-    votes, last_prices = collect_votes(pairs, interval, asof, max_age_sec)
+    votes, last_prices = collect_votes(
+    pairs,
+    interval,
+    asof,
+    max_age_sec,
+    backtest_mode=backtest_mode,
+    )
 
     results: List[Dict[str, Any]] = []
     for pair in pairs:
@@ -979,11 +944,19 @@ if __name__ == "__main__":
     if len(sys.argv) < 2:
         _usage()
         sys.exit(1)
+
     cmd = sys.argv[1].lower()
+
     if cmd == "run":
         run_once()
+
     elif cmd == "pair" and len(sys.argv) >= 3:
         _debug_pair(sys.argv[2].upper())
+
+    elif cmd == "backtest":
+        run_once(backtest_mode=True)
+
     else:
         _usage()
         sys.exit(1)
+

@@ -45,13 +45,6 @@ def run_health_check() -> bool:
         critical_fail = True
         print("[HEALTH][CRITICAL] LLM token/call limit reached:", report["llm_token_limits"])
 
-    # --- CryptoNews API nur nötig, wenn ENABLED ---
-    import os
-    if os.getenv("CRYPTONEWS_ENABLED", "true").lower() == "true":
-        if not report["cryptonews_api"]["ok"]:
-            critical_fail = True
-            print("[HEALTH][CRITICAL] CryptoNews API not working:", report["cryptonews_api"])
-
     if critical_fail:
         print("[HEALTH] Backtest aborted due to critical component failure.")
         return False

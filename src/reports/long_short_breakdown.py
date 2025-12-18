@@ -1,7 +1,6 @@
 # src/reports/long_short_breakdown.py
 from __future__ import annotations
 import json
-from typing import Dict, Any
 
 TRADES_PATH = "data/backtests/backtest_trades_latest.jsonl"
 
@@ -12,7 +11,7 @@ def load_trades(path: str):
         for line in f:
             try:
                 rows.append(json.loads(line))
-            except:
+            except Exception:
                 pass
     return rows
 

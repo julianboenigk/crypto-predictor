@@ -1,87 +1,136 @@
 from __future__ import annotations
-from typing import Dict, Any, List
-import yaml
-import os
+from typing import Dict, Any, List, Tuple
 
 """
-Multi-Agent Consensus V2.0 (AI-ready)
-------------------------------------
+Consensus V4 — Policy-Tightened (Step 6)
 
-Aggregiert Scores & Confidences der Agents:
-    final_score = Σ (score_i * weight_i * confidence_i) / Σ (weight_i * confidence_i)
-
-Breakdown für Logging + Backtest:
-    [
-        (agent, score, confidence, weight, weighted),
-        ...
-    ]
-
-Wenn Daten fehlen oder Agent zurückgibt score=None → Agent wird ignoriert.
+Design principles:
+- Only two agents exist: technical + news_sentiment
+- Technical decides direction
+- News/Sentiment adjusts conviction only
+- No vetoes, no learning, no dynamic weights
+- Deterministic and backtest-safe
+- Explicit guardrails against narrative bias
 """
 
+# ------------------------------------------------------------------
+# Static base weights (unchanged)
+# ------------------------------------------------------------------
+TECH_WEIGHT = 0.8
+NEWS_WEIGHT = 0.2
 
-# ---------------------------------------------------------------------
-# LOAD WEIGHTS
-# ---------------------------------------------------------------------
-
-def load_agent_weights() -> Dict[str, float]:
-    path = os.path.join("src", "config", "weights.yaml")
-    with open(path, "r") as f:
-        return yaml.safe_load(f)
+# ------------------------------------------------------------------
+# Policy parameters (explicit, deterministic)
+# ------------------------------------------------------------------
+TECH_MIN_ABS_SCORE = 0.20        # below this → ignore news completely
+NEWS_CONFLICT_PENALTY = 0.50     # confidence multiplier if conflict
+NEWS_MAX_EFFECTIVE_WEIGHT = 0.30 # hard cap on news influence
 
 
-# ---------------------------------------------------------------------
-# MAIN CONSENSUS FUNCTION
-# ---------------------------------------------------------------------
+def _sign(x: float) -> int:
+    if x > 0:
+        return 1
+    if x < 0:
+        return -1
+    return 0
 
-def aggregate_agent_outputs(agent_outputs: List[Dict[str, Any]]) -> Dict[str, Any]:
+
+def decide_pair(
+    pair: str,
+    votes: List[Dict[str, Any]],
+    thresholds: Dict[str, float],
+) -> Tuple[float, str, str, Dict[str, float]]:
     """
-    Eingabe:
-        [
-            {"agent": "technical", "score": ..., "confidence": ..., "explanation": ...},
-            {"agent": "news", ...},
-            {"agent": "sentiment", ...},
-            {"agent": "research", ...},
+    Input:
+        votes = [
+            {"agent": "technical", "score": float, "confidence": float, ...},
+            {"agent": "news_sentiment", "score": float, "confidence": float, ...},
         ]
-    Rückgabe:
-        {
-            "final_score": float,
-            "breakdown": [...],
-            "valid_agents": int
-        }
+
+    Output:
+        (
+            final_score: float,
+            decision: "LONG" | "SHORT" | "HOLD",
+            reason: str,
+            breakdown: {
+                "technical": float,
+                "news_sentiment": float
+            }
+        )
     """
 
-    weights = load_agent_weights()
+    tech_vote = None
+    news_vote = None
 
-    num = 0.0
-    den = 0.0
-    breakdown_rows = []
+    for v in votes:
+        if v.get("agent") == "technical":
+            tech_vote = v
+        elif v.get("agent") == "news_sentiment":
+            news_vote = v
 
-    for out in agent_outputs:
-        agent = out.get("agent")
-        score = out.get("score")
-        conf = out.get("confidence", 0.0)
+    # ------------------------------------------------------------------
+    # HARD REQUIREMENT: technical agent must exist
+    # ------------------------------------------------------------------
+    if tech_vote is None:
+        return 0.0, "HOLD", "NO_TECHNICAL_SIGNAL", {}
 
-        if score is None or agent not in weights:
-            continue
+    tech_score = float(tech_vote.get("score", 0.0))
+    tech_conf = float(tech_vote.get("confidence", 1.0))
 
-        w = float(weights.get(agent, 0.0))
-        weighted = score * conf * w
+    news_score = float(news_vote.get("score", 0.0)) if news_vote else 0.0
+    news_conf = float(news_vote.get("confidence", 1.0)) if news_vote else 0.0
 
-        breakdown_rows.append(
-            (agent, float(score), float(conf), w, weighted)
-        )
+    # ------------------------------------------------------------------
+    # STEP 6 POLICY APPLICATION
+    # ------------------------------------------------------------------
 
-        num += weighted
-        den += abs(w) * max(1e-9, conf)
-
-    if den <= 0:
-        final = 0.0
+    # Rule 1 — Technical gate
+    if abs(tech_score) < TECH_MIN_ABS_SCORE:
+        effective_news_weight = 0.0
+        effective_news_conf = 0.0
+        news_policy_note = "NEWS_DISABLED_WEAK_TECH"
     else:
-        final = max(-1.0, min(1.0, num / den))
+        effective_news_weight = min(NEWS_WEIGHT, NEWS_MAX_EFFECTIVE_WEIGHT)
+        effective_news_conf = news_conf
+        news_policy_note = "NEWS_ACTIVE"
 
-    return {
-        "final_score": final,
-        "breakdown": breakdown_rows,
-        "valid_agents": len(breakdown_rows),
+        # Rule 2 — Directional conflict
+        if _sign(news_score) != _sign(tech_score):
+            effective_news_conf *= NEWS_CONFLICT_PENALTY
+            news_policy_note = "NEWS_CONFLICT_PENALIZED"
+
+    # ------------------------------------------------------------------
+    # Final score computation (explicit & bounded)
+    # ------------------------------------------------------------------
+    tech_component = TECH_WEIGHT * tech_score * tech_conf
+    news_component = effective_news_weight * news_score * effective_news_conf
+
+    final_score = tech_component + news_component
+    final_score = max(-1.0, min(1.0, final_score))
+
+    # ------------------------------------------------------------------
+    # Decision
+    # ------------------------------------------------------------------
+    if final_score >= thresholds["long"]:
+        decision = "LONG"
+    elif final_score <= thresholds["short"]:
+        decision = "SHORT"
+    else:
+        decision = "HOLD"
+
+    # ------------------------------------------------------------------
+    # Reason + breakdown (fully explainable)
+    # ------------------------------------------------------------------
+    reason = (
+        f"technical={tech_score:+.3f} (conf={tech_conf:.2f}), "
+        f"news_sentiment={news_score:+.3f} (conf={effective_news_conf:.2f}), "
+        f"policy={news_policy_note}, "
+        f"final={final_score:+.3f}"
+    )
+
+    breakdown = {
+        "technical": tech_component,
+        "news_sentiment": news_component,
     }
+
+    return final_score, decision, reason, breakdown

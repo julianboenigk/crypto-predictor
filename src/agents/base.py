@@ -12,7 +12,7 @@ class Candle(TypedDict):
     t: Any
     o: float
     h: float
-    l: float
+    low: float
     c: float
     v: float
 
