@@ -18,7 +18,7 @@ def load_runs():
         for line in f:
             try:
                 out.append(json.loads(line))
-            except:
+            except Exception:
                 continue
     return out
 

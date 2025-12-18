@@ -36,7 +36,6 @@ def _pnl_list_stats(trades: List[float]) -> Dict[str, Any]:
 
     n = len(trades)
     wins = sum(1 for x in trades if x > 0)
-    losses = sum(1 for x in trades if x < 0)
 
     gross_profit = sum(x for x in trades if x > 0)
     gross_loss = -sum(x for x in trades if x < 0)  # positiv

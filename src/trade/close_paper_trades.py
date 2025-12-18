@@ -1,4 +1,3 @@
-# src/trade/close_paper_trades.py
 from __future__ import annotations
 
 import json
@@ -25,6 +24,7 @@ from src.trade.testnet import (
 )
 from src.data.binance_client import get_ohlcv  # type: ignore
 
+from src.core.version import SYSTEM_VERSION
 
 DATA_DIR = Path("data")
 
@@ -81,10 +81,6 @@ def _simulate_over_klines(
     tp: float,
     klines: List[List[Any]],
 ) -> str:
-    """
-    Simuliere einen Trade über eine Liste von Binance-Kerzen.
-    Jede Kline: [open_time, open, high, low, close, volume, ...]
-    """
     side_u = str(side).upper()
     for k in klines:
         high = float(k[2])
@@ -105,16 +101,15 @@ def _simulate_over_klines(
 def _filter_klines_since(
     klines: List[List[Any]],
     opened_at: datetime,
+    interval_sec: int,
 ) -> List[List[Any]]:
     """
-    Filtert die OHLCV-Kerzen, so dass nur Kerzen nach dem Entry
-    betrachtet werden. open_time ist im ms-Format in k[0].
+    Include the entry candle (critical for TP/SL detection).
     """
+    cutoff_ms = int((opened_at.timestamp() - interval_sec) * 1000)
     out: List[List[Any]] = []
-    cutoff_ms = int(opened_at.timestamp() * 1000)
     for k in klines:
-        open_time_ms = int(k[0])
-        if open_time_ms >= cutoff_ms:
+        if int(k[0]) >= cutoff_ms:
             out.append(k)
     return out
 
@@ -124,61 +119,37 @@ def _sync_testnet_from_closed_paper(
     existing_testnet: List[Dict[str, Any]],
     mirror_enabled: bool,
 ) -> int:
-    """
-    Spiegel bereits vorhandene abgeschlossene Paper-Trades in die
-    Testnet-Trade-Datei, falls dort noch kein entsprechender Eintrag existiert.
-
-    Aktuell nutzen wir dieselben Ergebnisse (pnl_r, outcome) – Ziel ist,
-    eine identische Lifecycle-Logik zu haben. Später kann hier echte
-    Testnet-Execution einfließen.
-    """
     if not mirror_enabled:
         return 0
 
-    paper_keys = { _make_key_paper_closed(tr) for tr in closed_paper }
-    testnet_keys = { _make_key_testnet(tr) for tr in existing_testnet }
+    paper_keys = {_make_key_paper_closed(tr) for tr in closed_paper}
+    testnet_keys = {_make_key_testnet(tr) for tr in existing_testnet}
 
     missing_keys = paper_keys - testnet_keys
     if not missing_keys:
         return 0
 
-    key_to_paper: Dict[Tuple[Any, ...], Dict[str, Any]] = {}
-    for tr in closed_paper:
-        key = _make_key_paper_closed(tr)
-        key_to_paper[key] = tr
-
+    key_to_paper = {_make_key_paper_closed(tr): tr for tr in closed_paper}
     created = 0
+
     for key in missing_keys:
         tr = key_to_paper.get(key)
         if tr is None:
             continue
 
-        entry = float(tr.get("entry"))
-        sl = float(tr.get("stop_loss"))
-        tp = float(tr.get("take_profit"))
-        size = float(tr.get("size", 1.0))
-        side = str(tr.get("side", "LONG")).upper()
-        outcome = str(tr.get("outcome", "")).upper() or "MANUAL"
-        exit_price = float(tr.get("exit", tp if outcome == "TP" else sl))
-        pnl_r = float(tr.get("pnl_r", 0.0))
-        opened_at = tr.get("open_time") or tr.get("t")
-        exit_time = tr.get("exit_time")
-        meta = tr.get("meta") or {}
-        meta = {**meta, "source": "mirror_from_paper"}
-
         record_closed_testnet_trade(
             pair=str(tr.get("pair")),
-            side=side,
-            entry=entry,
-            stop_loss=sl,
-            take_profit=tp,
-            size=size,
-            exit_price=exit_price,
-            outcome=outcome,
-            opened_at=opened_at,
-            exit_time=exit_time,
-            pnl_r=pnl_r,
-            meta=meta,
+            side=str(tr.get("side", "LONG")).upper(),
+            entry=float(tr.get("entry")),
+            stop_loss=float(tr.get("stop_loss")),
+            take_profit=float(tr.get("take_profit")),
+            size=float(tr.get("size", 1.0)),
+            exit_price=float(tr.get("exit")),
+            outcome=str(tr.get("outcome", "MANUAL")).upper(),
+            opened_at=tr.get("open_time") or tr.get("t"),
+            exit_time=tr.get("exit_time"),
+            pnl_r=float(tr.get("pnl_r", 0.0)),
+            meta={**(tr.get("meta") or {}), "source": "mirror_from_paper"},
         )
         created += 1
 
@@ -186,59 +157,55 @@ def _sync_testnet_from_closed_paper(
 
 
 def main() -> None:
-    # 0) Env-Flag, ob wir überhaupt Testnet-Trades spiegeln wollen
     testnet_mirror_enabled = os.getenv("BINANCE_TESTNET_ENABLED", "false").lower() == "true"
 
-    # 1) Offene + bereits geschlossene Paper-Trades einlesen
     open_trades = list(iter_paper_trades())
     closed_trades = list(iter_closed_paper_trades())
     existing_testnet_trades = list(iter_testnet_trades())
 
-    # 1a) Bereits geschlossene Paper-Trades nach Testnet spiegeln (Backfill)
     testnet_backfill = _sync_testnet_from_closed_paper(
         closed_paper=closed_trades,
         existing_testnet=existing_testnet_trades,
         mirror_enabled=testnet_mirror_enabled,
     )
 
-    closed_keys = { _make_key_paper_closed(tr) for tr in closed_trades }
-    candidates: List[Dict[str, Any]] = []
+    closed_keys = {_make_key_paper_closed(tr) for tr in closed_trades}
+    candidates = [tr for tr in open_trades if _make_key_paper_open(tr) not in closed_keys]
 
-    for tr in open_trades:
-        key = _make_key_paper_open(tr)
-        if key in closed_keys:
-            # bereits verarbeitet
-            continue
-        candidates.append(tr)
-
-    # 2) Pro Kandidat prüfen, ob SL/TP inzwischen getroffen wurde
     if not candidates:
-        summary = {
+        print(json.dumps({
             "run_at": datetime.now(timezone.utc).isoformat(),
+            "system_version": SYSTEM_VERSION,
             "open_seen": len(open_trades),
             "closed_existing": len(closed_trades),
             "closed_new": 0,
             "testnet_backfill": testnet_backfill,
             "errors": [],
-        }
-        print(json.dumps(summary, indent=2))
+        }, indent=2))
         return
 
-    # grob nach (pair, interval) gruppieren
     groups: Dict[Tuple[str, str], List[Dict[str, Any]]] = {}
     for tr in candidates:
-        pair = str(tr.get("pair"))
-        interval = str(tr.get("interval") or "15m")
-        key = (pair, interval)
-        groups.setdefault(key, []).append(tr)
+        groups.setdefault((str(tr.get("pair")), str(tr.get("interval") or "15m")), []).append(tr)
 
     closed_new = 0
     testnet_new = 0
     errors: List[str] = []
 
     for (pair, interval), trs in groups.items():
-        # Binance-Limit: max 1000 Kerzen; reicht für ca. 10 Tage bei 15m
-        lookback = 1000
+        interval_sec = {
+            "1m": 60, "3m": 180, "5m": 300, "15m": 900,
+            "30m": 1800, "1h": 3600, "2h": 7200,
+            "4h": 14400, "1d": 86400,
+        }.get(interval, 900)
+
+        opened_times = [_parse_ts(tr.get("t")) for tr in trs if _parse_ts(tr.get("t"))]
+        if not opened_times:
+            continue
+
+        oldest_open = min(opened_times)
+        seconds = max(0.0, (datetime.now(timezone.utc) - oldest_open).total_seconds())
+        lookback = min(max(int(seconds // interval_sec) + 5, 100), 1000)
 
         try:
             klines = get_ohlcv(pair, interval, limit=lookback)
@@ -255,69 +222,51 @@ def main() -> None:
             if opened_at is None:
                 continue
 
-            sl = float(tr.get("stop_loss"))
-            tp = float(tr.get("take_profit"))
-            entry = float(tr.get("entry"))
-            size = float(tr.get("size", 1.0))
-            side = str(tr.get("side", "LONG")).upper()
-            meta = tr.get("meta") or {}
-
-            klines_tr = _filter_klines_since(klines, opened_at)
+            klines_tr = _filter_klines_since(klines, opened_at, interval_sec)
             if not klines_tr:
                 continue
 
-            outcome = _simulate_over_klines(side, sl, tp, klines_tr)
+            outcome = _simulate_over_klines(
+                str(tr.get("side", "LONG")),
+                float(tr.get("stop_loss")),
+                float(tr.get("take_profit")),
+                klines_tr,
+            )
+
             if outcome not in ("TP", "SL"):
-                # noch nicht getroffen -> Trade bleibt offen
                 continue
 
-            exit_price = tp if outcome == "TP" else sl
-
-            # Paper-Trade als geschlossen loggen (berechnet intern pnl_r)
             paper_rec = record_closed_paper_trade(
                 pair=pair,
-                side=side,
-                entry=entry,
-                stop_loss=sl,
-                take_profit=tp,
-                size=size,
-                exit_price=exit_price,
+                side=str(tr.get("side", "LONG")).upper(),
+                entry=float(tr.get("entry")),
+                stop_loss=float(tr.get("stop_loss")),
+                take_profit=float(tr.get("take_profit")),
+                size=float(tr.get("size", 1.0)),
+                exit_price=float(tr.get("take_profit") if outcome == "TP" else tr.get("stop_loss")),
                 outcome=outcome,
                 opened_at=tr.get("t"),
-                meta=meta,
+                meta=tr.get("meta") or {},
             )
             closed_new += 1
 
-            # Testnet-Trade spiegeln (optional, abhängig vom Env-Flag)
             if testnet_mirror_enabled:
-                meta_testnet = {**(paper_rec.get("meta") or {}), "source": "mirror_from_paper"}
                 record_closed_testnet_trade(
-                    pair=paper_rec["pair"],
-                    side=paper_rec["side"],
-                    entry=paper_rec["entry"],
-                    stop_loss=paper_rec["stop_loss"],
-                    take_profit=paper_rec["take_profit"],
-                    size=paper_rec["size"],
-                    exit_price=paper_rec["exit"],
-                    outcome=paper_rec["outcome"],
-                    opened_at=paper_rec.get("open_time"),
-                    exit_time=paper_rec.get("exit_time"),
-                    pnl_r=paper_rec.get("pnl_r", 0.0),
-                    meta=meta_testnet,
+                    **paper_rec,
+                    meta={**(paper_rec.get("meta") or {}), "source": "mirror_from_paper"},
                 )
                 testnet_new += 1
 
-    summary = {
+    print(json.dumps({
         "run_at": datetime.now(timezone.utc).isoformat(),
+        "system_version": SYSTEM_VERSION,
         "open_seen": len(open_trades),
         "closed_existing": len(closed_trades),
         "closed_new": closed_new,
         "testnet_backfill": testnet_backfill,
         "testnet_new": testnet_new,
         "errors": errors,
-    }
-    print(json.dumps(summary, indent=2))
-    return summary
+    }, indent=2))
 
 
 if __name__ == "__main__":

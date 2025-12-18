@@ -1,21 +1,17 @@
 from __future__ import annotations
+
+# ============================================================
+# Early bootstrap (env already loaded at app level)
+# ============================================================
 from src.bootstrap.env import env_debug  # noqa: F401
 
 # ============================================================
-# VERY EARLY ENV LOADING (before anything else)
+# Standard library imports (must be at top)
 # ============================================================
 import os
-from pathlib import Path
-from dotenv import load_dotenv
-
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-ENV_PATH = PROJECT_ROOT / ".env"
-
-# ============================================================
-# Standard imports
-# ============================================================
 import json
 import hashlib
+from pathlib import Path
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Tuple
 from datetime import datetime
@@ -25,11 +21,21 @@ from datetime import datetime
 # ============================================================
 from openai import OpenAI
 
+# ============================================================
+# Project paths
+# ============================================================
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+# ============================================================
+# OpenAI setup
+# ============================================================
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 if not OPENAI_API_KEY:
     print("[AI_BASE] WARNING: OPENAI_API_KEY not set")
 
 client = OpenAI(api_key=OPENAI_API_KEY)
+
+OPENAI_MODEL_DEFAULT = os.getenv("OPENAI_MODEL_DEFAULT", "gpt-4.1-mini")
 
 # ============================================================
 # Limits (0 = disabled)
@@ -40,17 +46,20 @@ def _int_env(name: str, default: int = 0) -> int:
     except Exception:
         return default
 
+
 MAX_LLM_CALLS_PER_DAY = _int_env("MAX_LLM_CALLS_PER_DAY", 0)
 MAX_LLM_TOKENS_PER_DAY = _int_env("MAX_LLM_TOKENS_PER_DAY", 0)
-
-OPENAI_MODEL_DEFAULT = os.getenv("OPENAI_MODEL_DEFAULT", "gpt-4.1-mini")
 
 # ============================================================
 # Utility
 # ============================================================
 def deterministic_hash(data: Any) -> str:
     try:
-        encoded = json.dumps(data, sort_keys=True, ensure_ascii=False).encode("utf-8")
+        encoded = json.dumps(
+            data,
+            sort_keys=True,
+            ensure_ascii=False,
+        ).encode("utf-8")
     except Exception:
         encoded = str(data).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
@@ -77,14 +86,18 @@ def load_cache(agent_name: str, key: str) -> Optional[Dict[str, Any]]:
 def save_cache(agent_name: str, key: str, data: Dict[str, Any]) -> None:
     path = cache_path(agent_name, key)
     try:
-        path.write_text(json.dumps(data, indent=2), encoding="utf-8")
+        path.write_text(
+            json.dumps(data, indent=2),
+            encoding="utf-8",
+        )
     except Exception:
         pass
 
 # ============================================================
-# LLM Usage Tracking
+# LLM usage tracking
 # ============================================================
 USAGE_PATH = PROJECT_ROOT / "data" / "llm_usage.json"
+
 
 def _today() -> str:
     return datetime.utcnow().strftime("%Y-%m-%d")
@@ -102,19 +115,23 @@ def load_llm_usage() -> Tuple[int, int]:
 
 
 def save_llm_usage(calls: int, tokens: int) -> None:
-    data = {}
+    data: Dict[str, Any] = {}
     if USAGE_PATH.exists():
         try:
             data = json.loads(USAGE_PATH.read_text())
         except Exception:
-            pass
+            data = {}
 
-    data[_today()] = {"calls": calls, "tokens": tokens}
+    data[_today()] = {
+        "calls": calls,
+        "tokens": tokens,
+    }
+
     USAGE_PATH.parent.mkdir(parents=True, exist_ok=True)
     USAGE_PATH.write_text(json.dumps(data, indent=2))
 
 # ============================================================
-# Limit Check (clean & explicit)
+# Limit check
 # ============================================================
 def check_limits(tokens_required: int = 0) -> Tuple[bool, str]:
     calls, tokens_used = load_llm_usage()
@@ -122,13 +139,16 @@ def check_limits(tokens_required: int = 0) -> Tuple[bool, str]:
     if MAX_LLM_CALLS_PER_DAY > 0 and calls >= MAX_LLM_CALLS_PER_DAY:
         return False, "MAX_CALLS_REACHED"
 
-    if MAX_LLM_TOKENS_PER_DAY > 0 and (tokens_used + tokens_required) > MAX_LLM_TOKENS_PER_DAY:
+    if (
+        MAX_LLM_TOKENS_PER_DAY > 0
+        and (tokens_used + tokens_required) > MAX_LLM_TOKENS_PER_DAY
+    ):
         return False, "MAX_TOKENS_REACHED"
 
     return True, ""
 
 # ============================================================
-# Prompt Loader
+# Prompt loader
 # ============================================================
 def load_prompt(prompt_file: str) -> str:
     path = PROJECT_ROOT / "prompts" / prompt_file
@@ -138,7 +158,7 @@ def load_prompt(prompt_file: str) -> str:
         return "SCORE: 0\nCONFIDENCE: 0"
 
 # ============================================================
-# LLM Call
+# LLM call
 # ============================================================
 def run_llm(prompt: str, model: str = OPENAI_MODEL_DEFAULT) -> Dict[str, Any]:
     token_estimate = max(1, len(prompt.split()))
@@ -163,7 +183,7 @@ def run_llm(prompt: str, model: str = OPENAI_MODEL_DEFAULT) -> Dict[str, Any]:
     calls, tokens_used = load_llm_usage()
     save_llm_usage(
         calls + 1,
-        tokens_used + (response.usage.total_tokens or 0),
+        tokens_used + int(response.usage.total_tokens or 0),
     )
 
     return {
@@ -189,23 +209,33 @@ class AIAgent:
     prompt_file: str = "prompt_not_set.txt"
     model_name: str = OPENAI_MODEL_DEFAULT
 
-    def build_prompt(self, candle_window: Any, external_data: Dict[str, Any]) -> str:
+    def build_prompt(
+        self,
+        candle_window: Any,
+        external_data: Dict[str, Any],
+    ) -> str:
         template = load_prompt(self.prompt_file)
         return template.format(
             candles=json.dumps(candle_window, ensure_ascii=False),
             data=json.dumps(external_data, ensure_ascii=False),
         )
 
-    def run(self, candle_window: Any, external_data: Dict[str, Any]) -> AgentOutput:
-        key = deterministic_hash({"c": candle_window, "e": external_data})
+    def run(
+        self,
+        candle_window: Any,
+        external_data: Dict[str, Any],
+    ) -> AgentOutput:
+        key = deterministic_hash(
+            {"c": candle_window, "e": external_data}
+        )
 
         cached = load_cache(self.agent_name, key)
         if cached:
             return AgentOutput(
-                self.agent_name,
-                cached["score"],
-                cached["confidence"],
-                cached["raw"],
+                agent=self.agent_name,
+                score=cached["score"],
+                confidence=cached["confidence"],
+                raw=cached["raw"],
             )
 
         prompt = self.build_prompt(candle_window, external_data)
@@ -220,7 +250,12 @@ class AIAgent:
         }
         save_cache(self.agent_name, key, result)
 
-        return AgentOutput(self.agent_name, score, conf, out)
+        return AgentOutput(
+            agent=self.agent_name,
+            score=score,
+            confidence=conf,
+            raw=out,
+        )
 
     @staticmethod
     def parse_output(text: str) -> Tuple[float, float]:
@@ -228,10 +263,13 @@ class AIAgent:
             return 0.0, 0.0
 
         score = 0.0
-        conf = 0.0
+        confidence = 0.0
+
         for line in text.splitlines():
-            if line.upper().startswith("SCORE:"):
+            up = line.upper()
+            if up.startswith("SCORE:"):
                 score = float(line.split(":", 1)[1].strip())
-            elif line.upper().startswith("CONFIDENCE:"):
-                conf = float(line.split(":", 1)[1].strip())
-        return score, conf
+            elif up.startswith("CONFIDENCE:"):
+                confidence = float(line.split(":", 1)[1].strip())
+
+        return score, confidence
