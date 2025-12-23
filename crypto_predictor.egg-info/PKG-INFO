@@ -5,3 +5,4 @@ Requires-Python: >=3.12
 Requires-Dist: requests
 Requires-Dist: PyYAML
 Requires-Dist: pytest
+Requires-Dist: python-dotenv

@@ -36,8 +36,8 @@ class TechnicalAgent:
         if len(candles) < min_len:
             return self._result(pair, 0.0, 0.2, "insufficient candles", inputs_fresh, t0)
 
-        closes = [c["c"] for c in candles]
-        highs  = [c["h"] for c in candles]
+        closes = [c["close"] for c in candles]
+        highs  = [c["high"] for c in candles]
         lows   = [c["low"] for c in candles]
 
         # --- EMA200 ---
@@ -51,7 +51,7 @@ class TechnicalAgent:
         rsi_slow = rsi(closes, self.RSI_SLOW_LEN)
         atr14 = atr(highs, lows, closes, self.ATR_LEN)
 
-        if None in (rsi_fast, rsi_slow, atr14):
+        if rsi_fast is None or rsi_slow is None or atr14 is None:
             return self._result(pair, 0.0, 0.2, "indicator None", inputs_fresh, t0)
 
         price = float(closes[-1])

@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "crypto-predictor"
 version = "0.1.0"
 requires-python = ">=3.12"
-dependencies = ["requests", "PyYAML", "pytest"]
+dependencies = ["requests", "PyYAML", "pytest", "python-dotenv"]
 
 [tool.setuptools.packages.find]
 where = [""]          # look in repo root
